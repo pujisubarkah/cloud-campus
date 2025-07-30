@@ -1,4 +1,5 @@
 <script setup>
+import { ref } from 'vue';
 const categories = [
   {
     title: 'Semi-close loop ecosystem dalam Pengentasan kemiskinan',
@@ -30,14 +31,23 @@ const categories = [
     img: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=400&q=80',
     link: '#'
   }
+
 ];
+const activeIndex = ref(0);
+function prev() {
+  if (activeIndex.value > 0) activeIndex.value--;
+}
+function next() {
+  if (activeIndex.value < categories.length - 1) activeIndex.value++;
+}
 </script>
+
 
 <template>
   <section class="container mx-auto py-8 font-poppins">
     <div class="mb-8">
       <div class="bg-[#3399FF] rounded-xl shadow-lg p-6 md:p-10 text-white mb-6">
-        <h2 class="text-3xl md:text-4xl font-extrabold mb-2 text-[#FFB400]">Akademi Pengentasan Kemiskinan</h2>
+        <h2 class="text-3xl md:text-4xl font-extrabold mb-2 text-[#FFD966]">Akademi Pengentasan Kemiskinan</h2>
         <p class="text-base md:text-lg mb-4">Kemiskinan masih menjadi tantangan besar di Indonesia, meskipun tren menunjukkan penurunan.</p>
         <ul class="list-disc pl-5 space-y-1 text-sm md:text-base">
           <li>Berdasarkan data Badan Pusat Statistik (BPS) per September 2024: <span class="font-bold">Jumlah penduduk miskin mencapai 24,06 juta orang</span> atau <span class="font-bold">8,57%</span> dari total populasi.</li>
@@ -47,19 +57,27 @@ const categories = [
           <li>Meskipun angka ini merupakan yang <span class="font-bold">terendah sejak 1960</span>, tantangan struktural seperti <span class="font-bold">ketimpangan wilayah</span>, <span class="font-bold">akses pendidikan</span>, dan <span class="font-bold">minimnya keterlibatan sektor swasta</span> masih menghambat percepatan pengentasan kemiskinan.</li>
         </ul>
       </div>
-      <!-- ...existing code... -->
     </div>
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-8">
-      <div v-for="cat in categories" :key="cat.title" class="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col hover:scale-[1.03] transition-all">
-        <a :href="cat.link" target="_blank" rel="noopener" class="block">
-          <div class="relative">
-            <img :src="cat.img" :alt="cat.title" class="w-full h-48 object-cover" />
-            <div class="absolute inset-0 bg-gradient-to-t from-[#3399FF]/70 to-transparent"></div>
-            <span class="absolute bottom-2 right-2 bg-[#FFB400] text-[#3399FF] text-xs font-bold px-3 py-1 rounded shadow">View all courses</span>
+    <!-- Carousel Example -->
+    <div class="w-full pb-4">
+      <div class="flex items-center justify-between mb-4">
+        <button @click="prev" :disabled="activeIndex === 0" class="bg-[#3399FF] text-white px-4 py-2 rounded shadow disabled:opacity-50">&#8592; Prev</button>
+        <button @click="next" :disabled="activeIndex === categories.length - 1" class="bg-[#3399FF] text-white px-4 py-2 rounded shadow disabled:opacity-50">Next &#8594;</button>
+      </div>
+      <div class="overflow-hidden relative" style="height: 300px;">
+        <div class="flex transition-all duration-500" :style="`transform: translateX(-${activeIndex * 100}%); width: ${categories.length * 100}%`">
+          <div v-for="cat in categories" :key="cat.title" class="w-full flex-shrink-0 max-w-xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden flex flex-col hover:scale-[1.03] transition-all">
+            <a :href="cat.link" target="_blank" rel="noopener" class="block">
+              <div class="relative">
+                <img :src="cat.img" :alt="cat.title" class="w-full h-48 object-cover" />
+                <div class="absolute inset-0 bg-gradient-to-t from-[#3399FF]/70 to-transparent"></div>
+                <span class="absolute bottom-2 right-2 bg-[#FFD966] text-[#3399FF] text-xs font-bold px-3 py-1 rounded shadow">View Materi</span>
+              </div>
+            </a>
+            <div class="p-4 flex-1 flex flex-col justify-between">
+              <h5 class="text-lg font-bold text-[#3399FF] mb-2 leading-tight">{{ cat.title }}</h5>
+            </div>
           </div>
-        </a>
-        <div class="p-4 flex-1 flex flex-col justify-between">
-          <h5 class="text-lg font-bold text-[#3399FF] mb-2 leading-tight">{{ cat.title }}</h5>
         </div>
       </div>
     </div>
