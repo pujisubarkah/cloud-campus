@@ -1,5 +1,9 @@
 <script setup>
-import { ref } from 'vue';
+import { ref } from 'vue'
+import { Swiper, SwiperSlide } from 'swiper/vue'
+import 'swiper/css'
+import 'swiper/css/navigation'
+import 'swiper/css/pagination'
 const categories = [
   {
     title: 'Semi-close loop ecosystem dalam Pengentasan kemiskinan',
@@ -31,17 +35,8 @@ const categories = [
     img: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=400&q=80',
     link: '#'
   }
-
-];
-const activeIndex = ref(0);
-function prev() {
-  if (activeIndex.value > 0) activeIndex.value--;
-}
-function next() {
-  if (activeIndex.value < categories.length - 1) activeIndex.value++;
-}
+]
 </script>
-
 
 <template>
   <section class="container mx-auto py-8 font-poppins">
@@ -58,15 +53,17 @@ function next() {
         </ul>
       </div>
     </div>
-    <!-- Carousel Example -->
+    <!-- Swiper Carousel -->
     <div class="w-full pb-4">
-      <div class="flex items-center justify-between mb-4">
-        <button @click="prev" :disabled="activeIndex === 0" class="bg-[#3399FF] text-white px-4 py-2 rounded shadow disabled:opacity-50">&#8592; Prev</button>
-        <button @click="next" :disabled="activeIndex === categories.length - 1" class="bg-[#3399FF] text-white px-4 py-2 rounded shadow disabled:opacity-50">Next &#8594;</button>
-      </div>
-      <div class="overflow-hidden relative" style="height: 300px;">
-        <div class="flex transition-all duration-500" :style="`transform: translateX(-${activeIndex * 100}%); width: ${categories.length * 100}%`">
-          <div v-for="cat in categories" :key="cat.title" class="w-full flex-shrink-0 max-w-xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden flex flex-col hover:scale-[1.03] transition-all">
+      <Swiper
+        :slides-per-view="1"
+        :space-between="24"
+        navigation
+        pagination
+        class="h-[340px]"
+      >
+        <SwiperSlide v-for="cat in categories" :key="cat.title">
+          <div class="max-w-xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden flex flex-col hover:scale-[1.03] transition-all">
             <a :href="cat.link" target="_blank" rel="noopener" class="block">
               <div class="relative">
                 <img :src="cat.img" :alt="cat.title" class="w-full h-48 object-cover" />
@@ -78,8 +75,8 @@ function next() {
               <h5 class="text-lg font-bold text-[#3399FF] mb-2 leading-tight">{{ cat.title }}</h5>
             </div>
           </div>
-        </div>
-      </div>
+        </SwiperSlide>
+      </Swiper>
     </div>
   </section>
 </template>
