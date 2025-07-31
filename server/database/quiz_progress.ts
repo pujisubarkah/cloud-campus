@@ -6,7 +6,7 @@ export const quizProgress = pgTable('quiz_progress', {
   id: uuid('id').primaryKey().defaultRandom(),
   user_id: uuid('user_id').notNull().references(() => users.id),
   quiz_id: uuid('quiz_id').notNull().references(() => quizzes.id),
-  score: integer('score'), // nilai akhir kuis
-  taken_at: timestamp('taken_at').defaultNow(), // waktu pengerjaan
+  score: integer('score'),
+  taken_at: timestamp('taken_at').defaultNow(),
   is_passed: integer('is_passed').default(0), // 1 = lulus, 0 = tidak
 });
