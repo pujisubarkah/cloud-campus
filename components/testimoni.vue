@@ -5,39 +5,39 @@ import 'swiper/css/pagination'
 import 'swiper/css/effect-cards'
 const testimonials = [
   {
-    quote: 'Udemy was rated the <b>most popular online course or certification program</b> for learning how to code according to <a target="_blank" rel="noreferrer" class="link" href="https://survey.stackoverflow.co/2023/#section-learning-to-code-online-course-platforms-to-learn-how-to-code">StackOverflow’s 2023 Developer survey</a>.',
-    sourceImg: 'https://cms-images.udemycdn.com/96883mtakkm8/2PBcNgsQa3SvYWklkiN27r/5b8707cc79c8cae5774d5eb3b88b4001/logo_stackoverflow.svg',
-    source: '37,076 responses collected',
+    quote: 'Program Akademi Pengentasan Kemiskinan telah membantu saya mendapatkan keterampilan baru dan peluang kerja yang lebih baik di desa saya.',
+    sourceImg: 'https://randomuser.me/api/portraits/men/32.jpg',
+    source: 'Budi Santoso, Peserta Akademi 2024',
     cta: {
-      text: 'View Web Development courses',
-      link: 'https://www.udemy.com/topic/web-development/'
+      text: 'Lihat kisah Budi',
+      link: '#'
     }
   },
   {
-    quote: 'Udemy was truly <b>a game-changer and a great guide</b> for me as we brought Dimensional to life.',
-    sourceImg: 'https://cms-images.udemycdn.com/96883mtakkm8/1Djz6c0gZLaCG5SQS3PgUY/54b6fb8c85d8da01da95cbb94fa6335f/Alvin_Lim.jpeg',
-    source: 'Alvin Lim, Technical Co-Founder, CTO at Dimensional',
+    quote: 'Saya sangat terbantu dengan pelatihan digital marketing dari Akademi. Sekarang usaha kecil saya berkembang pesat.',
+    sourceImg: 'https://randomuser.me/api/portraits/women/44.jpg',
+    source: 'Siti Aminah, UMKM Desa',
     cta: {
-      text: 'View this iOS & Swift course',
-      link: 'https://www.udemy.com/course/ios-13-app-development-bootcamp/'
+      text: 'Lihat kisah Siti',
+      link: '#'
     }
   },
   {
-    quote: 'Udemy gives you the ability to be persistent. I learned exactly what I needed to know in the real world. It helped me sell myself to <b>get a new role.</b>',
-    sourceImg: 'https://cms-images.udemycdn.com/96883mtakkm8/6dT7xusLHYoOUizXeVqgUk/4317f63fe25b2e07ad8c70cda641014b/William_A_Wachlin.jpeg',
-    source: 'William A. Wachlin, Partner Account Manager at Amazon Web Services',
+    quote: 'Akademi ini memberikan harapan baru bagi generasi muda di daerah kami untuk keluar dari lingkaran kemiskinan.',
+    sourceImg: 'https://randomuser.me/api/portraits/men/65.jpg',
+    source: 'Rizky Pratama, Relawan Pengajar',
     cta: {
-      text: 'View this AWS course',
-      link: 'https://www.udemy.com/course/aws-certified-developer-associate-dva-c01/'
+      text: 'Lihat kisah Rizky',
+      link: '#'
     }
   },
   {
-    quote: 'With Udemy Business employees were able to marry the two together, technology and consultant soft skills... to help <b>drive their careers forward.</b>',
-    sourceImg: 'https://cms-images.udemycdn.com/96883mtakkm8/4w9dYD4F64ibQwsaAB01Z4/c4610e9b1ac65589d8b1374ad10714e2/Ian_Stevens.png',
-    source: 'Ian Stevens, Head of Capability Development, North America at Publicis Sapient',
+    quote: 'Materi yang diberikan sangat relevan dan mudah dipahami. Saya kini lebih percaya diri untuk mencari pekerjaan.',
+    sourceImg: 'https://randomuser.me/api/portraits/women/68.jpg',
+    source: 'Dewi Lestari, Alumni Akademi',
     cta: {
-      text: 'Read full story',
-      link: 'https://business.udemy.com/case-studies/publicis-sapient/?ref=Ian_Stevens_Testimonial_LOHP'
+      text: 'Lihat kisah Dewi',
+      link: '#'
     }
   }
 ]
@@ -47,7 +47,7 @@ const testimonials = [
   <section aria-labelledby="testimonials-unit-title" class="py-12 bg-base-100">
     <div class="container mx-auto px-4">
       <div class="mb-8 text-center">
-        <h2 id="testimonials-unit-title" class="text-3xl md:text-4xl font-serif font-bold mb-2">See what others are achieving through learning</h2>
+        <h2 id="testimonials-unit-title" class="text-3xl md:text-4xl font-serif font-bold mb-2">Cerita Sukses Alumni Akademi Pengentasan Kemiskinan</h2>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
         <div v-for="(t, i) in testimonials" :key="i" class="bg-white rounded-xl shadow-lg p-8 flex flex-col gap-4 items-center">

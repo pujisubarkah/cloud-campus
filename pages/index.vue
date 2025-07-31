@@ -1,16 +1,18 @@
+
 <template>
-  <div class="min-h-screen bg-gray-50 font-poppins">
-    <Carousel />
-    <FeaturesCourse />
+  <div class="min-h-screen bg-gray-50 font-poppins pt-16">
     <reimage />
+    <div class="my-8"></div>
+    <FeaturesCourse />
     <testimoni />
+    <!-- MapSection removed as requested -->
   </div>
 </template>
 
+
 <script setup>
-import Carousel from '~/components/Carousel.vue'
-import FeaturesCourse from '~/components/FeaturesCourse.vue'
 import reimage from '~/components/reimage.vue'
+import FeaturesCourse from '~/components/FeaturesCourse.vue'
 import testimoni from '~/components/testimoni.vue'
 // Halaman selamat datang Cloud Campus
 </script>

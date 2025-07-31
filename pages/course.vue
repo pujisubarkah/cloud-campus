@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-base-100 py-8">
+  <div class="bg-base-100 py-8 pt-16">
     <div class="container mx-auto px-4">
       <div class="flex flex-col gap-8">
         <!-- Search Bar -->
@@ -31,60 +31,43 @@
 
 <script setup>
 import CourseCard from '~/components/CourseCard.vue'
+
 const courses = [
   {
-    id: 66,
-    title: 'AI and Technology - الذكاء الاصطناعي والتكنولوجيا',
-    image: 'https://cloudcampus.hbmsu.ac.ae/pluginfile.php/187988/course/overviewfiles/Develop%20digital%20skills.png',
-    link: 'https://cloudcampus.hbmsu.ac.ae/course/index.php?categoryid=66',
+    id: 1,
+    title: 'Semi-close loop ecosystem dalam Pengentasan Kemiskinan',
+    image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80',
+    link: '#',
   },
   {
-    id: 67,
-    title: 'Entrepreneurship - ريادة الأعمال',
-    image: 'https://cloudcampus.hbmsu.ac.ae/pluginfile.php/136082/course/overviewfiles/1-million-arab-entrepreneurs.jpg',
-    link: 'https://cloudcampus.hbmsu.ac.ae/course/index.php?categoryid=67',
+    id: 2,
+    title: 'Rencana Induk Pengentasan Kemiskinan',
+    image: 'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=400&q=80',
+    link: '#',
   },
   {
-    id: 69,
-    title: 'Education - التعليم',
-    image: 'https://cloudcampus.hbmsu.ac.ae/pluginfile.php/187520/course/overviewfiles/Screenshot%202025-05-08%20101623.png',
-    link: 'https://cloudcampus.hbmsu.ac.ae/course/index.php?categoryid=69',
+    id: 3,
+    title: 'Industrialisasi untuk Memerdekakan Rakyat Miskin',
+    image: 'https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=400&q=80',
+    link: '#',
   },
   {
-    id: 70,
-    title: 'Innovation - الابتكار',
-    image: 'https://cloudcampus.hbmsu.ac.ae/pluginfile.php/186320/course/overviewfiles/Course358.png',
-    link: 'https://cloudcampus.hbmsu.ac.ae/course/index.php?categoryid=70',
+    id: 4,
+    title: 'Penyusunan Proposal',
+    image: 'https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?auto=format&fit=crop&w=400&q=80',
+    link: '#',
   },
   {
-    id: 71,
-    title: 'Leadership & Management - القيادة والإدارة',
-    image: 'https://cloudcampus.hbmsu.ac.ae/pluginfile.php/186375/course/overviewfiles/Screenshot%202025-04-25%20093804.png',
-    link: 'https://cloudcampus.hbmsu.ac.ae/course/index.php?categoryid=71',
+    id: 5,
+    title: 'Studi Kasus Inovasi Pengentasan Kemiskinan',
+    image: 'https://images.unsplash.com/photo-1503676382389-4809596d5290?auto=format&fit=crop&w=400&q=80',
+    link: '#',
   },
   {
-    id: 72,
-    title: 'Quality & Excellence - الجودة والتميز',
-    image: 'https://cloudcampus.hbmsu.ac.ae/pluginfile.php/188025/course/overviewfiles/Course%20thumbnail%20image2%20%281%29.jpg',
-    link: 'https://cloudcampus.hbmsu.ac.ae/course/index.php?categoryid=72',
-  },
-  {
-    id: 89,
-    title: 'Health Sciences | العلوم الصحية',
-    image: 'https://cloudcampus.hbmsu.ac.ae/pluginfile.php/187530/course/overviewfiles/thmbnail%20image.jpg',
-    link: 'https://cloudcampus.hbmsu.ac.ae/course/index.php?categoryid=89',
-  },
-  {
-    id: 90,
-    title: 'Environment & Sustainability | البيئة والاستدامة',
-    image: 'https://cloudcampus.hbmsu.ac.ae/pluginfile.php/186802/course/overviewfiles/Screenshot%202025-04-24%20193335.png',
-    link: 'https://cloudcampus.hbmsu.ac.ae/course/index.php?categoryid=90',
-  },
-  {
-    id: 68,
-    title: 'Seminars - الندوات',
-    image: 'https://cloudcampus.hbmsu.ac.ae/pluginfile.php/152987/course/overviewfiles/Dr.%20Mansoor-ignite%20-1.jpg',
-    link: 'https://cloudcampus.hbmsu.ac.ae/course/index.php?categoryid=68',
+    id: 6,
+    title: 'Penyusunan proposal Pengentasan Kemiskinan',
+    image: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=400&q=80',
+    link: '#',
   },
 ]
 
