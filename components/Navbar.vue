@@ -1,5 +1,5 @@
 
-<template>
+gi<template>
   <nav class="fixed top-0 left-0 right-0 flex justify-between items-center px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-blue-800 via-blue-600 to-blue-700 shadow-md backdrop-blur-sm font-poppins z-[9999999]">
     <!-- Logo & Brand -->
     <div class="flex items-center flex-shrink-0 gap-2">

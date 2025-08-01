@@ -10,15 +10,6 @@
         <div class="mb-8 text-primary">
           <p class="text-lg text-center font-nunito font-medium pt-6 pb-6">Daftar untuk mendapatkan tiket wahana pengetahuanmu!</p>
         </div>
-        <div class="mb-4">
-          <div class="relative">
-            <select v-model="country" class="select select-bordered w-full pl-10">
-              <option value="">Pilih negara...</option>
-              <option v-for="c in countries" :key="c.value" :value="c.value">{{ c.label }}</option>
-            </select>
-            <span class="absolute left-3 top-2 text-primary"><Globe :size="20" /></span>
-          </div>
-        </div>
         <div class="mb-4 relative">
           <input type="text" name="nik" placeholder="Nomor Induk Kependudukan (NIK)" class="input input-bordered w-full pl-10" v-model="nik" />
           <span class="absolute left-3 top-2 text-primary"><IdCard :size="20" /></span>
@@ -72,8 +63,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import { User, Globe, IdCard, Mail, Lock } from 'lucide-vue-next'
-const country = ref('')
+import { User, IdCard, Mail, Lock } from 'lucide-vue-next'
 const nik = ref('')
 const name = ref('')
 const username = ref('')
@@ -81,13 +71,6 @@ const email = ref('')
 const nip = ref('')
 const password = ref('')
 const password2 = ref('')
-const countries = ref([
-  { value: 'ID', label: 'Indonesia (ID)' },
-  { value: 'MY', label: 'Malaysia (MY)' },
-  { value: 'SG', label: 'Singapore (SG)' },
-  { value: 'US', label: 'United States (US)' },
-  // ...tambahkan negara lain sesuai kebutuhan
-])
 const passwordStrength = ref(0)
 const submitSignup = () => {
   // TODO: handle signup

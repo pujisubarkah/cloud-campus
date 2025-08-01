@@ -1,4 +1,3 @@
-
 <script setup>
 import { Instagram, Youtube, Linkedin } from 'lucide-vue-next';
 </script>
@@ -26,15 +25,10 @@ import { Instagram, Youtube, Linkedin } from 'lucide-vue-next';
           <p class="text-lg font-bold mb-4 text-blue-200">CloudCampus</p>
           <ul class="space-y-2">
             <li><NuxtLink to="/" class="hover:text-[#FFD966] transition-colors">Beranda</NuxtLink></li>
-            <li><NuxtLink to="/kursus" class="hover:text-[#FFD966] transition-colors">Kursus</NuxtLink></li>
+            <li><NuxtLink to="/course" class="hover:text-[#FFD966] transition-colors">Kursus</NuxtLink></li>
             <li><NuxtLink to="/tentang" class="hover:text-[#FFD966] transition-colors">Tentang</NuxtLink></li>
             <li><NuxtLink to="/kontak" class="hover:text-[#FFD966] transition-colors">Kontak</NuxtLink></li>
-            <li><a href="#" class="hover:text-[#FFD966] transition-colors">Sertifikasi</a></li>
-            <li><a href="#" class="hover:text-[#FFD966] transition-colors">CAT/Ujian Online</a></li>
-            <li><a href="#" class="hover:text-[#FFD966] transition-colors">KSPP</a></li>
-            <li><a href="#" class="hover:text-[#FFD966] transition-colors">SIPP</a></li>
-            <li><a href="#" class="hover:text-[#FFD966] transition-colors">Expert Locator</a></li>
-            <li><a href="#" class="hover:text-[#FFD966] transition-colors">Kebijakan Privasi</a></li>
+          
           </ul>
         </div>
         <!-- Sosial Media -->

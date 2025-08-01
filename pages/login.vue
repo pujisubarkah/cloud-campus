@@ -30,7 +30,7 @@
         </div>
         <div class="border-b border-base-300 my-3"></div>
         <div class="mb-6 text-center">
-          <a id="signingoogle-btn" class="btn w-[85%] text-white font-medium text-sm" style="background-color:#db4437; border-color:#cb2e1a">
+          <a id="signingoogle-btn" class="btn w-[85%] text-white font-medium text-sm" style="background-color:#db4437; border-color:#cb2e1a" @click.prevent="signInWithGoogle">
             <i class="fab fa-google-plus-g mr-2"></i> Masuk dengan Google
           </a>
         </div>
@@ -74,11 +74,29 @@
 
 <script setup>
 import { ref } from 'vue'
+
 const showOtherForm = ref(false)
 const email = ref('')
 const password = ref('')
+
+// Ganti dengan client_id Google OAuth kamu
+const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID'
+const REDIRECT_URI = 'https://your-domain.com/auth/callback' // ganti dengan URL callback kamu
+
+function signInWithGoogle() {
+  const params = new URLSearchParams({
+    client_id: GOOGLE_CLIENT_ID,
+    redirect_uri: REDIRECT_URI,
+    response_type: 'token',
+    scope: 'openid email profile',
+    include_granted_scopes: 'true',
+    state: 'login'
+  })
+  window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`
+}
+
 const submitForm = () => {
-  // TODO: handle login
+  // TODO: handle login manual
 }
 </script>
 

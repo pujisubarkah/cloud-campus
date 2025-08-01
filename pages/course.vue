@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-base-100 py-8 pt-16">
+  <div class="bg-base-100 py-8 pt-24">
     <div class="container mx-auto px-4">
       <div class="flex flex-col gap-8">
         <!-- Search Bar -->
