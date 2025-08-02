@@ -17,68 +17,49 @@
     <div class="w-full max-w-6xl mx-auto flex flex-col lg:flex-row gap-8 px-4 pb-12">
       <!-- Konten utama di kiri -->
       <div class="flex-1 order-2 lg:order-1">
-        <div class="my_course_content mb-8 bg-white rounded-xl shadow-lg p-6">
-          <!-- Header filter dan search -->
-          <div class="my_course_content_header mb-6">
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between w-full gap-4">
-              <div class="flex-grow mb-2 md:mb-0">
-                <form class="flex items-center w-full">
-                  <input type="text" class="form-control rounded-lg px-4 py-2 border border-gray-300 w-full focus:ring-2 focus:ring-blue-200" placeholder="Search courses..." name="search" autocomplete="off" />
-                  <button type="button" class="ml-2 text-gray-400 hover:text-blue-500">
-                    <span class="sr-only">Clear search input</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                  </button>
-                </form>
-              </div>
-              <div class="flex items-center space-x-2">
-                <div class="dropdown">
-                  <button type="button" class="btn btn-outline-blue-500 border-blue-500 text-blue-500 font-medium rounded-lg px-4 py-2 hover:bg-blue-50 transition">All</button>
-                </div>
-                <div class="dropdown">
-                  <button type="button" class="btn btn-outline-blue-500 border-blue-500 text-blue-500 font-medium rounded-lg px-4 py-2 hover:bg-blue-50 transition">Sort by course name</button>
-                </div>
-              </div>
-            </div>
+        <!-- Jika belum login -->
+        <div v-if="!auth.isLoggedIn" class="my_course_content mb-8 bg-white rounded-xl shadow-lg p-6 text-center">
+          <h2 class="text-2xl font-bold mb-4 text-blue-600">Silakan login dulu untuk mendapatkan materi</h2>
+          <NuxtLink to="/login" class="btn btn-primary px-6 py-3 font-semibold rounded-xl shadow hover:bg-blue-600 transition">Login</NuxtLink>
+        </div>
+        <!-- Jika sudah login -->
+        <div v-else class="my_course_content mb-8 bg-white rounded-xl shadow-lg p-6">
+          <!-- Jika belum ada kursus yang diikuti -->
+          <div v-if="enrollments.length === 0" class="text-center py-12 text-gray-400">
+            Anda belum memiliki kursus yang diikuti.
           </div>
-          <!-- Course list -->
-          <div class="container-fluid p-0">
+          <!-- Jika sudah ada kursus yang diikuti -->
+          <div v-else>
+            <!-- Daftar kursus yang diikuti -->
             <div class="my_course_content_list" role="list">
-              <div class="mc_content_list flex flex-col md:flex-row bg-gradient-to-r from-blue-50 via-white to-yellow-50 rounded-xl shadow p-6 mb-6 border border-gray-100" role="listitem">
+              <div v-for="enroll in enrollments" :key="enroll.enrollmentId" class="mc_content_list flex flex-col md:flex-row bg-gradient-to-r from-blue-50 via-white to-yellow-50 rounded-xl shadow p-6 mb-6 border border-gray-100" role="listitem">
                 <div class="thumb mr-6 mb-4 md:mb-0 flex items-center justify-center">
-                  <img class="w-36 h-36 object-cover rounded-xl border border-blue-100 shadow-sm" src="https://cloudcampus.hbmsu.ac.ae/theme/image.php/edumy/block_myoverview/1750320906/courses" alt="Course image" />
+                  <img :src="enroll.course_thumbnail" class="w-36 h-36 object-cover rounded-xl border border-blue-100 shadow-sm" :alt="enroll.course_title" />
                 </div>
                 <div class="details flex-1 flex flex-col justify-center">
                   <div class="mc_content">
-                    <p class="subtitle text-sm text-blue-500 mb-1 font-medium">Professional Diplomas</p>
-                    <h5 class="title text-2xl font-bold mb-2 text-gray-800">Indonesia Executive Leadership Program</h5>
-                    <div class="ccn_mc_content_header_status mb-2"><small class="tag bg-blue-100 text-blue-600 px-3 py-1 rounded-full font-semibold">Published</small></div>
-                    <div class="ccn_mc_progress mb-2">
-                      <div class="progress bg-gray-200 h-3 rounded-full">
-                        <div class="progress-bar bg-blue-500 h-3 rounded-full transition-all duration-500" style="width: 67%"></div>
-                      </div>
-                      <div class="text-xs mt-2 text-gray-600"><strong>67</strong>% complete</div>
+                    <p class="subtitle text-sm text-blue-500 mb-1 font-medium">{{ enroll.course_title }}</p>
+                    <h5 class="title text-2xl font-bold mb-2 text-gray-800">{{ enroll.course_title }}</h5>
+                    <div class="ccn_mc_content_header_status mb-2">
+                      <small class="tag bg-blue-100 text-blue-600 px-3 py-1 rounded-full font-semibold">Enrolled</small>
                     </div>
+                    <p class="text-gray-600 mb-2">{{ enroll.course_description }}</p>
                     <div class="flex items-center space-x-4 mt-4">
-                      <NuxtLink :to="`/courses/497`" class="px-4 py-2 bg-blue-500 text-white rounded-lg font-semibold shadow hover:bg-blue-600 transition">View</NuxtLink>
-                      <button class="text-yellow-500" title="Starred course"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.966a1 1 0 00.95.69h4.18c.969 0 1.371 1.24.588 1.81l-3.388 2.462a1 1 0 00-.364 1.118l1.287 3.966c.3.921-.755 1.688-1.54 1.118l-3.388-2.462a1 1 0 00-1.175 0l-3.388 2.462c-.784.57-1.838-.197-1.539-1.118l1.287-3.966a1 1 0 00-.364-1.118L2.174 9.393c-.783-.57-.38-1.81.588-1.81h4.18a1 1 0 00.95-.69l1.286-3.966z" /></svg></button>
+                      <NuxtLink
+                        :to="`/course/${enroll.course_id}/materi`"
+                        class="px-4 py-2 bg-blue-500 text-white rounded-lg font-semibold shadow hover:bg-blue-600 transition"
+                      >
+                        View
+                      </NuxtLink>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-          <!-- Pagination -->
-          <div class="flex justify-center mt-6">
-            <button class="page-item disabled px-4 py-2 text-gray-400 bg-gray-100 rounded-l-lg" disabled>
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
-            </button>
-            <button class="page-item disabled px-4 py-2 text-gray-400 bg-gray-100 rounded-r-lg" disabled>
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
-            </button>
-          </div>
         </div>
       </div>
-      <!-- Sidebar di kanan -->
+      <!-- Sidebar tetap -->
       <div class="w-full lg:w-1/3 lg:sticky lg:top-8 h-fit order-1 lg:order-2">
         <!-- Timeline Block -->
         <aside class="block-region mb-8" aria-label="Blocks">
@@ -162,6 +143,57 @@
   </div>
 </template>
 
-<script setup>
-// Halaman sementara, tidak ada logic khusus
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import { useAuthStore } from '~/stores/auth'
+
+const auth = useAuthStore()
+interface Enrollment {
+  enrollmentId: string | number
+  course_id: string | number
+  course_thumbnail: string
+  course_title: string
+  course_slug: string
+  course_description: string
+}
+
+const enrollments = ref<Enrollment[]>([])
+
+onMounted(async () => {
+  if (!auth.isLoggedIn) return
+  try {
+    const res = await $fetch('/api/enrollment', {
+      method: 'GET'
+    })
+    if (res && !('error' in res)) {
+      if ('enrollments' in res && Array.isArray((res as any).enrollments)) {
+        enrollments.value = (res as any).enrollments.map((e: any) => ({
+          enrollmentId: e.enrollmentId,
+          course_id: e.course_id,
+          course_thumbnail: e.course_thumbnail ?? '',
+          course_title: e.course_title ?? '',
+          course_slug: e.course_slug ?? '',
+          course_description: e.course_description ?? ''
+        }))
+      } else if ('enrollment' in res && (res as any).enrollment) {
+        // Handle single enrollment object
+        const e = (res as any).enrollment
+        enrollments.value = [{
+          enrollmentId: e.id ?? e.enrollmentId,
+          course_id: e.course_id,
+          course_thumbnail: e.course_thumbnail ?? '',
+          course_title: e.course_title ?? '',
+          course_slug: e.course_slug ?? '',
+          course_description: e.course_description ?? ''
+        }]
+      } else {
+        enrollments.value = []
+      }
+    } else {
+      enrollments.value = []
+    }
+  } catch (err) {
+    enrollments.value = []
+  }
+})
 </script>

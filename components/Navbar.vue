@@ -1,5 +1,4 @@
-
-gi<template>
+<template>
   <nav class="fixed top-0 left-0 right-0 flex justify-between items-center px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-blue-800 via-blue-600 to-blue-700 shadow-md backdrop-blur-sm font-poppins z-[9999999]">
     <!-- Logo & Brand -->
     <div class="flex items-center flex-shrink-0 gap-2">
@@ -27,17 +26,32 @@ gi<template>
       </ul>
     </div>
 
-    <!-- Login Button -->
+    <!-- Login/User Button -->
     <div class="flex items-center gap-2 sm:gap-3">
-      <a href="/login" class="border border-blue-400/30 bg-blue-500/30 backdrop-blur-sm text-blue-50 py-1.5 px-3 sm:py-2 sm:px-4 rounded-lg cursor-pointer text-sm sm:text-base font-medium hover:bg-blue-400/40 hover:border-blue-300/40 transition-all duration-200 touch-manipulation whitespace-nowrap flex items-center gap-2">
-        <span class="flaticon-user"></span>
-        <span class="hidden md:inline">Masuk</span>
-      </a>
+      <template v-if="auth.isLoggedIn">
+        <div class="flex items-center gap-2">
+          <span class="inline-flex items-center gap-1 text-blue-50 font-semibold text-sm sm:text-base">
+            <i class="fas fa-user-circle text-lg"></i>
+            {{ auth.user?.name }}
+          </span>
+          <button @click="auth.logout(); $router.push('/')" class="border border-blue-400/30 bg-blue-500/30 backdrop-blur-sm text-blue-50 py-1.5 px-3 sm:py-2 sm:px-4 rounded-lg cursor-pointer text-sm sm:text-base font-medium hover:bg-blue-400/40 hover:border-blue-300/40 transition-all duration-200 whitespace-nowrap flex items-center gap-2">
+            Logout
+          </button>
+        </div>
+      </template>
+      <template v-else>
+        <a href="/login" class="border border-blue-400/30 bg-blue-500/30 backdrop-blur-sm text-blue-50 py-1.5 px-3 sm:py-2 sm:px-4 rounded-lg cursor-pointer text-sm sm:text-base font-medium hover:bg-blue-400/40 hover:border-blue-300/40 transition-all duration-200 touch-manipulation whitespace-nowrap flex items-center gap-2">
+          <span class="flaticon-user"></span>
+          <span class="hidden md:inline">Masuk</span>
+        </a>
+      </template>
     </div>
   </nav>
 </template>
 
-
-<script setup>
-// Navbar CloudCampus modern dengan blue gradient dan responsive menu
+<script setup lang="ts">
+import { useAuthStore } from '~/stores/auth'
+import { useRouter } from 'vue-router'
+const auth = useAuthStore()
+const $router = useRouter()
 </script>

@@ -11,10 +11,6 @@
           <p class="text-lg text-center font-nunito font-medium pt-6 pb-6">Daftar untuk mendapatkan tiket wahana pengetahuanmu!</p>
         </div>
         <div class="mb-4 relative">
-          <input type="text" name="nik" placeholder="Nomor Induk Kependudukan (NIK)" class="input input-bordered w-full pl-10" v-model="nik" />
-          <span class="absolute left-3 top-2 text-primary"><IdCard :size="20" /></span>
-        </div>
-        <div class="mb-4 relative">
           <input type="text" name="name" placeholder="Nama Lengkap" class="input input-bordered w-full pl-10" v-model="name" />
           <span class="absolute left-3 top-2 text-primary"><User :size="20" /></span>
         </div>
@@ -64,7 +60,6 @@
 <script setup>
 import { ref } from 'vue'
 import { User, IdCard, Mail, Lock } from 'lucide-vue-next'
-const nik = ref('')
 const name = ref('')
 const username = ref('')
 const email = ref('')

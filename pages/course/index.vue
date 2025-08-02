@@ -30,48 +30,16 @@
 
 
 <script setup>
+import { ref, onMounted } from 'vue'
 import CourseCard from '~/components/CourseCard.vue'
 
-const courses = [
-  {
-    id: 1,
-    title: 'Semi-close loop ecosystem dalam Pengentasan Kemiskinan',
-    image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80',
-    link: '#',
-  },
-  {
-    id: 2,
-    title: 'Rencana Induk Pengentasan Kemiskinan',
-    image: 'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=400&q=80',
-    link: '#',
-  },
-  {
-    id: 3,
-    title: 'Industrialisasi untuk Memerdekakan Rakyat Miskin',
-    image: 'https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=400&q=80',
-    link: '#',
-  },
-  {
-    id: 4,
-    title: 'Penyusunan Proposal',
-    image: 'https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?auto=format&fit=crop&w=400&q=80',
-    link: '#',
-  },
-  {
-    id: 5,
-    title: 'Studi Kasus Inovasi Pengentasan Kemiskinan',
-    image: 'https://images.unsplash.com/photo-1503676382389-4809596d5290?auto=format&fit=crop&w=400&q=80',
-    link: '#',
-  },
-  {
-    id: 6,
-    title: 'Penyusunan proposal Pengentasan Kemiskinan',
-    image: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=400&q=80',
-    link: '#',
-  },
-]
+const courses = ref([])
 
-
+onMounted(async () => {
+  const res = await fetch('/api/course')
+  const data = await res.json()
+  courses.value = data
+})
 </script>
 
 <style scoped>

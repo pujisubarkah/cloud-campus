@@ -4,104 +4,156 @@
     <div class="hidden md:flex md:w-2/3 items-center justify-center">
       <img src="/LAN_9736.JPG" alt="login" class="max-w-[80%]" />
     </div>
+
     <!-- Form Login -->
     <div class="w-full md:w-1/3 flex flex-col items-center justify-center">
+      <!-- Form Utama: Pilih Institusi -->
       <div v-if="!showOtherForm" class="bg-base-200 rounded-xl shadow-lg border border-base-300 p-10 w-full max-w-md mb-6">
         <div class="mb-8 text-primary">
           <p class="text-2xl font-bold text-center font-nunito">Selamat Datang di Cloud Campus!</p>
-          <p class="text-base text-center font-nunito font-light">Masuk untuk mengeksplorasi galaksi pengetahuan!</p>
+          <p class="text-base text-center font-nunito font-light">
+            Platform pembelajaran untuk membangun kapasitas, memperkuat ekonomi, dan mengentaskan kemiskinan
+          </p>
         </div>
         <div class="mb-8 mt-6 text-primary">
           <p class="text-base text-center font-nunito font-bold">Dari mana Anda berasal?</p>
         </div>
         <div class="mb-4">
-          <a id="signinlan-btn" class="btn btn-primary w-full font-nunito font-bold text-base">Lembaga Administrasi Negara</a>
+          <a id="signinlan-btn" class="btn btn-primary w-full font-nunito font-bold text-base">
+            Lembaga Administrasi Negara
+          </a>
         </div>
         <div class="mb-4">
-          <button class="btn btn-outline btn-primary w-full font-nunito font-bold text-base" @click="showOtherForm = true">Selain Lembaga Administrasi Negara</button>
+          <button class="btn btn-outline btn-primary w-full font-nunito font-bold text-base" @click="showOtherForm = true">
+            Selain Lembaga Administrasi Negara
+          </button>
         </div>
-        <p class="text-xs text-center font-nunito text-gray-500 mt-6">Gunakan akun Anda secara bijak <br>dan <strong>JANGAN</strong> bagi pakai akun Anda kepada orang lain.</p>
+        <p class="text-xs text-center font-nunito text-gray-500 mt-6">
+          Gunakan akun Anda secara bijak <br />dan <strong>JANGAN</strong> bagi pakai akun Anda kepada orang lain.
+        </p>
       </div>
-      <!-- Form Selain LAN -->
+
+      <!-- Form Selain LAN (Login KLC) -->
       <div v-else class="bg-base-200 rounded-xl shadow-lg border border-base-300 p-8 w-full max-w-md mb-6 animate__animated animate__fadeIn">
+        <!-- Tombol Kembali -->
         <div class="mb-4 flex items-center cursor-pointer" @click="showOtherForm = false">
           <span class="text-primary"><i class="fa fa-arrow-left"></i></span>
           <span class="ml-2 text-primary font-medium">Kembali</span>
         </div>
         <div class="border-b border-base-300 my-3"></div>
-        <div class="mb-6 text-center">
-          <a id="signingoogle-btn" class="btn w-[85%] text-white font-medium text-sm" style="background-color:#db4437; border-color:#cb2e1a" @click.prevent="signInWithGoogle">
-            <i class="fab fa-google-plus-g mr-2"></i> Masuk dengan Google
-          </a>
+
+        <!-- Judul Form -->
+        <div class="mb-4 text-primary text-center">
+          <p class="text-base font-nunito font-bold">Akun CloudCampus</p>
+          <p class="text-sm font-nunito text-gray-600">Masuk dengan email dan kata sandi</p>
         </div>
-        <div class="border-b border-base-300 my-6 text-center relative">
-          <span class="absolute left-1/2 -translate-x-1/2 -top-3 bg-base-200 px-2 text-xs text-gray-400">atau</span>
-        </div>
-        <div class="mb-4 text-primary">
-          <p class="text-base text-center font-nunito font-bold">Akun KLC</p>
-          <p class="text-base text-center font-nunito">Untuk selain pengguna Google</p>
-        </div>
-        <form @submit.prevent="submitForm">
+
+        <!-- Form Login -->
+        <form @submit.prevent="handleSubmit">
           <div class="mb-4 relative">
-            <input type="text" name="email" placeholder="Email" class="input input-bordered w-full pl-10 py-2" v-model="email" />
+            <input
+              type="text"
+              name="email"
+              placeholder="Email"
+              class="input input-bordered w-full pl-10 py-2"
+              v-model="email"
+              required
+            />
             <span class="absolute left-3 top-2 text-primary"><i class="fas fa-envelope"></i></span>
           </div>
-          <div class="mb-2 relative">
-            <input type="password" name="password" placeholder="Kata Sandi" class="input input-bordered w-full pl-10 py-2" v-model="password" />
+
+          <div class="mb-6 relative">
+            <input
+              type="password"
+              name="password"
+              placeholder="Kata Sandi"
+              class="input input-bordered w-full pl-10 py-2"
+              v-model="password"
+              required
+            />
             <span class="absolute left-3 top-2 text-primary"><i class="fas fa-lock"></i></span>
           </div>
-          <!-- reCAPTCHA placeholder -->
-          <div class="my-6 flex justify-center">
-            <div class="bg-gray-200 rounded w-[304px] h-[78px] flex items-center justify-center text-gray-500 text-xs">[reCAPTCHA]</div>
+
+          <div v-if="errorMsg" class="text-red-500 text-sm mb-2 text-center">{{ errorMsg }}</div>
+
+          <!-- Tombol Masuk -->
+          <div class="flex justify-center mb-4">
+            <button id="submitdata" type="submit" class="btn btn-primary w-[60%]" :disabled="loading">
+              <span v-if="loading">Memproses...</span>
+              <span v-else>Masuk</span>
+            </button>
           </div>
-          <div class="flex justify-center mt-6">
-            <button id="submitdata" type="submit" class="btn btn-primary w-[60%]">Masuk</button>
-          </div>
-          <div class="mt-4 text-right">
-            <a href="/send-email" class="text-green-600 text-sm">Lupa kata sandi?</a>
+
+          <!-- Lupa Kata Sandi -->
+          <div class="mt-2 text-right">
+            <a href="/send-email" class="text-green-600 text-sm hover:underline">Lupa kata sandi?</a>
           </div>
         </form>
+
+        <!-- Daftar -->
         <div class="bg-base-100 rounded-xl shadow p-4 mt-6">
-          <p class="text-center text-base font-medium">Belum punya Akun KLC?</p>
+          <p class="text-center text-base font-medium">Belum punya Akun CloudCampus?</p>
           <div class="flex justify-center mt-2 pb-4">
             <a href="/signup" class="btn btn-primary w-[80%] text-sm font-medium">Daftar</a>
           </div>
         </div>
       </div>
+
+      <!-- User Info (Setelah Login) -->
+      <div v-if="auth.user" class="flex items-center gap-2 mt-4">
+        <span class="inline-flex items-center gap-1 text-blue-50 font-semibold text-sm sm:text-base">
+          <i class="fas fa-user-circle text-lg"></i>
+          {{ auth.user?.name }}
+        </span>
+        <button @click="auth.logout(); router.push('/')" class="border border-blue-400/30 bg-blue-500/30 backdrop-blur-sm text-blue-50 py-1.5 px-3 sm:py-2 sm:px-4 rounded-lg cursor-pointer text-sm sm:text-base font-medium hover:bg-blue-400/40 hover:border-blue-300/40 transition-all duration-200 whitespace-nowrap flex items-center gap-2">
+          Logout
+        </button>
+      </div>
     </div>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
+import { useAuthStore } from '~/stores/auth'
+import { useRouter } from 'vue-router'
 
 const showOtherForm = ref(false)
 const email = ref('')
 const password = ref('')
+const loading = ref(false)
+const errorMsg = ref('')
+const auth = useAuthStore()
+const router = useRouter()
 
-// Ganti dengan client_id Google OAuth kamu
-const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID'
-const REDIRECT_URI = 'https://your-domain.com/auth/callback' // ganti dengan URL callback kamu
+async function handleSubmit() {
+  loading.value = true
+  errorMsg.value = ''
+  try {
+    type LoginResponse =
+      | { success: boolean; user: { id: string; email: string; full_name: string; role: string }; error?: undefined }
+      | { error: string; success?: undefined; user?: undefined };
 
-function signInWithGoogle() {
-  const params = new URLSearchParams({
-    client_id: GOOGLE_CLIENT_ID,
-    redirect_uri: REDIRECT_URI,
-    response_type: 'token',
-    scope: 'openid email profile',
-    include_granted_scopes: 'true',
-    state: 'login'
-  })
-  window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`
-}
-
-const submitForm = () => {
-  // TODO: handle login manual
+    const res = await $fetch<LoginResponse>('/api/login', {
+      method: 'POST',
+      body: { email: email.value, password: password.value }
+    })
+    if ('success' in res && res.success && res.user) {
+      auth.login({ id: Number(res.user.id), name: res.user.full_name })
+      const redirect = localStorage.getItem('redirectAfterSignup')
+      if (redirect) {
+        localStorage.removeItem('redirectAfterSignup')
+        router.push(redirect)
+      } else {
+        router.push('/my')
+      }
+    } else {
+      errorMsg.value = res.error || 'Login gagal. Silakan coba lagi.'
+    }
+  } catch (err) {
+    errorMsg.value = 'Terjadi kesalahan. Silakan coba lagi.'
+  } finally {
+    loading.value = false
+  }
 }
 </script>
-
-<style scoped>
-.font-nunito {
-  font-family: 'Nunito', 'Poppins', 'sans-serif';
-}
-</style>
