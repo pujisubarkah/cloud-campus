@@ -29,13 +29,26 @@
       <div class="dropdown dropdown-end">
         <label tabindex="0" class="btn btn-ghost btn-circle avatar">
           <div class="w-10 rounded-full ring ring-yellow-300 ring-offset-base-100 ring-offset-2">
-            <img src="https://i.pravatar.cc/100" />
+            <img :src="`https://ui-avatars.com/api/?name=${encodeURIComponent(auth.user?.name || '')}&background=random`" />
           </div>
         </label>
         <ul tabindex="0" class="menu menu-compact dropdown-content mt-3 p-2 shadow bg-base-100 rounded-box w-52 text-gray-700">
-          <li><a><Icon name="heroicons-outline:user" class="w-5 h-5 mr-2" /> Profile</a></li>
-          <li><a><Icon name="heroicons-outline:cog" class="w-5 h-5 mr-2" /> Settings</a></li>
-          <li><a><Icon name="heroicons-outline:logout" class="w-5 h-5 mr-2 text-red-400" /> Logout</a></li>
+          <li>
+            <a>
+              <Icon name="heroicons-outline:user" class="w-5 h-5 mr-2" />
+              {{ auth.user?.name }}
+            </a>
+          </li>
+          <li>
+            <a>
+              <Icon name="heroicons-outline:cog" class="w-5 h-5 mr-2" /> Settings
+            </a>
+          </li>
+          <li>
+            <button @click="handleLogout" class="w-full text-left flex items-center">
+              <Icon name="heroicons-outline:logout" class="w-5 h-5 mr-2 text-red-400" /> Logout
+            </button>
+          </li>
         </ul>
       </div>
     </div>
@@ -43,7 +56,14 @@
 </template>
 
 <script setup>
-definePageMeta({
-  layout: 'admin'
-})
+import { useAuthStore } from '~/stores/auth'
+import { useRouter } from 'vue-router'
+
+const auth = useAuthStore()
+const router = useRouter()
+
+function handleLogout() {
+  auth.logout()
+  router.push('/login')
+}
 </script>

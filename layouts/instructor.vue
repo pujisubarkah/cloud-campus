@@ -1,9 +1,9 @@
-<!-- filepath: c:\Users\user\Documents\cloud-campus\layouts\instructor.vue -->
+<!-- filepath: c:\Users\user\Documents\cloud-campus\layouts\admin.vue -->
 <template>
   <div class="flex min-h-screen bg-base-100 flex-col font-poppins">
-    <headerInstructor />
-    <div class="flex flex-1 pt-10"> <!-- Tambahkan pt-16 di sini -->
-      <SidebarInstruktur />
+    <HeaderInstructor />
+    <div class="flex flex-1 pt-12 border-t-4 border-yellow-400">
+      <SidebarInstructor />
       <main class="flex-1">
         <slot />
       </main>
@@ -12,8 +12,8 @@
 </template>
 
 <script setup>
-import headerInstructor from '@/components/headerInstructor.vue'
-import SidebarInstruktur from '@/components/SidebarInstruktur.vue'
+import HeaderInstructor from '@/components/headerInstructor.vue'
+import SidebarInstructor from '@/components/SidebarInstruktur.vue'
 </script>
 
 <style>

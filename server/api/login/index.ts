@@ -20,6 +20,7 @@ export default defineEventHandler(async (event) => {
         email: users.email,
         full_name: users.full_name,
         role: users.role,
+        role_id: users.role_id, // tambahkan role_id
         passwordHash: users.password_hash
       })
       .from(users)

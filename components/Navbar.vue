@@ -1,46 +1,44 @@
 <template>
-  <nav class="fixed top-0 left-0 right-0 flex justify-between items-center px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-blue-800 via-blue-600 to-blue-700 shadow-md backdrop-blur-sm font-poppins z-[9999999]">
+  <nav class="fixed top-0 left-0 right-0 w-full flex justify-between items-center px-4 sm:px-10 py-3 bg-gradient-to-r from-blue-900 via-blue-800 to-blue-700 shadow-lg backdrop-blur-md font-poppins z-[9999999] border-b-4 border-yellow-400">
     <!-- Logo & Brand -->
-    <div class="flex items-center flex-shrink-0 gap-2">
+    <div class="flex items-center gap-4">
       <a href="/">
-        <img src="/lanri.png" alt="Logo LANRI" class="h-8 mr-2 sm:h-10 sm:mr-3 drop-shadow-lg filter brightness-110 contrast-125" style="filter:drop-shadow(0 0 8px rgba(255,255,255,0.4)) drop-shadow(0 0 16px rgba(255,255,255,0.2));" />
+        <img src="/lanri_.png" alt="Logo Lanri" class="h-12 w-auto bg-white p-1 rounded-lg shadow-lg" />
       </a>
-      <a href="/">
-        <img src="/oip.png" alt="Logo OIP" class="h-6 mr-2 sm:h-8 sm:mr-3 drop-shadow-md opacity-90" />
-      </a>
-      <span class="text-white font-bold text-base sm:text-lg md:text-xl tracking-wide drop-shadow-lg" style="text-shadow:0 0 8px rgba(255,255,255,0.3), 0 2px 4px rgba(0,0,0,0.3);">CloudCampus</span>
+     
+      <span class="text-white font-bold text-xl md:text-2xl tracking-wide drop-shadow-lg" style="text-shadow:0 0 8px rgba(255,255,255,0.3), 0 2px 4px rgba(0,0,0,0.3);">Akademi Pengentasan Kemiskinan</span>
     </div>
 
-    <!-- Menu -->
-    <div class="hidden lg:flex items-center gap-3 xl:gap-4">
-      <ul class="flex gap-3 xl:gap-4 list-none font-poppins text-white">
+    <!-- Main Menu -->
+    <div class="hidden lg:flex items-center gap-2 xl:gap-6">
+      <ul class="flex gap-2 xl:gap-6 list-none font-poppins text-white">
         <li>
-          <a href="/" class="no-underline px-3 py-2 rounded-lg transition-all duration-200 font-medium text-sm xl:text-base whitespace-nowrap hover:bg-blue-500/30 hover:shadow-sm hover:backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-300/50 bg-gradient-to-r from-blue-500/40 to-blue-400/30 text-blue-100 shadow-sm border border-blue-400/20 backdrop-blur-sm">Beranda</a>
+          <a href="/" class="px-4 py-2 rounded-lg font-semibold text-base transition-all duration-200 text-blue-50 hover:bg-yellow-400 hover:text-blue-900 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-yellow-300/50">Beranda</a>
         </li>
         <li>
-          <a href="/course/" class="no-underline px-3 py-2 rounded-lg transition-all duration-200 font-medium text-sm xl:text-base whitespace-nowrap hover:bg-blue-500/30 hover:shadow-sm hover:backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-300/50 text-blue-50">Materi</a>
+          <a href="/course/" class="px-4 py-2 rounded-lg font-semibold text-base transition-all duration-200 text-blue-50 hover:bg-yellow-400 hover:text-blue-900 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-yellow-300/50">Materi</a>
         </li>
         <li>
-          <a href="/my/" class="no-underline px-3 py-2 rounded-lg transition-all duration-200 font-medium text-sm xl:text-base whitespace-nowrap hover:bg-blue-500/30 hover:shadow-sm hover:backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-300/50 text-blue-50">Kursus Saya</a>
+          <a href="/my/" class="px-4 py-2 rounded-lg font-semibold text-base transition-all duration-200 text-blue-50 hover:bg-yellow-400 hover:text-blue-900 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-yellow-300/50">Kursus Saya</a>
         </li>
       </ul>
     </div>
 
     <!-- Login/User Button -->
-    <div class="flex items-center gap-2 sm:gap-3">
+    <div class="flex items-center gap-2 sm:gap-4">
       <template v-if="auth.isLoggedIn">
         <div class="flex items-center gap-2">
-          <span class="inline-flex items-center gap-1 text-blue-50 font-semibold text-sm sm:text-base">
-            <i class="fas fa-user-circle text-lg"></i>
+          <span class="inline-flex items-center gap-2 text-yellow-300 font-semibold text-base">
+            <i class="fas fa-user-circle text-2xl"></i>
             {{ auth.user?.name }}
           </span>
-          <button @click="auth.logout(); $router.push('/')" class="border border-blue-400/30 bg-blue-500/30 backdrop-blur-sm text-blue-50 py-1.5 px-3 sm:py-2 sm:px-4 rounded-lg cursor-pointer text-sm sm:text-base font-medium hover:bg-blue-400/40 hover:border-blue-300/40 transition-all duration-200 whitespace-nowrap flex items-center gap-2">
+          <button @click="auth.logout(); $router.push('/')" class="border border-yellow-400 bg-yellow-400 text-blue-900 py-2 px-4 rounded-lg font-semibold hover:bg-yellow-300 hover:border-yellow-300 transition-all duration-200 whitespace-nowrap flex items-center gap-2 shadow">
             Logout
           </button>
         </div>
       </template>
       <template v-else>
-        <a href="/login" class="border border-blue-400/30 bg-blue-500/30 backdrop-blur-sm text-blue-50 py-1.5 px-3 sm:py-2 sm:px-4 rounded-lg cursor-pointer text-sm sm:text-base font-medium hover:bg-blue-400/40 hover:border-blue-300/40 transition-all duration-200 touch-manipulation whitespace-nowrap flex items-center gap-2">
+        <a href="/login" class="border border-yellow-400 bg-yellow-400 text-blue-900 py-2 px-4 rounded-lg font-semibold hover:bg-yellow-300 hover:border-yellow-300 transition-all duration-200 flex items-center gap-2 shadow">
           <span class="flaticon-user"></span>
           <span class="hidden md:inline">Masuk</span>
         </a>

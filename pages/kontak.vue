@@ -1,15 +1,19 @@
+<script setup>
+import LeafletMap from '@/components/LeafletMap.vue'
+</script>
+
 <template>
-  <div class="min-h-screen bg-gray-50 font-poppins pt-30 pb-20">
+  <div class="min-h-screen bg-gray-50 font-poppins pt-40 pb-40">
     <div class="container mx-auto px-4 max-w-2xl">
-      <div class="bg-white rounded-2xl shadow-xl p-8 md:p-12">
-        <h1 class="text-3xl md:text-4xl font-bold text-blue-700 mb-4">Kontak CloudCampus</h1>
+      <div class="bg-white rounded-2xl shadow-xl p-8 md:p-12 border-2 border-blue-600">
+        <h1 class="text-3xl md:text-4xl font-bold text-blue-700 mb-4">Kontak Akademi Pengentasan Kemiskinan</h1>
         <p class="text-gray-700 mb-6">
           Jika Anda memiliki pertanyaan, masukan, atau ingin berkolaborasi, silakan hubungi kami melalui form di bawah atau kontak resmi berikut.
         </p>
         <div class="mb-8">
           <div class="mb-4">
             <span class="font-semibold text-blue-700">Email:</span>
-            <a href="mailto:info@cloudcampus.id" class="text-blue-600 hover:underline ml-2">info@cloudcampus.id</a>
+            <a href="mailto:info@pengentasankemiskinan.id" class="text-blue-600 hover:underline ml-2">info@pengentasankemiskinan.id</a>
           </div>
           <div class="mb-4">
             <span class="font-semibold text-blue-700">Telepon:</span>
@@ -20,7 +24,7 @@
             <span class="ml-2">Jl. Purnawarman No 99, Kebayoran Baru, Jakarta Selatan</span>
           </div>
         </div>
-        <form class="space-y-4">
+        <form class="space-y-4 mt-8">
           <div>
             <input type="text" placeholder="Nama Anda" class="input input-bordered w-full" />
           </div>
@@ -34,6 +38,9 @@
             <button type="submit" class="btn btn-primary px-8">Kirim Pesan</button>
           </div>
         </form>
+        <div class="mt-8">
+          <LeafletMap />
+        </div>
       </div>
     </div>
   </div>

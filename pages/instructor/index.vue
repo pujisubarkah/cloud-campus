@@ -5,7 +5,12 @@
 
     <!-- Main Content -->
     <main class="flex-1 p-6">
-      <h1 class="text-3xl font-bold mb-6">Dashboard Instruktur</h1>
+      <h1 class="text-3xl font-bold mb-2">Dashboard Instruktur</h1>
+      <p class="text-lg mb-6 text-blue-700 font-semibold">
+        Selamat Datang, {{ auth.user?.name }}.<br>
+        Ini adalah dashboard Anda.<br>
+        Silakan mengupload lebih banyak pembelajaran untuk Akademi Pengentasan Kemiskinan.
+      </p>
       
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div class="card bg-primary text-primary-content">
@@ -43,7 +48,9 @@
 </template>
 
 <script setup>
+import { useAuthStore } from '~/stores/auth'
 
+const auth = useAuthStore()
 
 definePageMeta({
   layout: 'instructor'

@@ -10,7 +10,7 @@
       <!-- Form Utama: Pilih Institusi -->
       <div v-if="!showOtherForm" class="bg-base-200 rounded-xl shadow-lg border border-base-300 p-10 w-full max-w-md mb-6">
         <div class="mb-8 text-primary">
-          <p class="text-2xl font-bold text-center font-nunito">Selamat Datang di Cloud Campus!</p>
+          <p class="text-2xl font-bold text-center font-nunito">Selamat Datang di Akademi Pengentasan Kemiskinan</p>
           <p class="text-base text-center font-nunito font-light">
             Platform pembelajaran untuk membangun kapasitas, memperkuat ekonomi, dan mengentaskan kemiskinan
           </p>
@@ -131,7 +131,7 @@ async function handleSubmit() {
   errorMsg.value = ''
   try {
     type LoginResponse =
-      | { success: boolean; user: { id: string; email: string; full_name: string; role: string }; error?: undefined }
+      | { success: boolean; user: { id: string; email: string; full_name: string; role_id: number }; error?: undefined }
       | { error: string; success?: undefined; user?: undefined };
 
     const res = await $fetch<LoginResponse>('/api/login', {
@@ -139,11 +139,12 @@ async function handleSubmit() {
       body: { email: email.value, password: password.value }
     })
     if ('success' in res && res.success && res.user) {
-      auth.login({ id: Number(res.user.id), name: res.user.full_name })
-      const redirect = localStorage.getItem('redirectAfterSignup')
-      if (redirect) {
-        localStorage.removeItem('redirectAfterSignup')
-        router.push(redirect)
+      auth.login({ id: Number(res.user.id), name: res.user.full_name, role_id: Number(res.user.role_id) })
+      // Redirect sesuai role_id
+      if (res.user.role_id === 1) {
+        router.push('/admin')
+      } else if (res.user.role_id === 2) {
+        router.push('/instructor')
       } else {
         router.push('/my')
       }

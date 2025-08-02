@@ -2,7 +2,7 @@
 <template>
   <div class="flex min-h-screen bg-base-100 flex-col font-poppins">
     <HeaderAdmin />
-    <div class="flex flex-1 pt-16">
+    <div class="flex flex-1  border-t-4 border-yellow-400">
       <SidebarAdmin />
       <main class="flex-1">
         <slot />
