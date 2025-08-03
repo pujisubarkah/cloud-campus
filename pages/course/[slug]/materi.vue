@@ -1,19 +1,29 @@
 <template>
-  <div class="flex min-h-[calc(100vh-64px)] bg-base-100 pt-16">
+  <div class="flex min-h-[calc(100vh-64px)] bg-gradient-to-br from-blue-50 via-white to-yellow-50 pt-16">
     <!-- Sidebar Materi -->
     <transition name="slide">
-      <aside v-if="showSidebar" class="w-72 bg-base-200 p-6 shadow-lg border-r border-base-300 flex flex-col min-h-[calc(100vh-64px)] relative">
+      <aside v-if="showSidebar" class="w-80 bg-white/90 p-6 shadow-xl border-r border-base-300 flex flex-col min-h-[calc(100vh-64px)] relative rounded-r-3xl">
         <div class="flex justify-between items-center mb-6">
-          <h2 class="font-bold text-xl tracking-wide text-primary">Materi</h2>
+          <h2 class="font-bold text-2xl tracking-wide text-blue-700 flex items-center gap-2">
+            <svg class="w-6 h-6 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 20l9-5-9-5-9 5 9 5z" /></svg>
+            Materi
+          </h2>
           <button class="btn btn-sm btn-circle btn-ghost" @click="toggleSidebar" title="Tutup Sidebar">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
         </div>
-        <ul class="menu bg-base-100 rounded-xl shadow-sm">
-          <li v-for="section in sections" :key="section.id">
-            <a @click="selectSection(section)" :class="selectedSection?.id === section.id ? 'active font-semibold text-primary' : ''">
-              {{ section.title }}
-              <span v-if="completedSections.includes(section.id)" class="ml-2 text-yellow-400">⭐</span>
+        <ul class="menu bg-white rounded-xl shadow-sm">
+          <li v-for="section in sections" :key="section.id" class="mb-2">
+            <a
+              @click="selectSection(section)"
+              :class="{
+                'flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 cursor-pointer': true,
+                'bg-blue-100 text-blue-700 font-bold shadow': selectedSection?.id === section.id,
+                'hover:bg-blue-50 text-gray-700': selectedSection?.id !== section.id
+              }"
+            >
+              <span>{{ section.title }}</span>
+              <span v-if="completedSections.includes(section.id)" class="ml-2 text-yellow-400 text-xl">⭐</span>
             </a>
           </li>
         </ul>
@@ -21,30 +31,31 @@
     </transition>
 
     <!-- Area Konten -->
-    <main :class="showSidebar ? 'w-full md:w-[calc(100%-18rem)]' : 'w-full'" class="p-8 flex-1 transition-all duration-300">
+    <main :class="showSidebar ? 'w-full md:w-[calc(100%-20rem)]' : 'w-full'" class="p-8 flex-1 transition-all duration-300">
       <div class="flex items-center justify-between mb-8">
-        <h1 class="text-3xl font-bold text-base-content tracking-tight">
+        <h1 class="text-3xl font-extrabold text-blue-900 tracking-tight flex items-center gap-2">
+          <svg v-if="selectedSection" class="w-8 h-8 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 20l9-5-9-5-9 5 9 5z" /></svg>
           {{ selectedSection?.title || 'Pilih materi di sidebar' }}
         </h1>
         <button v-if="!showSidebar" class="btn btn-sm btn-circle btn-ghost" @click="toggleSidebar" title="Buka Sidebar">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
         </button>
       </div>
-      <div class="rounded-xl bg-base-200 shadow p-6">
+      <div class="rounded-3xl bg-white/90 shadow-xl p-8 border border-blue-100">
         <div v-if="selectedSection">
-          <div class="mb-4 text-lg">{{ selectedSection.title }}</div>
+          <div class="mb-6 text-xl text-gray-700">{{ selectedSection.title }}</div>
           <button
             v-if="!completedSections.includes(selectedSection.id)"
-            class="btn btn-success"
+            class="btn btn-success btn-lg px-8 py-3 text-xl font-bold shadow"
             @click="handleCompletion(selectedSection.id)"
           >
             Tandai Selesai
           </button>
-          <div v-else class="text-yellow-500 font-bold flex items-center gap-2">
+          <div v-else class="text-yellow-500 font-bold flex items-center gap-2 text-xl">
             <span>Section selesai</span> <span>⭐</span>
           </div>
         </div>
-        <div v-else class="text-center text-gray-400 py-12">Silakan pilih materi di sidebar.</div>
+        <div v-else class="text-center text-gray-400 py-12 text-xl">Silakan pilih materi di sidebar.</div>
       </div>
     </main>
   </div>

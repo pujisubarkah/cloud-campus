@@ -37,6 +37,11 @@ const povertyCourses = [
     link: '#'
   }
 ];
+
+const search = ref('');
+const filteredCourses = computed(() => {
+  return povertyCourses.filter(course => course.title.toLowerCase().includes(search.value.toLowerCase()));
+});
 </script>
 
 <template>
@@ -44,20 +49,32 @@ const povertyCourses = [
     <div class="container mx-auto px-4">
       <div class="flex justify-center">
         <div class="max-w-xl w-full">
-          <div class="main-title text-center mb-4">
-            <h2 class="text-3xl md:text-4xl font-serif font-bold mb-2 text-black" id="features-course-title">
-              Materi Pengentasan Kemiskinan
-            </h2>
-            <p class="text-gray-700 mt-2" data-ccn="subtitle">
-              Berbagai materi dan studi kasus untuk mendukung upaya pengentasan kemiskinan di Indonesia.
-            </p>
+          <!-- Fitur Pencarian Menarik -->
+          <div class="main-title text-center mb-8">
+            <div class="relative flex items-center">
+              <input
+                type="text"
+                placeholder="Cari Materi Pengentasan Kemiskinan..."
+                class="input input-bordered w-full py-4 pl-5 pr-14 text-lg rounded-full shadow focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+                v-model="search"
+              />
+              <button
+                class="absolute right-2 top-1/2 -translate-y-1/2 bg-[#FFD966] text-[#3399FF] rounded-full p-3 shadow-md hover:bg-[#FFD54F] transition"
+                @click="search = ''"
+                title="Reset Pencarian"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       </div>
       <div class="mt-8">
         <div class="w-full">
           <div class="flex gap-6 overflow-x-auto pb-4">
-            <div v-for="course in povertyCourses" :key="course.title" class="min-w-[355px]">
+            <div v-for="course in filteredCourses" :key="course.title" class="min-w-[355px]">
               <div class="top_courses ccnWithFoot hbmsu-masonry-grid-custom bg-white rounded-xl shadow-lg p-4 transition-transform duration-200 hover:-translate-y-2 hover:shadow-2xl">
                 <div class="thumb relative mb-2">
                   <img class="img-whp rounded-lg w-full h-48 object-cover" :src="course.img" :alt="course.title">

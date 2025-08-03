@@ -11,9 +11,7 @@
         placeholder="Cari kursus..."
         class="input input-bordered w-full md:max-w-xs"
       />
-      <button class="btn btn-primary flex items-center gap-2" @click="openAddModal">
-        <span class="text-lg">+</span> <span>Tambah Kursus</span>
-      </button>
+      <!-- Tombol tambah kursus dihapus untuk halaman admin -->
     </div>
 
     <!-- Table -->
@@ -21,77 +19,49 @@
       <table class="table w-full">
         <thead class="bg-blue-900 text-white">
           <tr>
-            <th class="py-3">Judul</th>
-            <th>Instruktur</th>
+            <th class="py-3">No</th>
+            <th>Judul</th>
+            <th>Nama Instruktur</th>
             <th>Status</th>
             <th class="text-center">Aksi</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="course in filteredCourses" :key="course.id" class="hover:bg-blue-50 transition">
+          <tr v-for="(course, index) in filteredCourses" :key="course.id" class="hover:bg-blue-50 transition">
+            <td>{{ index + 1 }}</td>
             <td class="font-semibold text-blue-900">{{ course.title }}</td>
-            <td>{{ course.instructor }}</td>
+            <td>{{ course.instructor_name }}</td>
             <td>
               <span
-                :class="[
+                :class=" [
                   'badge px-3 py-2 text-xs font-semibold',
-                  course.status === 'published'
+                  course.is_published
                     ? 'badge-success bg-green-100 text-green-700'
                     : 'badge-warning bg-yellow-100 text-yellow-700'
                 ]"
               >
-                {{ course.status === 'published' ? 'Published' : 'Draft' }}
+                {{ course.is_published ? 'Published' : 'Draft' }}
               </span>
             </td>
             <td class="text-center space-x-2">
               <button
-                class="inline-flex items-center justify-center rounded-full bg-blue-100 hover:bg-blue-200 text-blue-700 transition p-2"
-                title="Edit Kursus"
-                @click="editCourse(course)"
+                class="inline-flex items-center justify-center rounded-full bg-green-100 hover:bg-green-200 text-green-700 transition p-2"
+                title="Setujui Kursus"
+                @click="approveCourse(course.id)"
+                :disabled="course.is_published"
               >
-                <Edit class="w-5 h-5" />
-              </button>
-              <button
-                class="inline-flex items-center justify-center rounded-full bg-red-100 hover:bg-red-200 text-red-700 transition p-2"
-                title="Hapus Kursus"
-                @click="deleteCourse(course.id)"
-              >
-                <Trash2 class="w-5 h-5" />
+                ✔️ Setujui
               </button>
             </td>
           </tr>
           <tr v-if="filteredCourses.length === 0">
-            <td colspan="4" class="text-center py-6 text-gray-400">Tidak ada kursus ditemukan.</td>
+            <td colspan="5" class="text-center py-6 text-gray-400">Tidak ada kursus ditemukan.</td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <!-- Modal tambah/ubah kursus -->
-    <dialog ref="modal" class="modal">
-      <form method="dialog" class="modal-box">
-        <h3 class="font-bold text-lg mb-4">{{ isEditing ? 'Edit' : 'Tambah' }} Kursus</h3>
-        <div class="form-control mb-3">
-          <label class="label font-semibold">Judul Kursus</label>
-          <input v-model="form.title" type="text" class="input input-bordered" />
-        </div>
-        <div class="form-control mb-3">
-          <label class="label font-semibold">Instruktur</label>
-          <input v-model="form.instructor" type="text" class="input input-bordered" />
-        </div>
-        <div class="form-control mb-3">
-          <label class="label font-semibold">Status</label>
-          <select v-model="form.status" class="select select-bordered">
-            <option value="draft">Draft</option>
-            <option value="published">Published</option>
-          </select>
-        </div>
-        <div class="modal-action flex gap-2 justify-end mt-4">
-          <button class="btn btn-primary" @click="saveCourse">Simpan</button>
-          <button class="btn btn-outline" @click="closeModal">Batal</button>
-        </div>
-      </form>
-    </dialog>
+   
   </div>
 </template>
 
@@ -100,7 +70,7 @@ definePageMeta({
   layout: 'admin'
 })
 
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { Edit, Trash2 } from 'lucide-vue-next'
 
 const search = ref('')
@@ -110,14 +80,20 @@ const editingId = ref(null)
 
 const form = ref({
   title: '',
-  instructor: '',
-  status: 'draft'
+  instructor_name: '',
+  is_published: false
 })
 
-const courses = ref([
-  { id: 1, title: 'Belajar Nuxt 3', instructor: 'Kak Puji', status: 'published' },
-  { id: 2, title: 'TailwindCSS Dasar', instructor: 'Budi Santoso', status: 'draft' }
-])
+const courses = ref([])
+
+onMounted(async () => {
+  try {
+    const res = await $fetch('/api/course')
+    courses.value = Array.isArray(res) ? res : []
+  } catch (err) {
+    courses.value = []
+  }
+})
 
 const filteredCourses = computed(() =>
   courses.value.filter(c => c.title.toLowerCase().includes(search.value.toLowerCase()))
@@ -125,7 +101,7 @@ const filteredCourses = computed(() =>
 
 function openAddModal() {
   isEditing.value = false
-  form.value = { title: '', instructor: '', status: 'draft' }
+  form.value = { title: '', instructor_name: '', is_published: false }
   modal.value.showModal()
 }
 
@@ -143,7 +119,8 @@ function saveCourse() {
       courses.value[index] = { ...form.value, id: editingId.value }
     }
   } else {
-    const newId = Math.max(...courses.value.map(c => c.id)) + 1
+    // Simulasi id baru, seharusnya dari backend
+    const newId = Math.random().toString(36).slice(2)
     courses.value.push({ ...form.value, id: newId })
   }
   modal.value.close()
@@ -155,6 +132,40 @@ function deleteCourse(id) {
 
 function closeModal() {
   modal.value.close()
+}
+
+async function approveCourse(id) {
+  try {
+    await $fetch(`/api/course/${id}`, {
+      method: 'PATCH',
+      body: { is_published: true }
+    })
+    const idx = courses.value.findIndex(c => c.id === id)
+    if (idx !== -1) {
+      courses.value[idx].is_published = true
+
+      // Kirim notifikasi ke instruktur
+      await $fetch('/api/notifikasi', {
+        method: 'POST',
+        body: {
+          user_id: courses.value[idx].instructor_id, // id instruktur
+          pesan: 'Kursus anda telah disetujui admin, dan siap untuk publikasi',
+          dibaca: false,
+          created_by: 'ADMIN_ID' // ganti dengan id admin yang sedang login
+        }
+      })
+    }
+  } catch (err) {
+    // Optional: tampilkan pesan error
+    // alert('Gagal menyetujui kursus')
+  }
+}
+
+function rejectCourse(id) {
+  const idx = courses.value.findIndex(c => c.id === id)
+  if (idx !== -1) {
+    courses.value[idx].is_published = false
+  }
 }
 </script>
 

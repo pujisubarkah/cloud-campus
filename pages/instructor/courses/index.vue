@@ -12,6 +12,7 @@ const courses = ref([])
 const showModal = ref(false)
 const selectedCourse = ref({})
 const showAddModal = ref(false)
+const thumbnailError = ref('')
 
 // Form state
 const form = ref({
@@ -42,17 +43,31 @@ function closeAddModal() {
     description: '',
     thumbnail_url: '',
   }
+  thumbnailError.value = ''
 }
 
 // Handle image upload for thumbnail
-function onThumbnailChange(e) {
+async function onThumbnailChange(e) {
   const file = e.target.files[0]
+  thumbnailError.value = ''
   if (!file) return
-  const reader = new FileReader()
-  reader.onload = (event) => {
-    form.value.thumbnail_url = event.target.result
+  if (file.size > 2 * 1024 * 1024) {
+    thumbnailError.value = 'Ukuran gambar maksimal 2 MB.'
+    return
   }
-  reader.readAsDataURL(file)
+
+  const formData = new FormData()
+  formData.append('image', file)
+  try {
+    const res = await $fetch('https://api.imgbb.com/1/upload?key=1a1425b30d0fc0b7340bdb0a031ca255', {
+      method: 'POST',
+      body: formData,
+    })
+    // Link gambar dari imgbb ada di res.data.url
+    form.value.thumbnail_url = res.data?.url || ''
+  } catch (err) {
+    thumbnailError.value = 'Gagal upload gambar ke ImgBB.'
+  }
 }
 
 async function handleAddCourse() {
@@ -64,11 +79,24 @@ async function handleAddCourse() {
     description: form.value.description,
     thumbnail_url: form.value.thumbnail_url,
     instructor_id: auth.user.id,
+    is_published: false,
   }
   await $fetch('/api/instructor/' + auth.user.id + '/course', {
     method: 'POST',
     body: newCourse,
   })
+
+  // Kirim notifikasi ke admin setelah instructor submit draft kursus
+  await $fetch('/api/notifikasi', {
+    method: 'POST',
+    body: {
+      user_id: '550e8400-e29b-41d4-a716-446655440000', // id admin
+      pesan: `Instructor ${auth.user.full_name} telah mengirimkan draft kursusnya, mohon direview`,
+      dibaca: false,
+      created_by: auth.user.id // id instructor
+    }
+  })
+
   closeAddModal()
   const res = await $fetch(`/api/instructor/${auth.user.id}/course`)
   courses.value = Array.isArray(res) ? res : []
@@ -162,7 +190,7 @@ onMounted(async () => {
             <textarea v-model="form.description" class="textarea textarea-bordered w-full" required></textarea>
           </div>
           <div class="mb-4">
-            <label class="block font-semibold mb-1">Thumbnail Gambar</label>
+            <label class="block font-semibold mb-1">Cover Kursus</label>
             <input
               type="file"
               accept="image/*"
@@ -170,6 +198,7 @@ onMounted(async () => {
               @change="onThumbnailChange"
               required
             />
+            <div v-if="thumbnailError" class="text-red-500 mt-2">{{ thumbnailError }}</div>
             <div v-if="form.thumbnail_url" class="mt-2">
               <img :src="form.thumbnail_url" alt="Preview" class="rounded w-full max-h-40 object-cover" />
             </div>

@@ -10,8 +10,10 @@
           <div class="w-full md:w-2/3 flex justify-end">
             <form autocomplete="off" action="https://cloudcampus.hbmsu.ac.ae/search/index.php" method="get" class="flex gap-2">
               <input type="hidden" name="areaids" value="core_course-course" />
-              <input type="text" class="input input-bordered" placeholder="Search courses" name="q" />
-              <button class="btn btn-primary" type="submit"><span class="flaticon-magnifying-glass"></span></button>
+              <input type="text" class="input input-bordered" placeholder="Cari kursus..." name="q" />
+              <button class="btn btn-primary" type="submit">
+                <span class="flaticon-magnifying-glass"></span>
+              </button>
             </form>
           </div>
         </div>
@@ -23,11 +25,17 @@
             :course="course"
           />
         </div>
+        <div v-if="courses.length === 0" class="flex flex-col items-center justify-center py-16 text-gray-500">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mb-4 text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <h3 class="text-xl font-semibold mb-2">Belum ada kursus yang tersedia</h3>
+          <p class="text-base">Silakan gunakan fitur pencarian di atas atau kembali lagi nanti untuk melihat kursus baru.</p>
+        </div>
       </div>
     </div>
   </div>
 </template>
-
 
 <script setup>
 import { ref, onMounted } from 'vue'
@@ -36,9 +44,14 @@ import CourseCard from '~/components/CourseCard.vue'
 const courses = ref([])
 
 onMounted(async () => {
-  const res = await fetch('/api/course')
-  const data = await res.json()
-  courses.value = data
+  try {
+    const res = await $fetch('/api/course/published')
+    courses.value = Array.isArray(res) ? res : []
+  } catch (err) {
+    courses.value = []
+    // Optional: tampilkan pesan error
+    // console.error('Gagal mengambil data kursus:', err)
+  }
 })
 </script>
 

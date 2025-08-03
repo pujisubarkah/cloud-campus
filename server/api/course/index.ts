@@ -1,13 +1,27 @@
 // server/api/course/index.ts
-import { db } from '~/server/db'; // pastikan path db sesuai setup kamu
-import { courses } from '~/server/database/courses'; // path model courses
+import { db } from '~/server/db';
+import { courses } from '~/server/database/courses';
+import { users } from '~/server/database/users';
 import { eq } from 'drizzle-orm';
 import { H3Event, readBody } from 'h3';
 
 export default defineEventHandler(async (event: H3Event) => {
   if (event.method === 'GET') {
-    // Get all courses
-    const allCourses = await db.select().from(courses);
+    // Join courses dengan users untuk dapatkan nama instruktur
+    const allCourses = await db
+      .select({
+        id: courses.id,
+        title: courses.title,
+        slug: courses.slug,
+        description: courses.description,
+        thumbnail_url: courses.thumbnail_url,
+        instructor_id: courses.instructor_id,
+        created_at: courses.created_at,
+        is_published: courses.is_published,
+        instructor_name: users.full_name,
+      })
+      .from(courses)
+      .leftJoin(users, eq(courses.instructor_id, users.id));
     return allCourses;
   }
 
@@ -24,6 +38,7 @@ export default defineEventHandler(async (event: H3Event) => {
       description: body.description,
       thumbnail_url: body.thumbnail_url,
       instructor_id: body.instructor_id,
+      is_published: body.is_published ?? false,
     }).returning();
     return inserted[0];
   }

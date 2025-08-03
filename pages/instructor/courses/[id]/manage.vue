@@ -1,100 +1,161 @@
-<!-- filepath: c:\Users\user\Documents\cloud-campus\pages\instructor\courses\[id]\manage.vue -->
 <template>
-  <div class="flex min-h-screen bg-base-100">
-    <main class="flex-1 p-8">
-      <!-- Tombol Back -->
-      <button
-        class="btn btn-outline mb-6"
-        @click="$router.push('/instructor/courses')"
-      >
-        ← Kembali ke Daftar Kursus
-      </button>
-      <h1 class="text-2xl font-bold mb-6">Kelola Kursus</h1>
-      <!-- Info Kursus -->
-      <div class="bg-white rounded-xl shadow p-6 mb-8">
-        <h2 class="text-xl font-semibold mb-4">Info Kursus</h2>
-        <div v-if="course">
-          <div class="mb-2"><strong>Judul:</strong> {{ course.title }}</div>
-          <div class="mb-2"><strong>Deskripsi:</strong> {{ course.description }}</div>
-          <div class="mb-2"><strong>Slug:</strong> {{ course.slug }}</div>
-          <img v-if="course.thumbnail_url" :src="course.thumbnail_url" alt="Thumbnail" class="w-40 h-24 object-cover rounded mt-2" />
-        </div>
-        <div v-else>Memuat data kursus...</div>
-      </div>
-
-      <!-- Section List & Tambah Section -->
-      <div class="bg-white rounded-xl shadow p-6 mb-8">
-        <h2 class="text-xl font-semibold mb-4">Daftar Section</h2>
-        <ul class="mb-4">
-          <li v-for="section in sections" :key="section.id" class="mb-2 flex items-center justify-between">
-            <div>
-              <span class="font-semibold">{{ section.title }}</span>
-              <span class="ml-2 text-xs text-gray-400">Urutan: {{ section.order }}</span>
+  <div class="p-6">
+    <h1 class="text-3xl font-bold mb-6">📚 Daftar Section Kursus</h1>
+    <!-- Form tambah section -->
+    <form class="flex gap-2 items-center mb-8">
+      <input v-model="newSectionTitle" type="text" class="input input-bordered text-lg" placeholder="Judul Section" required />
+      <input v-model.number="newSectionOrder" type="number" class="input input-bordered w-24 text-lg" placeholder="Urutan" min="1" required />
+      <button type="submit" class="btn btn-primary text-lg" @click.prevent="addSection">Tambah Section</button>
+    </form>
+    <div v-if="sectionError" class="text-red-500 mb-4 text-lg">{{ sectionError }}</div>
+    <!-- Tabel Section -->
+    <table class="table w-full bg-white border border-gray-200 text-lg">
+      <thead class="bg-gray-100">
+        <tr>
+          <th class="py-3 px-4 text-left text-xl">Order</th>
+          <th class="py-3 px-4 text-left text-xl">Section</th>
+          <th class="py-3 px-4 text-left text-xl">Content</th>
+          <th class="py-3 px-4 text-left text-xl">Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="section in sections" :key="section.id" class="border-t">
+          <td class="py-3 px-4">{{ section.order }}</td>
+          <td class="py-3 px-4">{{ section.title }}</td>
+          <td class="py-3 px-4">
+            <!-- Konten -->
+            <div v-if="section.contents && section.contents.length">
+              <ul>
+                <li v-for="(content, idx) in section.contents" :key="idx" class="flex items-center gap-2">
+                  <a :href="content.url" target="_blank" class="text-blue-600 underline text-lg">{{ content.title }}</a>
+                  <button class="btn btn-xs btn-error text-lg" @click="removeContent(section.id, idx)">Hapus</button>
+                </li>
+              </ul>
             </div>
+            <div v-else class="text-gray-400 mb-2 text-lg">Belum ada konten</div>
+            <button class="btn btn-xs btn-primary mt-2 text-lg" @click="openAddContentModal(section)">Tambah Konten</button>
+            <button class="btn btn-xs btn-warning mt-2 ml-2 text-lg" @click="openAddQuizModal(section)">Tambah Quiz</button>
+          </td>
+          <td class="py-3 px-4">
             <div class="flex gap-2">
-              <button class="btn btn-xs btn-outline" @click="openContentModal(section)">Kelola Konten</button>
-              <button class="btn btn-xs btn-outline" @click="openQuizModal(section)">Kelola Quiz</button>
+              <button class="btn btn-sm btn-outline text-lg flex items-center gap-1" @click="editSection(section)">
+                <Pencil class="w-5 h-5" /> Edit
+              </button>
+              <button class="btn btn-sm btn-error text-white text-lg flex items-center gap-1" @click="deleteSection(section.id)">
+                <Trash2 class="w-5 h-5" /> Delete
+              </button>
             </div>
-          </li>
-        </ul>
-        <!-- Form tambah section -->
-        <form class="flex gap-2 items-center" @submit.prevent="addSection">
-          <input v-model="newSectionTitle" type="text" class="input input-bordered" placeholder="Judul Section" required />
-          <input v-model.number="newSectionOrder" type="number" class="input input-bordered w-24" placeholder="Urutan" min="1" required />
-          <button type="submit" class="btn btn-primary">Tambah Section</button>
-        </form>
-        <div v-if="sectionError" class="text-red-500 mt-2">{{ sectionError }}</div>
-      </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
 
-      <!-- Modal Kelola Konten Section -->
-      <div v-if="showContentModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-        <div class="bg-white rounded-xl shadow-xl p-8 w-full max-w-lg relative">
-          <button class="absolute top-4 right-4 btn btn-sm btn-circle btn-ghost" @click="closeContentModal">
-            <span aria-label="Close">&times;</span>
-          </button>
-          <h3 class="text-xl font-bold mb-4">Kelola Konten Section: {{ selectedSection?.title }}</h3>
-          <ul class="mb-4">
-            <li v-for="content in sectionContents" :key="content.id" class="mb-2">
-              <span class="font-semibold">{{ content.type.toUpperCase() }}</span> - {{ content.title }}
-            </li>
-          </ul>
-          <!-- Form tambah konten -->
-          <form @submit.prevent="addContent">
-            <select v-model="newContentType" class="input input-bordered mb-2 w-full" required>
-              <option value="" disabled>Pilih Tipe Konten</option>
-              <option value="youtube">YouTube</option>
-              <option value="paparan">Paparan (PDF/Slide)</option>
+    <!-- Modal Tambah Konten -->
+    <div v-if="showAddContentModal" class="fixed inset-0 flex items-center justify-center z-50">
+      <div class="modal-overlay absolute inset-0 bg-black opacity-30"></div>
+      <div class="modal-container bg-white w-11/12 md:max-w-md mx-auto rounded-lg shadow-lg z-50 overflow-y-auto">
+        <div class="modal-content py-4 text-left px-6">
+          <h2 class="text-lg font-bold mb-4">Tambah Konten ke {{ selectedSection?.title }}</h2>
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1" for="contentTitle">Judul Konten</label>
+            <input v-model="newContentTitle" type="text" id="contentTitle" class="input input-bordered w-full" placeholder="Judul Konten" required />
+          </div>
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1" for="contentUrl">URL Konten</label>
+            <input v-model="newContentUrl" type="url" id="contentUrl" class="input input-bordered w-full" placeholder="https://example.com" required />
+          </div>
+          <div class="flex justify-end gap-2">
+            <button class="btn btn-secondary" @click="showAddContentModal = false">Batal</button>
+            <button class="btn btn-primary" @click="addContent">Simpan Konten</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Tambah Quiz -->
+    <div v-if="showAddQuizModal" class="fixed inset-0 flex items-center justify-center z-50">
+      <div class="modal-overlay absolute inset-0 bg-black opacity-30"></div>
+      <div class="modal-container bg-white w-11/12 md:max-w-md mx-auto rounded-lg shadow-lg z-50 overflow-y-auto">
+        <div class="modal-content py-4 text-left px-6">
+          <h2 class="text-lg font-bold mb-4">Tambah Quiz ke {{ selectedSection?.title }}</h2>
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Tipe Quiz</label>
+            <select v-model="newQuizType" class="select select-bordered w-full">
+              <option value="multiple">Multiple Choice</option>
+              <option value="short">Short Answer</option>
+              <option value="truefalse">True or False</option>
+              <option value="fill">Fill in the Blanks</option>
+              <option value="likert">Likert Scale</option>
             </select>
-            <input v-model="newContentTitle" type="text" class="input input-bordered mb-2 w-full" placeholder="Judul Konten" required />
-            <input v-model="newContentUrl" type="text" class="input input-bordered mb-2 w-full" placeholder="URL Konten" required />
-            <button type="submit" class="btn btn-primary w-full">Tambah Konten</button>
-          </form>
-          <div v-if="contentError" class="text-red-500 mt-2">{{ contentError }}</div>
+          </div>
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1" for="quizQuestion">Pertanyaan Quiz</label>
+            <input v-model="newQuizQuestion" type="text" id="quizQuestion" class="input input-bordered w-full" placeholder="Pertanyaan" required />
+          </div>
+          <!-- Multiple Choice -->
+          <div v-if="newQuizType === 'multiple'" class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Pilihan Jawaban</label>
+            <div v-for="(choice, idx) in newQuizChoices" :key="idx" class="flex gap-2 mb-2">
+              <input v-model="newQuizChoices[idx]" type="text" class="input input-bordered w-full" :placeholder="`Pilihan ${String.fromCharCode(65+idx)}`" required />
+              <input type="radio" :value="idx" v-model="newQuizCorrect" :name="'quizCorrect'" />
+              <span>Benar</span>
+            </div>
+            <button class="btn btn-xs btn-outline" @click="addChoice" type="button">Tambah Pilihan</button>
+          </div>
+          <!-- Short Answer -->
+          <div v-if="newQuizType === 'short'" class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1" for="quizAnswer">Jawaban Singkat</label>
+            <input v-model="newQuizAnswer" type="text" id="quizAnswer" class="input input-bordered w-full" placeholder="Jawaban" required />
+          </div>
+          <!-- True or False -->
+          <div v-if="newQuizType === 'truefalse'" class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Jawaban</label>
+            <select v-model="newQuizAnswer" class="select select-bordered w-full">
+              <option value="true">True</option>
+              <option value="false">False</option>
+            </select>
+          </div>
+          <!-- Fill in the Blanks -->
+          <div v-if="newQuizType === 'fill'" class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1" for="quizAnswer">Jawaban yang Benar</label>
+            <input v-model="newQuizAnswer" type="text" id="quizAnswer" class="input input-bordered w-full" placeholder="Jawaban" required />
+          </div>
+          <!-- Likert Scale -->
+          <div v-if="newQuizType === 'likert'" class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Skala Likert (1-5)</label>
+            <select v-model="newQuizAnswer" class="select select-bordered w-full">
+              <option v-for="n in 5" :key="n" :value="n">{{ n }}</option>
+            </select>
+          </div>
+          <div class="flex justify-end gap-2">
+            <button class="btn btn-secondary" @click="showAddQuizModal = false">Batal</button>
+            <button class="btn btn-primary" @click="addQuiz">Simpan Quiz</button>
+          </div>
         </div>
       </div>
+    </div>
 
-      <!-- Modal Kelola Quiz Section -->
-      <div v-if="showQuizModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-        <div class="bg-white rounded-xl shadow-xl p-8 w-full max-w-lg relative">
-          <button class="absolute top-4 right-4 btn btn-sm btn-circle btn-ghost" @click="closeQuizModal">
-            <span aria-label="Close">&times;</span>
-          </button>
-          <h3 class="text-xl font-bold mb-4">Kelola Quiz Section: {{ selectedSection?.title }}</h3>
-          <ul class="mb-4">
-            <li v-for="quiz in sectionQuizzes" :key="quiz.id" class="mb-2">
-              <span class="font-semibold">Soal:</span> {{ quiz.question }}
-            </li>
-          </ul>
-          <!-- Form tambah quiz -->
-          <form @submit.prevent="addQuiz">
-            <input v-model="newQuizQuestion" type="text" class="input input-bordered mb-2 w-full" placeholder="Pertanyaan Quiz" required />
-            <input v-model="newQuizAnswer" type="text" class="input input-bordered mb-2 w-full" placeholder="Jawaban" required />
-            <button type="submit" class="btn btn-primary w-full">Tambah Quiz</button>
-          </form>
-          <div v-if="quizError" class="text-red-500 mt-2">{{ quizError }}</div>
+    <!-- Modal Edit Section -->
+    <div v-if="showEditSectionModal" class="fixed inset-0 flex items-center justify-center z-50">
+      <div class="modal-overlay absolute inset-0 bg-black opacity-30"></div>
+      <div class="modal-container bg-white w-11/12 md:max-w-md mx-auto rounded-lg shadow-lg z-50 overflow-y-auto">
+        <div class="modal-content py-4 text-left px-6">
+          <h2 class="text-lg font-bold mb-4">Edit Section</h2>
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1" for="editSectionTitle">Judul Section</label>
+            <input v-model="editSectionTitle" type="text" id="editSectionTitle" class="input input-bordered w-full text-lg" required />
+          </div>
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1" for="editSectionOrder">Urutan</label>
+            <input v-model.number="editSectionOrder" type="number" id="editSectionOrder" class="input input-bordered w-24 text-lg" min="1" required />
+          </div>
+          <div class="flex justify-end gap-2">
+            <button class="btn btn-secondary" @click="showEditSectionModal = false">Batal</button>
+            <button class="btn btn-primary" @click="saveEditSection">Simpan Perubahan</button>
+          </div>
         </div>
       </div>
-    </main>
+    </div>
   </div>
 </template>
 
@@ -105,58 +166,48 @@ definePageMeta({
 
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-
+import { Pencil, Trash2 } from 'lucide-vue-next'
 
 const route = useRoute()
 const courseId = route.params.id
-
-const course = ref(null)
 const sections = ref([])
-const sectionError = ref('')
 const newSectionTitle = ref('')
 const newSectionOrder = ref(1)
-
-const showContentModal = ref(false)
+const sectionError = ref('')
+const showAddContentModal = ref(false)
+const showAddQuizModal = ref(false)
+const showEditSectionModal = ref(false)
 const selectedSection = ref(null)
-const sectionContents = ref([])
-const newContentType = ref('')
 const newContentTitle = ref('')
 const newContentUrl = ref('')
-const contentError = ref('')
-
-const showQuizModal = ref(false)
-const sectionQuizzes = ref([])
+const newQuizType = ref('multiple')
 const newQuizQuestion = ref('')
+const newQuizChoices = ref(['', ''])
+const newQuizCorrect = ref(0)
 const newQuizAnswer = ref('')
-const quizError = ref('')
+const editSectionTitle = ref('')
+const editSectionOrder = ref(1)
 
-// Fetch course & section data
-onMounted(async () => {
-  // Fetch course info
-  const courseRes = await $fetch(`/api/course/${courseId}`)
-  course.value = courseRes.course
+async function fetchSections() {
+  const res = await $fetch(`/api/course_section/${courseId}`)
+  sections.value = res.sort((a, b) => a.order - b.order)
+}
 
-  // Fetch sections
-  const sectionRes = await $fetch('/api/course_section', { method: 'GET' })
-  sections.value = (sectionRes.sections || []).filter(s => s.course_id === courseId)
-})
-
-// Add Section
 async function addSection() {
   sectionError.value = ''
   try {
-    const res = await $fetch('/api/course_section', {
+    const res = await $fetch(`/api/course_section/${courseId}`, {
       method: 'POST',
       body: {
-        course_id: courseId,
         title: newSectionTitle.value,
         order: newSectionOrder.value
       }
     })
-    if (res.success) {
-      sections.value.push(res.section)
+    if (res && res.id) {
+      sections.value.push(res)
       newSectionTitle.value = ''
       newSectionOrder.value = sections.value.length + 1
+      fetchSections()
     } else {
       sectionError.value = res.error || 'Gagal menambah section.'
     }
@@ -165,65 +216,91 @@ async function addSection() {
   }
 }
 
-// Kelola Konten Section
-function openContentModal(section) {
+function editSection(section) {
   selectedSection.value = section
-  showContentModal.value = true
-  // Fetch konten section dari API (dummy di sini)
-  sectionContents.value = [
-    // { id: 1, type: 'youtube', title: 'Video Pengantar', url: '...' }
-  ]
+  editSectionTitle.value = section.title
+  editSectionOrder.value = section.order
+  showEditSectionModal.value = true
 }
-function closeContentModal() {
-  showContentModal.value = false
-  selectedSection.value = null
-  sectionContents.value = []
-}
-async function addContent() {
-  contentError.value = ''
-  if (!newContentType.value || !newContentTitle.value || !newContentUrl.value) {
-    contentError.value = 'Semua field wajib diisi.'
-    return
-  }
-  // Simpan ke backend (dummy push di sini)
-  sectionContents.value.push({
-    id: Date.now(),
-    type: newContentType.value,
-    title: newContentTitle.value,
-    url: newContentUrl.value
+
+async function saveEditSection() {
+  if (!selectedSection.value) return
+  await $fetch(`/api/course_section/${courseId}`, {
+    method: 'PUT',
+    body: {
+      id: selectedSection.value.id,
+      title: editSectionTitle.value,
+      order: editSectionOrder.value
+    }
   })
-  newContentType.value = ''
+  showEditSectionModal.value = false
+  fetchSections()
+}
+
+function deleteSection(id) {
+  if (confirm('Yakin ingin menghapus section ini?')) {
+    $fetch(`/api/course_section/${courseId}`, {
+      method: 'DELETE',
+      body: { id }
+    }).then(fetchSections)
+  }
+}
+
+function openAddContentModal(section) {
+  selectedSection.value = section
+  showAddContentModal.value = true
   newContentTitle.value = ''
   newContentUrl.value = ''
 }
 
-// Kelola Quiz Section
-function openQuizModal(section) {
-  selectedSection.value = section
-  showQuizModal.value = true
-  // Fetch quiz section dari API (dummy di sini)
-  sectionQuizzes.value = [
-    // { id: 1, question: 'Apa itu kemiskinan?', answer: '...' }
-  ]
-}
-function closeQuizModal() {
-  showQuizModal.value = false
-  selectedSection.value = null
-  sectionQuizzes.value = []
-}
-async function addQuiz() {
-  quizError.value = ''
-  if (!newQuizQuestion.value || !newQuizAnswer.value) {
-    quizError.value = 'Semua field wajib diisi.'
-    return
-  }
-  // Simpan ke backend (dummy push di sini)
-  sectionQuizzes.value.push({
-    id: Date.now(),
-    question: newQuizQuestion.value,
-    answer: newQuizAnswer.value
+async function addContent() {
+  // Simpan konten ke backend, misal PATCH ke section
+  await $fetch(`/api/course_section/${selectedSection.value.id}/content`, {
+    method: 'POST',
+    body: {
+      title: newContentTitle.value,
+      url: newContentUrl.value
+    }
   })
+  showAddContentModal.value = false
+  fetchSections()
+}
+
+async function removeContent(sectionId, idx) {
+  // Hapus konten dari backend, misal PATCH/DELETE
+  await $fetch(`/api/course_section/${sectionId}/content/${idx}`, { method: 'DELETE' })
+  fetchSections()
+}
+
+function addChoice() {
+  newQuizChoices.value.push('')
+}
+
+function openAddQuizModal(section) {
+  selectedSection.value = section
+  showAddQuizModal.value = true
+  newQuizType.value = 'multiple'
   newQuizQuestion.value = ''
+  newQuizChoices.value = ['', '']
+  newQuizCorrect.value = 0
   newQuizAnswer.value = ''
 }
+
+async function addQuiz() {
+  let body = { type: newQuizType.value, question: newQuizQuestion.value }
+  if (newQuizType.value === 'multiple') {
+    body.choices = newQuizChoices.value
+    body.correct = newQuizCorrect.value
+  } else {
+    body.answer = newQuizAnswer.value
+  }
+  await $fetch(`/api/course_section/${selectedSection.value.id}/quiz`, {
+    method: 'POST',
+    body
+  })
+  showAddQuizModal.value = false
+  fetchSections()
+}
+
+onMounted(fetchSections)
 </script>

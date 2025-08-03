@@ -39,7 +39,17 @@ import LeafletMap from '@/components/LeafletMap.vue'
           </div>
         </form>
         <div class="mt-8">
-          <LeafletMap />
+          <div class="rounded-xl overflow-hidden shadow-lg border border-blue-200">
+            <iframe
+              src="https://www.google.com/maps?q=Lembaga+Administrasi+Negara,+Jl.+Veteran+No.10,+Jakarta&output=embed"
+              width="100%"
+              height="450"
+              style="border:0;"
+              allowfullscreen=""
+              loading="lazy"
+              referrerpolicy="no-referrer-when-downgrade">
+            </iframe>
+          </div>
         </div>
       </div>
     </div>
