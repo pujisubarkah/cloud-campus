@@ -139,7 +139,7 @@ async function handleSubmit() {
       body: { email: email.value, password: password.value }
     })
     if ('success' in res && res.success && res.user) {
-      auth.login({ id: Number(res.user.id), name: res.user.full_name, role_id: Number(res.user.role_id) })
+      auth.login({ id: String(res.user.id), name: res.user.full_name, role_id: Number(res.user.role_id) })
       // Redirect sesuai role_id
       if (res.user.role_id === 1) {
         router.push('/admin')

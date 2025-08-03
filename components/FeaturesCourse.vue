@@ -1,4 +1,3 @@
-
 <script setup>
 const povertyCourses = [
   {
@@ -46,8 +45,12 @@ const povertyCourses = [
       <div class="flex justify-center">
         <div class="max-w-xl w-full">
           <div class="main-title text-center mb-4">
-            <h3 class="mb-0 mt-0 text-3xl font-bold text-blue-700" data-ccn="title">Materi Pengentasan Kemiskinan</h3>
-            <p class="text-gray-600 mt-2" data-ccn="subtitle">Berbagai materi dan studi kasus untuk mendukung upaya pengentasan kemiskinan di Indonesia.</p>
+            <h2 class="text-3xl md:text-4xl font-serif font-bold mb-2 text-black" id="features-course-title">
+              Materi Pengentasan Kemiskinan
+            </h2>
+            <p class="text-gray-700 mt-2" data-ccn="subtitle">
+              Berbagai materi dan studi kasus untuk mendukung upaya pengentasan kemiskinan di Indonesia.
+            </p>
           </div>
         </div>
       </div>

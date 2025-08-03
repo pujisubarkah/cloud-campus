@@ -1,8 +1,14 @@
 <!-- filepath: c:\Users\user\Documents\cloud-campus\pages\instructor\courses\[id]\manage.vue -->
 <template>
   <div class="flex min-h-screen bg-base-100">
-    <SidebarInstruktur />
     <main class="flex-1 p-8">
+      <!-- Tombol Back -->
+      <button
+        class="btn btn-outline mb-6"
+        @click="$router.push('/instructor/courses')"
+      >
+        ← Kembali ke Daftar Kursus
+      </button>
       <h1 class="text-2xl font-bold mb-6">Kelola Kursus</h1>
       <!-- Info Kursus -->
       <div class="bg-white rounded-xl shadow p-6 mb-8">

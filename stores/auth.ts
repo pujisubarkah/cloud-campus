@@ -3,14 +3,14 @@ import { defineStore } from 'pinia'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
-    user: null as null | { id: number; name: string; role_id: number },
+    user: null as null | { id: string; name: string; role_id: number },
   }),
   persist: true, // 🔥 Ini tetap dipakai!
   getters: {
     isLoggedIn: (state) => !!state.user,
   },
   actions: {
-    login(user: { id: number; name: string; role_id: number }) {
+    login(user: { id: string; name: string; role_id: number }) {
       this.user = user
     },
     logout() {

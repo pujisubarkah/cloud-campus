@@ -1,6 +1,6 @@
 
 <template>
-  <div class="min-h-screen bg-gray-50 font-poppins pt-16">
+  <div class="min-h-screen  font-poppins pt-16">
     <reimage />
     <div class="my-8"></div>
     <FeaturesCourse />
