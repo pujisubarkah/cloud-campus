@@ -15,6 +15,7 @@ export default defineEventHandler(async (event: H3Event) => {
       .select()
       .from(courseSections)
       .where(eq(courseSections.course_id, courseId))
+      .orderBy(courseSections.order) // Tambahkan ini
     return sections
   }
 

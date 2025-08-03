@@ -1,12 +1,24 @@
 import { db } from '@/server/db'
 import { courseSections } from '@/server/database/course_section'
+import { sectionContents } from '@/server/database/content_section'
 import { readBody } from 'h3'
+import { eq } from 'drizzle-orm'
 
-// GET: Ambil semua section
+// GET: Ambil semua section beserta kontennya
 export default defineEventHandler(async (event) => {
   if (event.method === 'GET') {
-    const data = await db.select().from(courseSections)
-    return { sections: data }
+    const sections = await db
+      .select()
+      .from(courseSections)
+      .orderBy(courseSections.order) // Urutkan berdasarkan order
+    // Ambil semua konten
+    const contents = await db.select().from(sectionContents)
+    // Gabungkan konten ke masing-masing section
+    const sectionsWithContents = sections.map(section => ({
+      ...section,
+      contents: contents.filter(content => content.section_id === section.id)
+    }))
+    return { sections: sectionsWithContents }
   }
 
   // POST: Tambah section baru

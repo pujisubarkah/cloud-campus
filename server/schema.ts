@@ -10,3 +10,4 @@ export * from "./database/course_progress";
 export * from "./database/section_progress";
 export * from "./database/quiz_progress";
 export * from "./database/notifikasi";
+export * from "./database/content_section";

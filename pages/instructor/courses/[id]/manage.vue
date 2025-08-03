@@ -27,7 +27,7 @@
             <div v-if="section.contents && section.contents.length">
               <ul>
                 <li v-for="(content, idx) in section.contents" :key="idx" class="flex items-center gap-2">
-                  <a :href="content.url" target="_blank" class="text-blue-600 underline text-lg">{{ content.title }}</a>
+                  <a :href="content.content_url" target="_blank" class="text-blue-600 underline text-lg">{{ content.title }}</a>
                   <button class="btn btn-xs btn-error text-lg" @click="removeContent(section.id, idx)">Hapus</button>
                 </li>
               </ul>
@@ -50,6 +50,25 @@
       </tbody>
     </table>
 
+    <!-- Daftar Konten Section Terpilih -->
+    <div v-if="selectedSection" class="mt-8">
+      <h2 class="text-2xl font-semibold mb-4">Konten di {{ selectedSection.title }}</h2>
+      <table class="table w-full bg-white border border-gray-200 text-lg">
+        <thead class="bg-gray-100">
+          <tr>
+            <th class="py-3 px-4 text-left text-xl">Order</th>
+            <th class="py-3 px-4 text-left text-xl">Title</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="content in selectedSection.contents" :key="content.id" class="border-t">
+            <td class="py-3 px-4">{{ content.order }}</td>
+            <td class="py-3 px-4">{{ content.title }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
     <!-- Modal Tambah Konten -->
     <div v-if="showAddContentModal" class="fixed inset-0 flex items-center justify-center z-50">
       <div class="modal-overlay absolute inset-0 bg-black opacity-30"></div>
@@ -59,6 +78,21 @@
           <div class="mb-4">
             <label class="block text-sm font-medium text-gray-700 mb-1" for="contentTitle">Judul Konten</label>
             <input v-model="newContentTitle" type="text" id="contentTitle" class="input input-bordered w-full" placeholder="Judul Konten" required />
+          </div>
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1" for="contentDescription">Deskripsi Konten</label>
+            <textarea v-model="newContentDescription" id="contentDescription" class="input input-bordered w-full" placeholder="Deskripsi singkat tentang konten ini" rows="3"></textarea>
+          </div>
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1" for="contentType">Tipe Konten</label>
+            <select v-model="newContentType" id="contentType" class="select select-bordered w-full">
+              <option value="video">Video</option>
+              <option value="pdf">PDF</option>
+            </select>
+          </div>
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1" for="contentOrder">Urutan Konten</label>
+            <input v-model.number="newContentOrder" type="number" id="contentOrder" class="input input-bordered w-24" min="1" placeholder="Urutan" required />
           </div>
           <div class="mb-4">
             <label class="block text-sm font-medium text-gray-700 mb-1" for="contentUrl">URL Konten</label>
@@ -179,7 +213,9 @@ const showAddQuizModal = ref(false)
 const showEditSectionModal = ref(false)
 const selectedSection = ref(null)
 const newContentTitle = ref('')
+const newContentDescription = ref('')
 const newContentUrl = ref('')
+const newContentType = ref('video') // Tambahkan ini
 const newQuizType = ref('multiple')
 const newQuizQuestion = ref('')
 const newQuizChoices = ref(['', ''])
@@ -187,6 +223,8 @@ const newQuizCorrect = ref(0)
 const newQuizAnswer = ref('')
 const editSectionTitle = ref('')
 const editSectionOrder = ref(1)
+const newContentOrder = ref(1) // Tambahkan ini
+const sectionContents = ref([])
 
 async function fetchSections() {
   const res = await $fetch(`/api/course_section/${courseId}`)
@@ -250,20 +288,30 @@ function openAddContentModal(section) {
   selectedSection.value = section
   showAddContentModal.value = true
   newContentTitle.value = ''
+  newContentDescription.value = ''
   newContentUrl.value = ''
+  newContentType.value = 'video'
+  newContentOrder.value = (section.contents?.length || 0) + 1 // default urutan berikutnya
 }
 
 async function addContent() {
-  // Simpan konten ke backend, misal PATCH ke section
-  await $fetch(`/api/course_section/${selectedSection.value.id}/content`, {
-    method: 'POST',
-    body: {
-      title: newContentTitle.value,
-      url: newContentUrl.value
-    }
-  })
-  showAddContentModal.value = false
-  fetchSections()
+  try {
+    const res = await $fetch(`/api/course_section/${selectedSection.value.id}/content`, {
+      method: 'POST',
+      body: {
+        title: newContentTitle.value,
+        type: newContentType.value,
+        deskripsi: newContentDescription.value, // harus 'deskripsi'
+        content_url: newContentUrl.value,       // harus 'content_url'
+        order: newContentOrder.value
+      }
+    })
+    showAddContentModal.value = false
+    fetchSections()
+    alert('Konten berhasil ditambahkan!')
+  } catch (err) {
+    alert('Gagal menambahkan konten!')
+  }
 }
 
 async function removeContent(sectionId, idx) {
@@ -301,6 +349,14 @@ async function addQuiz() {
   showAddQuizModal.value = false
   fetchSections()
 }
+
+async function fetchSectionContents(sectionId) {
+  const res = await $fetch(`/api/content_section/${sectionId}`)
+  sectionContents.value = res
+}
+
+// Panggil fungsi ini saat section dipilih atau setelah tambah konten
+// Contoh: fetchSectionContents(selectedSection.value.id)
 
 onMounted(fetchSections)
 </script>

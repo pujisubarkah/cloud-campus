@@ -9,4 +9,5 @@ export const sectionContents = pgTable('section_contents', {
   content_url: text('content_url').notNull(), // link ke video/pdf/slide/paparan
   order: integer('order'),
   created_at: timestamp('created_at').defaultNow(),
-}); 
+  deskripsi: text('deskripsi'), // Tambahkan kolom deskripsi
+});

@@ -1,5 +1,5 @@
 <template>
-  <div class="flex min-h-[calc(100vh-64px)] bg-gradient-to-br from-blue-50 via-white to-yellow-50 pt-16">
+  <div class="flex min-h-[calc(100vh-64px)] bg-gradient-to-br from-blue-50 via-white to-yellow-50 pt-16 poppins">
     <!-- Sidebar Materi -->
     <transition name="slide">
       <aside v-if="showSidebar" class="w-80 bg-white/90 p-6 shadow-xl border-r border-base-300 flex flex-col min-h-[calc(100vh-64px)] relative rounded-r-3xl">
@@ -53,6 +53,44 @@
           </button>
           <div v-else class="text-yellow-500 font-bold flex items-center gap-2 text-xl">
             <span>Section selesai</span> <span>⭐</span>
+          </div>
+
+          <!-- Konten Section -->
+          <div v-if="selectedSection">
+            <div v-if="selectedSection.contents && selectedSection.contents.length">
+              <div
+                v-for="content in selectedSection.contents"
+                :key="content.id"
+                class="mb-8 p-6 rounded-xl bg-white shadow border border-blue-100"
+              >
+                <div class="flex items-center gap-4 mb-2">
+                  <span class="font-bold text-blue-600 text-xl">#{{ content.order }}</span>
+                  <span class="font-bold text-lg">{{ content.title }}</span>
+                </div>
+                <div class="mb-2 text-gray-700 whitespace-pre-line">{{ content.deskripsi }}</div>
+                <div v-if="content.type === 'video'" class="my-4">
+                  <div class="relative w-full" style="padding-top: 56.25%;">
+                    <iframe
+                      :src="getYoutubeEmbed(content.content_url)"
+                      frameborder="0"
+                      allowfullscreen
+                      class="absolute top-0 left-0 w-full h-full rounded-lg border"
+                    ></iframe>
+                  </div>
+                </div>
+                <div v-else-if="content.type === 'pdf'" class="my-4">
+                  <iframe
+                    :src="content.content_url"
+                    class="w-full h-96 rounded-lg border"
+                  ></iframe>
+                  <div class="text-sm text-gray-500 mt-2">Jika PDF tidak tampil, <a :href="content.content_url" target="_blank" class="text-blue-600 underline">klik di sini</a>.</div>
+                </div>
+                <div v-else class="my-4">
+                  <a :href="content.content_url" target="_blank" class="btn btn-outline btn-sm">Buka Konten</a>
+                </div>
+              </div>
+            </div>
+            <div v-else class="text-gray-400 py-8 text-lg">Belum ada konten pada section ini.</div>
           </div>
         </div>
         <div v-else class="text-center text-gray-400 py-12 text-xl">Silakan pilih materi di sidebar.</div>
@@ -114,7 +152,21 @@ onMounted(async () => {
     completedSections.value = userProgress.map(p => p.section_id)
   }
 })
+
+function getYoutubeEmbed(url) {
+  // Mendukung format https://youtu.be/xxxx atau https://www.youtube.com/watch?v=xxxx
+  const match = url.match(/(?:youtu\.be\/|youtube\.com\/watch\?v=)([A-Za-z0-9_\-]+)/)
+  return match ? `https://www.youtube.com/embed/${match[1]}` : url
+}
 </script>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+body, .poppins, .flex, .menu, .btn, .text-xl, .text-2xl, .text-3xl, .text-lg {
+  font-family: 'Poppins', Arial, sans-serif !important;
+}
+</style>
 
 <style scoped>
 .slide-enter-active, .slide-leave-active {
