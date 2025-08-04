@@ -1,5 +1,5 @@
 <template>
-  <div class="p-6">
+  <div class="p-6 pt-20"> <!-- Tambahkan pt-20 untuk menghindari navbar -->
     <h1 class="text-3xl font-bold mb-6">📚 Daftar Section Kursus</h1>
     <!-- Form tambah section -->
     <form class="flex gap-2 items-center mb-8">
@@ -26,9 +26,10 @@
             <!-- Konten -->
             <div v-if="section.contents && section.contents.length">
               <ul>
-                <li v-for="(content, idx) in section.contents" :key="idx" class="flex items-center gap-2">
+                <li v-for="content in section.contents" :key="content.id" class="flex items-center gap-2 mb-1">
+                  <span class="text-blue-600 text-lg">#{{ content.order }}</span>
                   <a :href="content.content_url" target="_blank" class="text-blue-600 underline text-lg">{{ content.title }}</a>
-                  <button class="btn btn-xs btn-error text-lg" @click="removeContent(section.id, idx)">Hapus</button>
+                  <button class="btn btn-xs btn-error text-lg" @click="removeContent(content.id)">Hapus</button>
                 </li>
               </ul>
             </div>
@@ -227,8 +228,12 @@ const newContentOrder = ref(1) // Tambahkan ini
 const sectionContents = ref([])
 
 async function fetchSections() {
-  const res = await $fetch(`/api/course_section/${courseId}`)
-  sections.value = res.sort((a, b) => a.order - b.order)
+  const res = await $fetch(`/api/course_section`, { method: 'GET' })
+  // Filter sections berdasarkan courseId dan ambil yang sudah include contents
+  const filteredSections = (res.sections || [])
+    .filter(s => s.course_id === courseId)
+    .sort((a, b) => a.order - b.order)
+  sections.value = filteredSections
 }
 
 async function addSection() {

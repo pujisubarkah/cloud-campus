@@ -1,35 +1,40 @@
 import { eq, and } from 'drizzle-orm'
 import { db } from '@/server/db'
-import { quizProgress } from '../../database/quiz_progress'
+import { quizResponses } from '../../database/quiz_response' // Sesuaikan dengan nama file yang benar
 import { readBody, getQuery } from 'h3'
 
 export default defineEventHandler(async (event) => {
   if (event.method === 'GET') {
     const { user_id, quiz_id } = getQuery(event)
     const filters = []
-    if (user_id) filters.push(eq(quizProgress.user_id, String(user_id)))
-    if (quiz_id) filters.push(eq(quizProgress.quiz_id, String(quiz_id)))
+    if (user_id) filters.push(eq(quizResponses.user_id, String(user_id)))
+    if (quiz_id) filters.push(eq(quizResponses.quiz_id, String(quiz_id)))
 
     const data = await (
       filters.length > 0
-        ? db.select().from(quizProgress).where(and(...filters))
-        : db.select().from(quizProgress)
+        ? db.select().from(quizResponses).where(and(...filters))
+        : db.select().from(quizResponses)
     )
-    return data
+    return { responses: data }
   }
 
   if (event.method === 'POST') {
     const body = await readBody(event)
-    const { user_id, quiz_id, score, is_passed } = body
+    const { user_id, quiz_id, answer, is_correct, points_earned } = body
 
-    const result = await db.insert(quizProgress).values({
+    if (!user_id || !quiz_id || !answer) {
+      return { error: 'user_id, quiz_id, dan answer wajib diisi' }
+    }
+
+    const result = await db.insert(quizResponses).values({
       user_id,
       quiz_id,
-      score,
-      is_passed,
-      taken_at: new Date(),
-    })
-    return { success: true, result }
+      answer,
+      is_correct: is_correct ?? null,
+      points_earned: points_earned ?? 0,
+    }).returning()
+
+    return { success: true, response: result[0] }
   }
 
   return { error: 'Method not allowed' }

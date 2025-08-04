@@ -6,7 +6,12 @@
         <img src="/lanri_.png" alt="Logo Lanri" class="h-12 w-auto bg-white p-1 rounded-lg shadow-lg" />
       </a>
      
-      <span class="text-white font-bold text-xl md:text-2xl tracking-wide drop-shadow-lg" style="text-shadow:0 0 8px rgba(255,255,255,0.3), 0 2px 4px rgba(0,0,0,0.3);">Akademi Pengentasan Kemiskinan</span>
+      <div class="hidden md:block">
+        <h1 class="text-white font-bold text-xl md:text-2xl tracking-wide drop-shadow-lg" style="text-shadow:0 0 8px rgba(255,255,255,0.3), 0 2px 4px rgba(0,0,0,0.3);">
+          Akademi Pengentasan Kemiskinan
+        </h1>
+        <p class="text-yellow-200 text-sm font-medium opacity-90">Learning Management System</p>
+      </div>
     </div>
 
     <!-- Main Menu -->

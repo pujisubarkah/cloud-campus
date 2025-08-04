@@ -1,145 +1,264 @@
 <template>
-  <div class="min-h-screen flex flex-col items-center bg-gradient-to-br from-blue-50 via-white to-yellow-50 text-gray-800 font-poppins">
-    <nav class="breadcrumb_widgets ccn-clip-l w-full max-w-6xl mx-auto mt-8 mb-6 px-6" aria-label="breadcrumb">
-      <div class="flex items-center justify-between">
-        <h4 class="title text-xl font-semibold text-gray-700">My Courses</h4>
-        <ol class="breadcrumb flex space-x-2 text-sm">
-          <li class="breadcrumb-item">
-            <NuxtLink to="/" class="text-blue-500 hover:underline">Home</NuxtLink>
-          </li>
-          <li class="breadcrumb-item">
-            <span class="mx-1 text-gray-400">/</span>
-            <NuxtLink to="/my" aria-current="page" class="text-blue-500 hover:underline">My Courses</NuxtLink>
-          </li>
-        </ol>
-      </div>
-    </nav>
-    <div class="w-full max-w-6xl mx-auto flex flex-col lg:flex-row gap-8 px-4 pb-12">
-      <!-- Konten utama di kiri -->
-      <div class="flex-1 order-2 lg:order-1">
-        <!-- Jika belum login -->
-        <div v-if="!auth.isLoggedIn" class="my_course_content mb-8 bg-white rounded-xl shadow-lg p-6 text-center">
-          <h2 class="text-2xl font-bold mb-4 text-blue-600">Silakan login dulu untuk mendapatkan materi</h2>
-          <NuxtLink to="/login" class="btn btn-primary px-6 py-3 font-semibold rounded-xl shadow hover:bg-blue-600 transition">Login</NuxtLink>
-        </div>
-        <!-- Jika sudah login -->
-        <div v-else class="my_course_content mb-8 bg-white rounded-xl shadow-lg p-6">
-          <!-- Jika belum ada kursus yang diikuti -->
-          <div v-if="enrollments.length === 0" class="text-center py-12 text-gray-400">
-            Anda belum memiliki kursus yang diikuti.
+  <div class="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 font-poppins pt-16">
+    <!-- Header dengan animasi -->
+    <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-16">
+      <div class="max-w-6xl mx-auto px-6">
+        <nav class="breadcrumb mb-6" aria-label="breadcrumb">
+          <ol class="flex space-x-2 text-sm opacity-90">
+            <li><NuxtLink to="/" class="hover:underline">Beranda</NuxtLink></li>
+            <li><span class="mx-2">/</span></li>
+            <li class="font-semibold">Kursus Saya</li>
+          </ol>
+        </nav>
+        <div class="flex items-center space-x-4">
+          <div class="bg-white/20 p-4 rounded-2xl backdrop-blur-sm">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+            </svg>
           </div>
-          <!-- Jika sudah ada kursus yang diikuti -->
-          <div v-else>
-            <!-- Daftar kursus yang diikuti -->
-            <div class="my_course_content_list" role="list">
-              <div v-for="enroll in enrollments" :key="enroll.enrollmentId" class="mc_content_list flex flex-col md:flex-row bg-gradient-to-r from-blue-50 via-white to-yellow-50 rounded-xl shadow p-6 mb-6 border border-gray-100" role="listitem">
-                <div class="thumb mr-6 mb-4 md:mb-0 flex items-center justify-center">
-                  <img :src="enroll.course_thumbnail" class="w-36 h-36 object-cover rounded-xl border border-blue-100 shadow-sm" :alt="enroll.course_title" />
-                </div>
-                <div class="details flex-1 flex flex-col justify-center">
-                  <div class="mc_content">
-                    <p class="subtitle text-sm text-blue-500 mb-1 font-medium">{{ enroll.course_title }}</p>
-                    <h5 class="title text-2xl font-bold mb-2 text-gray-800">{{ enroll.course_title }}</h5>
-                    <div class="ccn_mc_content_header_status mb-2">
-                      <small class="tag bg-blue-100 text-blue-600 px-3 py-1 rounded-full font-semibold">Enrolled</small>
-                    </div>
-                    <p class="text-gray-600 mb-2">{{ enroll.course_description }}</p>
-                    <div class="flex items-center space-x-4 mt-4">
-                      <NuxtLink
-                        :to="`/course/${enroll.course_id}/materi`"
-                        class="px-4 py-2 bg-blue-500 text-white rounded-lg font-semibold shadow hover:bg-blue-600 transition"
-                      >
-                        View
-                      </NuxtLink>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <div>
+            <h1 class="text-4xl font-bold mb-2">Perjalanan Belajar Saya</h1>
+            <p class="text-xl opacity-90">Lacak kemajuan dan lanjutkan pembelajaran Anda</p>
           </div>
         </div>
-      </div>
-      <!-- Sidebar tetap -->
-      <div class="w-full lg:w-1/3 lg:sticky lg:top-8 h-fit order-1 lg:order-2">
-        <!-- Timeline Block -->
-        <aside class="block-region mb-8" aria-label="Blocks">
-          <div class="block_timeline block ccnDashBl mb-8 bg-white rounded-xl shadow-lg p-6 border border-gray-100" role="complementary">
-            <h4 class="title ccnDashBlHd text-lg font-bold mb-4">Timeline</h4>
-            <div class="ccnBlockContent ccnDashBlCt">
-              <!-- Timeline filter and view selector -->
-              <div class="flex flex-wrap gap-2 mb-4">
-                <div class="dropdown">
-                  <button type="button" class="btn btn-outline-blue-500 border-blue-500 text-blue-500 font-medium rounded-lg px-4 py-2 hover:bg-blue-50 transition">Next 7 days</button>
-                </div>
-                <div class="dropdown">
-                  <button type="button" class="btn btn-outline-blue-500 border-blue-500 text-blue-500 font-medium rounded-lg px-4 py-2 hover:bg-blue-50 transition">Sort by dates</button>
-                </div>
-                <div class="flex-1">
-                  <form class="flex items-center w-full">
-                    <input type="text" class="form-control rounded-lg px-4 py-2 border border-gray-300 w-full focus:ring-2 focus:ring-blue-200" placeholder="Search by activity type or name" name="search" autocomplete="off" />
-                    <button type="button" class="ml-2 text-gray-400 hover:text-blue-500">
-                      <span class="sr-only">Clear search input</span>
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                    </button>
-                  </form>
-                </div>
-              </div>
-              <div class="border-b pb-2 mb-4"></div>
-              <!-- Timeline events -->
-              <div class="text-center mt-6">
-                <img src="https://cloudcampus.hbmsu.ac.ae/theme/image.php/edumy/block_timeline/1750320906/activities" alt="" class="mx-auto" style="height: 70px; width: 70px" />
-                <p class="text-muted mt-2">No activities require action</p>
-              </div>
-            </div>
-          </div>
-        </aside>
-        <!-- Upcoming Events Block -->
-        <aside class="block-region mb-8" aria-label="Upcoming Events">
-          <div class="block_calendar_upcoming block ccnDashBl mb-8 bg-white rounded-xl shadow-lg p-6 border border-gray-100" role="complementary">
-            <h4 class="title ccnDashBlHd text-lg font-bold mb-4">Upcoming events</h4>
-            <div class="ccnBlockContent ccnDashBlCt">
-              <div class="card-text content calendarwrapper">
-                <div class="event d-flex border-bottom pt-4 pb-4">
-                  <div class="activityiconcontainer small administration courseicon mr-4 flex items-center">
-                    <img class="icon w-10 h-10 rounded-full border border-blue-100" alt="Activity event" title="Activity event" src="https://cloudcampus.hbmsu.ac.ae/theme/image.php/edumy/attendance/1750320906/monologo" />
-                  </div>
-                  <div class="overflow-auto">
-                    <h6 class="d-flex mb-1 text-base font-semibold">
-                      <a class="text-truncate text-blue-600 hover:underline" href="#">Attendance</a>
-                    </h6>
-                    <div class="date small text-gray-600">Monday, 4 August, 10:00 AM <strong>»</strong> 1:00 PM</div>
-                  </div>
-                </div>
-                <div class="event d-flex border-bottom pt-4 pb-4">
-                  <div class="activityiconcontainer small administration courseicon mr-4 flex items-center">
-                    <img class="icon w-10 h-10 rounded-full border border-blue-100" alt="Activity event" title="Activity event" src="https://cloudcampus.hbmsu.ac.ae/theme/image.php/edumy/attendance/1750320906/monologo" />
-                  </div>
-                  <div class="overflow-auto">
-                    <h6 class="d-flex mb-1 text-base font-semibold">
-                      <a class="text-truncate text-blue-600 hover:underline" href="#">Attendance</a>
-                    </h6>
-                    <div class="date small text-gray-600">Tuesday, 5 August, 10:00 AM <strong>»</strong> 1:00 PM</div>
-                  </div>
-                </div>
-                <div class="event d-flex border-bottom pt-4 pb-4">
-                  <div class="activityiconcontainer small assessment courseicon mr-4 flex items-center">
-                    <img class="icon w-10 h-10 rounded-full border border-yellow-100" alt="Activity event" title="Activity event" src="https://cloudcampus.hbmsu.ac.ae/theme/image.php/edumy/assign/1750320906/monologo" />
-                  </div>
-                  <div class="overflow-auto">
-                    <h6 class="d-flex mb-1 text-base font-semibold">
-                      <a class="text-truncate text-yellow-600 hover:underline" href="#">Submit Capstone Project Proposal is due</a>
-                    </h6>
-                    <div class="date small text-gray-600">Friday, 8 August, 11:59 PM</div>
-                  </div>
-                </div>
-              </div>
-              <div class="gotocal mt-4"><a class="text-blue-500 hover:underline font-medium" href="#">Go to calendar...</a></div>
-            </div>
-          </div>
-        </aside>
       </div>
     </div>
-    <NuxtLink to="/" class="px-6 py-3 bg-blue-500 text-white rounded-xl font-semibold shadow hover:bg-blue-600 transition mt-8">Kembali ke Beranda</NuxtLink>
+
+    <div class="max-w-6xl mx-auto px-6 -mt-8 pb-12">
+      <div class="flex flex-col lg:flex-row gap-8">
+        <!-- Konten Utama -->
+        <div class="flex-1">
+          <!-- Kartu Statistik -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white rounded-2xl shadow-lg p-6 border border-blue-100">
+              <div class="flex items-center">
+                <div class="bg-blue-100 p-3 rounded-xl">
+                  <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253"/>
+                  </svg>
+                </div>
+                <div class="ml-4">
+                  <p class="text-sm text-gray-600">Total Kursus</p>
+                  <p class="text-2xl font-bold text-gray-800">{{ enrollments.length }}</p>
+                </div>
+              </div>
+            </div>
+            <div class="bg-white rounded-2xl shadow-lg p-6 border border-green-100">
+              <div class="flex items-center">
+                <div class="bg-green-100 p-3 rounded-xl">
+                  <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                </div>
+                <div class="ml-4">
+                  <p class="text-sm text-gray-600">Selesai</p>
+                  <p class="text-2xl font-bold text-gray-800">0</p>
+                </div>
+              </div>
+            </div>
+            <div class="bg-white rounded-2xl shadow-lg p-6 border border-orange-100">
+              <div class="flex items-center">
+                <div class="bg-orange-100 p-3 rounded-xl">
+                  <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                  </svg>
+                </div>
+                <div class="ml-4">
+                  <p class="text-sm text-gray-600">Sedang Berjalan</p>
+                  <p class="text-2xl font-bold text-gray-800">{{ enrollments.length }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Kartu Kursus -->
+          <div class="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+            <!-- Belum Login -->
+            <div v-if="!auth.isLoggedIn" class="text-center py-16">
+              <div class="bg-blue-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg class="w-12 h-12 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                </svg>
+              </div>
+              <h2 class="text-3xl font-bold mb-4 text-gray-800">Selamat Datang Kembali!</h2>
+              <p class="text-gray-600 mb-8 text-lg">Silakan masuk untuk mengakses materi pembelajaran dan melanjutkan perjalanan Anda.</p>
+              <NuxtLink to="/login" class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
+                </svg>
+                Masuk untuk Melanjutkan
+              </NuxtLink>
+            </div>
+
+            <!-- Belum Ada Kursus -->
+            <div v-else-if="enrollments.length === 0" class="text-center py-16">
+              <div class="bg-gray-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253"/>
+                </svg>
+              </div>
+              <h3 class="text-2xl font-bold mb-4 text-gray-800">Belum Ada Kursus</h3>
+              <p class="text-gray-600 mb-8">Mulai perjalanan belajar Anda dengan mendaftar kursus pertama!</p>
+              <NuxtLink to="/" class="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl shadow hover:bg-blue-700 transition">
+                Jelajahi Kursus
+              </NuxtLink>
+            </div>
+
+            <!-- Daftar Kursus -->
+            <div v-else>
+              <div class="flex items-center justify-between mb-8">
+                <h2 class="text-2xl font-bold text-gray-800">Kursus Anda</h2>
+                <div class="flex items-center space-x-2 text-sm text-gray-600">
+                  <span>{{ enrollments.length }} kursus terdaftar</span>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div v-for="enroll in enrollments" :key="enroll.enrollmentId" 
+                     class="group bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
+                  
+                  <!-- Gambar Kursus -->
+                  <div class="relative overflow-hidden h-48">
+                    <img :src="enroll.course_thumbnail" 
+                         :alt="enroll.course_title"
+                         class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+                    <div class="absolute top-4 right-4">
+                      <span class="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg">
+                        Terdaftar
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Konten Kursus -->
+                  <div class="p-6">
+                    <div class="mb-4">
+                      <h3 class="text-xl font-bold text-gray-800 mb-2 line-clamp-2">{{ enroll.course_title }}</h3>
+                      <p class="text-gray-600 text-sm line-clamp-3">{{ enroll.course_description }}</p>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="mb-4">
+                      <div class="flex justify-between text-sm text-gray-600 mb-2">
+                        <span>Kemajuan</span>
+                        <span>0%</span>
+                      </div>
+                      <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full" style="width: 0%"></div>
+                      </div>
+                    </div>
+
+                    <!-- Tombol Aksi -->
+                    <div class="flex space-x-3">
+                      <NuxtLink :to="`/course/${enroll.course_id}/materi`"
+                                class="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-center py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5">
+                        Lanjutkan Belajar
+                      </NuxtLink>
+                      <button class="px-4 py-3 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sidebar yang Ditingkatkan -->
+        <div class="w-full lg:w-80 space-y-6">
+          <!-- Widget Timeline -->
+          <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+            <div class="flex items-center mb-6">
+              <div class="bg-blue-100 p-2 rounded-lg">
+                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+              </div>
+              <h3 class="text-lg font-bold text-gray-800 ml-3">Timeline</h3>
+            </div>
+            
+            <div class="text-center py-8">
+              <div class="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+              </div>
+              <p class="text-gray-500 text-sm">Tidak ada aktivitas yang memerlukan tindakan</p>
+            </div>
+          </div>
+
+          <!-- Acara Mendatang -->
+          <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+            <div class="flex items-center mb-6">
+              <div class="bg-purple-100 p-2 rounded-lg">
+                <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 012 2z"/>
+                </svg>
+              </div>
+              <h3 class="text-lg font-bold text-gray-800 ml-3">Acara Mendatang</h3>
+            </div>
+
+            <div class="space-y-4">
+              <div class="flex items-start space-x-3 p-3 bg-blue-50 rounded-xl border border-blue-100">
+                <div class="bg-blue-100 p-2 rounded-lg">
+                  <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                </div>
+                <div class="flex-1">
+                  <h4 class="font-semibold text-gray-800 text-sm">Kehadiran</h4>
+                  <p class="text-xs text-gray-600">Senin, 4 Agustus, 10:00 - 13:00</p>
+                </div>
+              </div>
+
+              <div class="flex items-start space-x-3 p-3 bg-yellow-50 rounded-xl border border-yellow-100">
+                <div class="bg-yellow-100 p-2 rounded-lg">
+                  <svg class="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                  </svg>
+                </div>
+                <div class="flex-1">
+                  <h4 class="font-semibold text-gray-800 text-sm">Batas Proyek Akhir</h4>
+                  <p class="text-xs text-gray-600">Jumat, 8 Agustus, 23:59</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-4 pt-4 border-t border-gray-100">
+              <a href="#" class="text-blue-600 hover:text-blue-700 text-sm font-medium">Lihat semua acara →</a>
+            </div>
+          </div>
+
+          <!-- Tips Belajar -->
+          <div class="bg-gradient-to-br from-green-50 to-blue-50 rounded-2xl shadow-xl p-6 border border-green-100">
+            <div class="flex items-center mb-4">
+              <div class="bg-green-100 p-2 rounded-lg">
+                <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                </svg>
+              </div>
+              <h3 class="text-lg font-bold text-gray-800 ml-3">Tips Belajar</h3>
+            </div>
+            <p class="text-gray-600 text-sm leading-relaxed">
+              "Beristirahatlah secara teratur setiap 25 menit untuk meningkatkan fokus dan daya ingat. Otak Anda akan berterima kasih!"
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Kembali ke Beranda -->
+      <div class="text-center mt-12">
+        <NuxtLink to="/" class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-gray-600 to-gray-700 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+          </svg>
+          Kembali ke Beranda
+        </NuxtLink>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -197,3 +316,20 @@ onMounted(async () => {
   }
 })
 </script>
+
+<style scoped>
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+</style>
