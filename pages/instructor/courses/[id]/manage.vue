@@ -51,24 +51,7 @@
       </tbody>
     </table>
 
-    <!-- Daftar Konten Section Terpilih -->
-    <div v-if="selectedSection" class="mt-8">
-      <h2 class="text-2xl font-semibold mb-4">Konten di {{ selectedSection.title }}</h2>
-      <table class="table w-full bg-white border border-gray-200 text-lg">
-        <thead class="bg-gray-100">
-          <tr>
-            <th class="py-3 px-4 text-left text-xl">Order</th>
-            <th class="py-3 px-4 text-left text-xl">Title</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="content in selectedSection.contents" :key="content.id" class="border-t">
-            <td class="py-3 px-4">{{ content.order }}</td>
-            <td class="py-3 px-4">{{ content.title }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    
 
     <!-- Modal Tambah Konten -->
     <div v-if="showAddContentModal" class="fixed inset-0 flex items-center justify-center z-50">
