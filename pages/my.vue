@@ -17,8 +17,8 @@
             </svg>
           </div>
           <div>
-            <h1 class="text-4xl font-bold mb-2">Perjalanan Belajar Saya</h1>
-            <p class="text-xl opacity-90">Lacak kemajuan dan lanjutkan pembelajaran Anda</p>
+            <h1 class="text-4xl font-bold mb-2">Kursus yang Anda Ikuti</h1>
+            <p class="text-xl opacity-90">Lihat progres dan lanjutkan materi yang sedang dipelajari.</p>
           </div>
         </div>
       </div>
@@ -279,40 +279,46 @@ interface Enrollment {
 const enrollments = ref<Enrollment[]>([])
 
 onMounted(async () => {
-  if (!auth.isLoggedIn) return
+  if (!auth.isLoggedIn) {
+    return
+  }
+
   try {
-    const res = await $fetch('/api/enrollment', {
-      method: 'GET'
-    })
-    if (res && !('error' in res)) {
-      if ('enrollments' in res && Array.isArray((res as any).enrollments)) {
-        enrollments.value = (res as any).enrollments.map((e: any) => ({
-          enrollmentId: e.enrollmentId,
-          course_id: e.course_id,
-          course_thumbnail: e.course_thumbnail ?? '',
-          course_title: e.course_title ?? '',
-          course_slug: e.course_slug ?? '',
-          course_description: e.course_description ?? ''
-        }))
-      } else if ('enrollment' in res && (res as any).enrollment) {
-        // Handle single enrollment object
-        const e = (res as any).enrollment
-        enrollments.value = [{
-          enrollmentId: e.id ?? e.enrollmentId,
-          course_id: e.course_id,
-          course_thumbnail: e.course_thumbnail ?? '',
-          course_title: e.course_title ?? '',
-          course_slug: e.course_slug ?? '',
-          course_description: e.course_description ?? ''
-        }]
-      } else {
-        enrollments.value = []
-      }
-    } else {
+    // 1. Fetch data from the API
+    const responseData: any = await $fetch('/api/enrollment')
+
+    // 2. Guard against empty or invalid responses
+    if (!responseData || typeof responseData !== 'object') {
       enrollments.value = []
+      return
     }
+
+    // 3. Determine the source of enrollment data from the response
+    let rawEnrollments: any[] = []
+    if (Array.isArray(responseData)) {
+      // Handles case where API returns a direct array: [...]
+      rawEnrollments = responseData
+    } else if (responseData.enrollments && Array.isArray(responseData.enrollments)) {
+      // Handles case where API returns: { enrollments: [...] }
+      rawEnrollments = responseData.enrollments
+    } else if (responseData.enrollment && typeof responseData.enrollment === 'object') {
+      // Handles case where API returns: { enrollment: {...} }
+      rawEnrollments = [responseData.enrollment]
+    }
+
+    // 4. Map the raw data to the structured Enrollment type, providing defaults
+    enrollments.value = rawEnrollments.map((e: any) => ({
+      enrollmentId: e.enrollmentId ?? e.id ?? '', // Use enrollmentId or id
+      course_id: e.course_id ?? '',
+      course_thumbnail: e.course_thumbnail || '/images/placeholder.jpg', // Provide a default placeholder image
+      course_title: e.course_title || 'Kursus Tanpa Judul',
+      course_slug: e.course_slug || '',
+      course_description: e.course_description || 'Tidak ada deskripsi.'
+    }))
+
   } catch (err) {
-    enrollments.value = []
+    console.error("Gagal mengambil data pendaftaran:", err)
+    enrollments.value = [] // Ensure enrollments is an empty array on error
   }
 })
 </script>

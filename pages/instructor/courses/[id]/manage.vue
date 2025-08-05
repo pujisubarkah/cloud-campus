@@ -24,18 +24,41 @@
           <td class="py-3 px-4">{{ section.title }}</td>
           <td class="py-3 px-4">
             <!-- Konten -->
-            <div v-if="section.contents && section.contents.length">
+            <div v-if="section.contents && section.contents.length" class="mb-4">
+              <h4 class="font-semibold text-gray-700 mb-2">📄 Konten:</h4>
               <ul>
                 <li v-for="content in section.contents" :key="content.id" class="flex items-center gap-2 mb-1">
                   <span class="text-blue-600 text-lg">#{{ content.order }}</span>
                   <a :href="content.content_url" target="_blank" class="text-blue-600 underline text-lg">{{ content.title }}</a>
+                  <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">{{ content.type }}</span>
                   <button class="btn btn-xs btn-error text-lg" @click="removeContent(content.id)">Hapus</button>
                 </li>
               </ul>
             </div>
-            <div v-else class="text-gray-400 mb-2 text-lg">Belum ada konten</div>
-            <button class="btn btn-xs btn-primary mt-2 text-lg" @click="openAddContentModal(section)">Tambah Konten</button>
-            <button class="btn btn-xs btn-warning mt-2 ml-2 text-lg" @click="openAddQuizModal(section)">Tambah Quiz</button>
+
+            <!-- Quiz -->
+            <div v-if="section.quizzes && section.quizzes.length" class="mb-4">
+              <h4 class="font-semibold text-gray-700 mb-2">❓ Quiz:</h4>
+              <ul>
+                <li v-for="quiz in section.quizzes" :key="quiz.id" class="flex items-center gap-2 mb-1">
+                  <span class="text-purple-600 text-lg">#{{ quiz.order }}</span>
+                  <span class="text-purple-600 text-lg">{{ quiz.question }}</span>
+                  <span class="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs">{{ quiz.type }}</span>
+                  <button class="btn btn-xs btn-error text-lg" @click="removeQuiz(quiz.id)">Hapus</button>
+                </li>
+              </ul>
+            </div>
+
+            <!-- Pesan jika tidak ada konten dan quiz -->
+            <div v-if="(!section.contents || section.contents.length === 0) && (!section.quizzes || section.quizzes.length === 0)" class="text-gray-400 mb-2 text-lg">
+              Belum ada konten atau quiz
+            </div>
+
+            <!-- Tombol Aksi -->
+            <div class="flex gap-2 mt-3">
+              <button class="btn btn-xs btn-primary text-lg" @click="openAddContentModal(section)">Tambah Konten</button>
+              <button class="btn btn-xs btn-warning text-lg" @click="openAddQuizModal(section)">Tambah Quiz</button>
+            </div>
           </td>
           <td class="py-3 px-4">
             <div class="flex gap-2">
@@ -109,6 +132,11 @@
           <div class="mb-4">
             <label class="block text-sm font-medium text-gray-700 mb-1" for="quizQuestion">Pertanyaan Quiz</label>
             <input v-model="newQuizQuestion" type="text" id="quizQuestion" class="input input-bordered w-full" placeholder="Pertanyaan" required />
+          </div>
+          <!-- Tambahkan input order -->
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1" for="quizOrder">Urutan Quiz</label>
+            <input v-model.number="newQuizOrder" type="number" id="quizOrder" class="input input-bordered w-24" min="1" placeholder="Urutan" required />
           </div>
           <!-- Multiple Choice -->
           <div v-if="newQuizType === 'multiple'" class="mb-4">
@@ -209,6 +237,7 @@ const editSectionTitle = ref('')
 const editSectionOrder = ref(1)
 const newContentOrder = ref(1) // Tambahkan ini
 const sectionContents = ref([])
+const newQuizOrder = ref(1) // Tambahkan ini
 
 async function fetchSections() {
   const res = await $fetch(`/api/course_section`, { method: 'GET' })
@@ -216,6 +245,17 @@ async function fetchSections() {
   const filteredSections = (res.sections || [])
     .filter(s => s.course_id === courseId)
     .sort((a, b) => a.order - b.order)
+  
+  // Fetch quiz untuk setiap section
+  for (let section of filteredSections) {
+    try {
+      const quizRes = await $fetch(`/api/quizzes_section/${section.id}`)
+      section.quizzes = quizRes.quizzes || []
+    } catch (err) {
+      section.quizzes = []
+    }
+  }
+  
   sections.value = filteredSections
 }
 
@@ -320,22 +360,37 @@ function openAddQuizModal(section) {
   newQuizChoices.value = ['', '']
   newQuizCorrect.value = 0
   newQuizAnswer.value = ''
+  newQuizOrder.value = (section.quizzes?.length || 0) + 1 // default urutan berikutnya
 }
 
 async function addQuiz() {
-  let body = { type: newQuizType.value, question: newQuizQuestion.value }
-  if (newQuizType.value === 'multiple') {
-    body.choices = newQuizChoices.value
-    body.correct = newQuizCorrect.value
-  } else {
-    body.answer = newQuizAnswer.value
+  try {
+    let body = { 
+      type: newQuizType.value, 
+      question: newQuizQuestion.value,
+      section_id: selectedSection.value.id,
+      order: newQuizOrder.value // Kirim order ke API
+    }
+    if (newQuizType.value === 'multiple') {
+      body.choices = newQuizChoices.value
+      body.correct_answer = newQuizCorrect.value
+    } else {
+      body.correct_answer = newQuizAnswer.value
+    }
+    const res = await $fetch(`/api/quizzes_section/${selectedSection.value.id}`, {
+      method: 'POST',
+      body
+    })
+    if (res.error) {
+      alert('Gagal menambahkan quiz: ' + res.error)
+    } else {
+      showAddQuizModal.value = false
+      fetchSections()
+      alert('Quiz berhasil ditambahkan!')
+    }
+  } catch (err) {
+    alert('Terjadi kesalahan saat menambahkan quiz!')
   }
-  await $fetch(`/api/course_section/${selectedSection.value.id}/quiz`, {
-    method: 'POST',
-    body
-  })
-  showAddQuizModal.value = false
-  fetchSections()
 }
 
 async function fetchSectionContents(sectionId) {

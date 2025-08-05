@@ -237,33 +237,161 @@
             </div>
           </div>
 
-          <!-- Empty State -->
-          <div v-else class="text-center py-16">
-            <div class="bg-slate-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
-              <svg class="w-12 h-12 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-              </svg>
+          <!-- Tampilkan Quiz jika ada -->
+          <div v-if="selectedSection.quizzes && selectedSection.quizzes.length" class="space-y-8 mt-8">
+            <div v-for="quiz in selectedSection.quizzes" :key="quiz.id" class="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
+              <div class="flex items-center gap-3 mb-4">
+                <div class="bg-purple-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold">
+                  {{ quiz.order }}
+                </div>
+                <span class="font-semibold text-lg text-slate-800">{{ quiz.question }}</span>
+                <span class="ml-auto px-3 py-1 rounded-full text-xs font-medium"
+                  :class="{
+                    'bg-purple-100 text-purple-600': quiz.type === 'multiple',
+                    'bg-blue-100 text-blue-600': quiz.type === 'short',
+                    'bg-green-100 text-green-600': quiz.type === 'truefalse',
+                    'bg-orange-100 text-orange-600': quiz.type === 'fill',
+                    'bg-emerald-100 text-emerald-600': quiz.type === 'likert'
+                  }">
+                  {{ quiz.type.toUpperCase() }}
+                </span>
+              </div>
+
+              <!-- Multiple Choice -->
+              <div v-if="quiz.type === 'multiple'" class="mt-4 space-y-3">
+                <div v-for="(choice, idx) in quiz.choices" :key="idx" 
+                     class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:border-purple-300 hover:bg-purple-50 transition-all duration-200 cursor-pointer"
+                     :class="{ 'border-purple-500 bg-purple-50': quizAnswers[quiz.id] === idx }"
+                     @click="saveQuizAnswer(quiz.id, idx)">
+                  <input 
+                    type="radio" 
+                    :name="'quiz-' + quiz.id" 
+                    :value="idx" 
+                    v-model="quizAnswers[quiz.id]"
+                    class="w-4 h-4 text-purple-600 bg-gray-100 border-gray-300 focus:ring-purple-500"
+                  />
+                  <span class="text-slate-700 font-medium">{{ String.fromCharCode(65 + idx) }}.</span>
+                  <span class="text-slate-800">{{ choice }}</span>
+                </div>
+              </div>
+
+              <!-- Short Answer -->
+              <div v-else-if="quiz.type === 'short'" class="mt-4">
+                <input 
+                  type="text" 
+                  v-model="quizAnswers[quiz.id]"
+                  class="input input-bordered w-full p-3 border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200" 
+                  placeholder="Masukkan jawaban singkat..."
+                />
+              </div>
+
+              <!-- True or False -->
+              <div v-else-if="quiz.type === 'truefalse'" class="mt-4 flex gap-6">
+                <label class="flex items-center gap-2 p-3 rounded-lg border border-slate-200 hover:border-green-300 hover:bg-green-50 transition-all duration-200 cursor-pointer"
+                       :class="{ 'border-green-500 bg-green-50': quizAnswers[quiz.id] === 'true' }">
+                  <input 
+                    type="radio" 
+                    :name="'quiz-' + quiz.id" 
+                    value="true" 
+                    v-model="quizAnswers[quiz.id]"
+                    class="w-4 h-4 text-green-600"
+                  />
+                  <span class="font-medium text-green-700">Benar</span>
+                </label>
+                <label class="flex items-center gap-2 p-3 rounded-lg border border-slate-200 hover:border-red-300 hover:bg-red-50 transition-all duration-200 cursor-pointer"
+                       :class="{ 'border-red-500 bg-red-50': quizAnswers[quiz.id] === 'false' }">
+                  <input 
+                    type="radio" 
+                    :name="'quiz-' + quiz.id" 
+                    value="false" 
+                    v-model="quizAnswers[quiz.id]"
+                    class="w-4 h-4 text-red-600"
+                  />
+                  <span class="font-medium text-red-700">Salah</span>
+                </label>
+              </div>
+
+              <!-- Fill in the Blanks -->
+              <div v-else-if="quiz.type === 'fill'" class="mt-4">
+                <input 
+                  type="text" 
+                  v-model="quizAnswers[quiz.id]"
+                  class="input input-bordered w-full p-3 border-slate-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200" 
+                  placeholder="Isi jawaban yang tepat..."
+                />
+              </div>
+
+              <!-- Likert Scale -->
+              <div v-else-if="quiz.type === 'likert'" class="mt-4">
+                <div class="flex justify-between items-center mb-3">
+                  <span class="text-sm text-slate-500">Sangat Tidak Setuju</span>
+                  <span class="text-sm text-slate-500">Sangat Setuju</span>
+                </div>
+                <div class="flex gap-4 justify-center">
+                  <label v-for="n in 5" :key="n" 
+                         class="flex flex-col items-center gap-2 p-3 rounded-lg border border-slate-200 hover:border-emerald-300 hover:bg-emerald-50 transition-all duration-200 cursor-pointer"
+                         :class="{ 'border-emerald-500 bg-emerald-50': quizAnswers[quiz.id] === n }">
+                    <input 
+                      type="radio" 
+                      :name="'quiz-' + quiz.id" 
+                      :value="n" 
+                      v-model="quizAnswers[quiz.id]"
+                      class="w-4 h-4 text-emerald-600"
+                    />
+                    <span class="font-bold text-emerald-700">{{ n }}</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Submit Button -->
+              <div class="mt-6 flex justify-end">
+                <button 
+                  @click="submitQuiz(quiz)"
+                  class="btn bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white border-none shadow-lg px-6"
+                  :disabled="!quizAnswers[quiz.id] && quizAnswers[quiz.id] !== 0"
+                  :class="{ 'opacity-50 cursor-not-allowed': !quizAnswers[quiz.id] && quizAnswers[quiz.id] !== 0 }"
+                >
+                  <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                  </svg>
+                  Submit Jawaban
+                </button>
+              </div>
             </div>
-            <h3 class="text-xl font-semibold text-slate-600 mb-2">Belum Ada Konten</h3>
-            <p class="text-slate-500">Section ini belum memiliki materi pembelajaran.</p>
           </div>
         </div>
 
-        <!-- No Section Selected -->
+        <!-- Empty State -->
         <div v-else class="text-center py-16 max-w-md mx-auto">
           <div class="bg-blue-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
             <svg class="w-12 h-12 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253"/>
             </svg>
           </div>
-          <h3 class="text-2xl font-bold text-slate-700 mb-3">Pilih Materi Pembelajaran</h3>
-          <p class="text-slate-500 mb-6">Silakan pilih section dari sidebar untuk memulai pembelajaran Anda.</p>
+          <h3 class="text-2xl font-bold text-slate-700 mb-3">Pilih Materi atau Quiz</h3>
+          <p class="text-slate-500 mb-6">
+            Silakan pilih section dari sidebar untuk mulai belajar atau mengerjakan quiz.
+          </p>
           <button v-if="!showSidebar" @click="toggleSidebar" class="btn bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white border-none shadow-lg">
             <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
             </svg>
             Buka Sidebar
           </button>
+        </div>
+
+        <!-- Empty State Section -->
+        <div
+          v-if="selectedSection && (!selectedSection.contents || selectedSection.contents.length === 0) && (!selectedSection.quizzes || selectedSection.quizzes.length === 0)"
+          class="text-center py-16"
+        >
+          <div class="bg-slate-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg class="w-12 h-12 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+            </svg>
+          </div>
+          <h3 class="text-xl font-semibold text-slate-600 mb-2">Belum Ada Materi atau Quiz</h3>
+          <p class="text-slate-500">Section ini belum memiliki materi maupun quiz.</p>
         </div>
       </div>
     </main>
@@ -281,6 +409,38 @@ const showSidebar = ref(true)
 const sections = ref([])
 const selectedSection = ref(null)
 const completedSections = ref([])
+const quizAnswers = ref({}) // Tambahkan state untuk menyimpan jawaban quiz
+
+// Fungsi untuk menyimpan jawaban quiz
+const saveQuizAnswer = (quizId, answer) => {
+  quizAnswers.value[quizId] = answer
+}
+
+// Fungsi untuk submit quiz
+const submitQuiz = async (quiz) => {
+  const userAnswer = quizAnswers.value[quiz.id]
+  if (!userAnswer && userAnswer !== 0) {
+    alert('Silakan pilih jawaban terlebih dahulu!')
+    return
+  }
+
+  try {
+    // Kirim jawaban ke API (jika ada endpoint untuk submit quiz)
+    // const result = await $fetch('/api/quiz_submission', {
+    //   method: 'POST',
+    //   body: {
+    //     quiz_id: quiz.id,
+    //     user_id: auth.user.id,
+    //     answer: userAnswer
+    //   }
+    // })
+    
+    alert(`Jawaban tersimpan untuk: ${quiz.question}`)
+  } catch (error) {
+    console.error('Error submitting quiz:', error)
+    alert('Gagal menyimpan jawaban!')
+  }
+}
 
 const toggleSidebar = () => {
   showSidebar.value = !showSidebar.value
@@ -314,6 +474,15 @@ onMounted(async () => {
     const res = await $fetch('/api/course_section', { method: 'GET' })
     const courseId = route.params.slug
     const filtered = (res.sections || []).filter(s => s.course_id === courseId)
+    // Fetch quizzes for each section
+    for (const section of filtered) {
+      try {
+        const quizRes = await $fetch(`/api/quizzes_section/${section.id}`)
+        section.quizzes = quizRes.quizzes || []
+      } catch {
+        section.quizzes = []
+      }
+    }
     sections.value = filtered
     selectedSection.value = sections.value[0] || null
 
