@@ -1,47 +1,153 @@
-import { db } from '@/server/db'
+import { db } from '~/server/db'
 import { enrollments } from '@/server/database/enrollment'
-import { courses } from '@/server/database/courses'
-import { readBody } from 'h3'
-import { eq } from 'drizzle-orm'
+import { courses } from '~/server/database/courses'
+import { eq, and } from 'drizzle-orm'
+import { H3Event } from 'h3'
 
-// GET: Ambil semua enrollment
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async (event: H3Event) => {
+  // Get authenticated user from context
+  const user = event.context.user
+  if (!user || !user.id) {
+    throw createError({
+      statusCode: 401,
+      message: 'Please login first'
+    })
+  }
+
+  // GET: Fetch enrollments for current user
   if (event.method === 'GET') {
-    // Join enrollments dengan courses
-    const data = await db
-      .select({
-        enrollmentId: enrollments.id,
-        enrolled_at: enrollments.enrolled_at,
-        user_id: enrollments.user_id,
-        course_id: enrollments.course_id,
-        course_title: courses.title,
-        course_slug: courses.slug,
-        course_description: courses.description,
-        course_thumbnail: courses.thumbnail_url
+    try {
+      const userEnrollments = await db
+        .select({
+          enrollment_id: enrollments.id,
+          enrolled_at: enrollments.enrolled_at,
+          course_id: courses.id,
+          course_title: courses.title,
+          course_slug: courses.slug,
+          course_description: courses.description
+        })
+        .from(enrollments)
+        .leftJoin(courses, eq(enrollments.course_id, courses.id))
+        .where(eq(enrollments.user_id, user.id))
+        .orderBy(enrollments.enrolled_at)
+
+      return {
+        success: true,
+        enrollments: userEnrollments || []
+      }
+    } catch (error) {
+      console.error('Error fetching enrollments:', error)
+      throw createError({
+        statusCode: 500,
+        message: 'Failed to fetch enrollments'
       })
-      .from(enrollments)
-      .leftJoin(courses, eq(enrollments.course_id, courses.id))
-
-    return { enrollments: data }
-  }
-
-  // POST: Tambah enrollment baru
-  if (event.method === 'POST') {
-    const body = await readBody(event)
-    const { user_id, course_id } = body
-
-    if (!user_id || !course_id) {
-      return { error: 'user_id dan course_id wajib diisi' }
     }
-
-    // Insert enrollment
-    const [newEnrollment] = await db
-      .insert(enrollments)
-      .values({ user_id, course_id })
-      .returning()
-
-    return { success: true, enrollment: newEnrollment }
   }
 
-  return { error: 'Method not allowed' }
+  // POST: Create new enrollment
+  if (event.method === 'POST') {
+    try {
+      const body = await readBody(event)
+
+      if (!body.course_id) {
+        throw createError({
+          statusCode: 400,
+          message: 'Course ID is required'
+        })
+      }
+
+      // Check if already enrolled
+      const existingEnrollment = await db
+        .select()
+        .from(enrollments)
+        .where(
+          and(
+            eq(enrollments.user_id, user.id),
+            eq(enrollments.course_id, body.course_id)
+          )
+        )
+        .limit(1)
+
+      if (existingEnrollment.length > 0) {
+        throw createError({
+          statusCode: 400,
+          message: 'Already enrolled in this course'
+        })
+      }
+
+      // Create new enrollment
+      const [newEnrollment] = await db
+        .insert(enrollments)
+        .values({
+          user_id: user.id,
+          course_id: body.course_id
+        })
+        .returning()
+
+      return {
+        success: true,
+        enrollment: newEnrollment
+      }
+    } catch (error) {
+      console.error('Error creating enrollment:', error)
+      throw createError({
+        statusCode: typeof error === 'object' && error !== null && 'statusCode' in error ? (error as any).statusCode : 500,
+        message: typeof error === 'object' && error !== null && 'message' in error ? (error as any).message : 'Failed to create enrollment'
+      })
+    }
+  }
+
+  // DELETE: Remove enrollment
+  if (event.method === 'DELETE') {
+    try {
+      const enrollmentId = event.context.params?.id
+
+      if (!enrollmentId) {
+        throw createError({
+          statusCode: 400,
+          message: 'Enrollment ID is required'
+        })
+      }
+
+      // Check if enrollment exists and belongs to user
+      const existingEnrollment = await db
+        .select()
+        .from(enrollments)
+        .where(
+          and(
+            eq(enrollments.id, enrollmentId),
+            eq(enrollments.user_id, user.id)
+          )
+        )
+        .limit(1)
+
+      if (!existingEnrollment.length) {
+        throw createError({
+          statusCode: 404,
+          message: 'Enrollment not found'
+        })
+      }
+
+      // Delete enrollment
+      await db
+        .delete(enrollments)
+        .where(eq(enrollments.id, enrollmentId))
+
+      return {
+        success: true,
+        message: 'Enrollment deleted successfully'
+      }
+    } catch (error) {
+      console.error('Error deleting enrollment:', error)
+      throw createError({
+        statusCode: (typeof error === 'object' && error !== null && 'statusCode' in error ? (error as any).statusCode : 500),
+        message: (typeof error === 'object' && error !== null && 'message' in error ? (error as any).message : 'Failed to delete enrollment')
+      })
+    }
+  }
+
+  throw createError({
+    statusCode: 405,
+    message: 'Method not allowed'
+  })
 })
