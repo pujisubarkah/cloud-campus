@@ -125,19 +125,75 @@
     <!-- Desktop Login/User Button -->
     <div class="hidden lg:flex items-center gap-2 sm:gap-4">
       <template v-if="auth.isLoggedIn">
-        <div class="flex items-center gap-2">
-          <span class="inline-flex items-center gap-2 text-yellow-300 font-semibold text-base">
+        <div class="relative user-dropdown">
+          <button 
+            @click="isUserDropdownOpen = !isUserDropdownOpen"
+            class="flex items-center gap-2 px-4 py-2 rounded-lg text-yellow-300 font-semibold text-base hover:bg-blue-800/50 transition-all duration-200"
+          >
             <i class="fas fa-user-circle text-2xl"></i>
-            {{ auth.user?.name }}
-          </span>
-          <button @click="auth.logout(); $router.push('/')" class="border border-yellow-400 bg-yellow-400 text-blue-900 py-2 px-4 rounded-lg font-semibold hover:bg-yellow-300 hover:border-yellow-300 transition-all duration-200 whitespace-nowrap flex items-center gap-2 shadow">
-            Logout
+            <span>{{ auth.user?.name }}</span>
+            <svg 
+              class="w-4 h-4 transition-transform duration-200"
+              :class="{ 'rotate-180': isUserDropdownOpen }"
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
           </button>
+
+          <!-- User Dropdown Menu -->
+          <div 
+            v-show="isUserDropdownOpen"
+            class="absolute right-0 mt-2 w-48 py-2 bg-white rounded-xl shadow-xl border border-gray-100 z-50"
+          >
+            <!-- Profile Link -->
+            <a 
+              href="/profile" 
+              @click="isUserDropdownOpen = false"
+              class="group flex items-center w-full px-4 py-3 text-gray-700 hover:bg-blue-50/80 transition-all duration-200"
+            >
+              <span class="flex items-center gap-3">
+                <i class="fas fa-user w-5 text-blue-600 group-hover:scale-110 transition-transform"></i>
+                <span class="font-medium">Profile</span>
+              </span>
+            </a>
+
+            <!-- Settings Link -->
+            <a 
+              href="/settings"
+              @click="isUserDropdownOpen = false" 
+              class="group flex items-center w-full px-4 py-3 text-gray-700 hover:bg-blue-50/80 transition-all duration-200"
+            >
+              <span class="flex items-center gap-3">
+                <i class="fas fa-cog w-5 text-blue-600 group-hover:scale-110 transition-transform"></i>
+                <span class="font-medium">Settings</span>
+              </span>
+            </a>
+
+            <!-- Divider -->
+            <div class="border-t border-gray-100 my-1"></div>
+
+            <!-- Logout Button -->
+            <button 
+              @click="auth.logout(); $router.push('/'); isUserDropdownOpen = false"
+              class="group flex items-center w-full px-4 py-3 text-red-600 hover:bg-red-50/80 transition-all duration-200"
+            >
+              <span class="flex items-center gap-3">
+                <i class="fas fa-sign-out-alt w-5 group-hover:scale-110 transition-transform"></i>
+                <span class="font-medium">Logout</span>
+              </span>
+            </button>
+          </div>
         </div>
       </template>
       <template v-else>
-        <a href="/login" class="border border-yellow-400 bg-yellow-400 text-blue-900 py-2 px-4 rounded-lg font-semibold hover:bg-yellow-300 hover:border-yellow-300 transition-all duration-200 flex items-center gap-2 shadow">
-          <span class="flaticon-user"></span>
+        <a 
+          href="/login" 
+          class="border border-yellow-400 bg-yellow-400 text-blue-900 py-2 px-4 rounded-lg font-semibold hover:bg-yellow-300 hover:border-yellow-300 transition-all duration-200 flex items-center gap-2 shadow"
+        >
+          <i class="fas fa-sign-in-alt"></i>
           <span class="hidden md:inline">Masuk</span>
         </a>
       </template>
@@ -153,16 +209,21 @@ import { useRouter } from 'vue-router'
 const auth = useAuthStore()
 const $router = useRouter()
 const isMenuOpen = ref(false)
+const isUserDropdownOpen = ref(false)
 
-// Optional: Close menu when route changes
+// Close menus when route changes
 watch(() => $router.currentRoute.value, () => {
   isMenuOpen.value = false
+  isUserDropdownOpen.value = false
 })
 
-// Optional: Close menu when clicking outside
+// Close menus when clicking outside
 onMounted(() => {
   document.addEventListener('click', (e) => {
     const target = e.target as HTMLElement
+    if (!target.closest('.user-dropdown')) {
+      isUserDropdownOpen.value = false
+    }
     if (!target.closest('nav')) {
       isMenuOpen.value = false
     }
@@ -180,5 +241,22 @@ onMounted(() => {
 .backdrop-blur-sm {
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+}
+
+/* Add dropdown animation */
+.user-dropdown > div {
+  transform-origin: top right;
+  animation: dropdown 0.2s ease-out;
+}
+
+@keyframes dropdown {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 </style>

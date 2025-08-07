@@ -121,16 +121,22 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 import { User, IdCard, Mail, Lock } from 'lucide-vue-next'
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
+
+// Form data
 const name = ref('')
 const email = ref('')
 const nip = ref('')
 const password = ref('')
 const password2 = ref('')
 const passwordStrength = ref(0)
+const isLoading = ref(false)
+const error = ref('')
 
 // Avatar handling
 const avatarUrl = ref('https://api.dicebear.com/7.x/avataaars/svg?seed=1')
@@ -141,13 +147,70 @@ const randomizeAvatar = () => {
   avatarUrl.value = `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentSeed.value}`
 }
 
+const validateForm = () => {
+  if (!name.value || !email.value || !password.value || !password2.value) {
+    error.value = 'Semua field harus diisi'
+    return false
+  }
+
+  if (password.value !== password2.value) {
+    error.value = 'Password tidak sama'
+    return false
+  }
+
+  if (passwordStrength.value < 60) {
+    error.value = 'Password terlalu lemah'
+    return false
+  }
+
+  return true
+}
+
+const submitSignup = async () => {
+  try {
+    error.value = ''
+    if (!validateForm()) return
+
+    isLoading.value = true
+    
+    const response = await fetch('/api/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        full_name: name.value,
+        email: email.value,
+        password: password.value,
+        nip: nip.value || undefined,
+        avatar_seed: currentSeed.value.toString()
+      })
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Gagal mendaftar')
+    }
+
+    // Registration successful
+    router.push({
+      path: '/login',
+      query: { 
+        message: 'Pendaftaran berhasil! Silakan login dengan akun Anda.' 
+      }
+    })
+
+  } catch (e) {
+    error.value = (e instanceof Error ? e.message : 'Terjadi kesalahan saat mendaftar')
+    console.error('Signup error:', e)
+  } finally {
+    isLoading.value = false
+  }
+}
+
 // Initialize with random avatar
 randomizeAvatar()
-
-const submitSignup = () => {
-  // TODO: include avatar seed in signup data
-  console.log('Selected avatar seed:', currentSeed.value)
-}
 </script>
 
 <style scoped>

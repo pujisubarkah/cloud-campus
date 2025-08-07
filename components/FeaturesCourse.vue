@@ -1,47 +1,52 @@
-<script setup>
-const povertyCourses = [
-  {
-    title: 'Semi-close loop ecosystem dalam Pengentasan Kemiskinan',
-    img: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80',
-    desc: 'Membangun ekosistem berkelanjutan untuk mendukung pengentasan kemiskinan secara terpadu.',
-    link: '#'
-  },
-  {
-    title: 'Rencana Induk Pengentasan Kemiskinan',
-    img: 'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=400&q=80',
-    desc: 'Strategi dan perencanaan jangka panjang untuk menurunkan angka kemiskinan.',
-    link: '#'
-  },
-  {
-    title: 'Industrialisasi untuk Memerdekakan Rakyat Miskin',
-    img: 'https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=400&q=80',
-    desc: 'Mendorong industrialisasi sebagai solusi untuk meningkatkan taraf hidup masyarakat miskin.',
-    link: '#'
-  },
-  {
-    title: 'Penyusunan Proposal',
-    img: 'https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?auto=format&fit=crop&w=400&q=80',
-    desc: 'Teknik dan tips dalam menyusun proposal program pengentasan kemiskinan yang efektif.',
-    link: '#'
-  },
-  {
-    title: 'Studi Kasus Inovasi Pengentasan Kemiskinan',
-    img: 'https://images.unsplash.com/photo-1503676382389-4809596d5290?auto=format&fit=crop&w=400&q=80',
-    desc: 'Belajar dari berbagai inovasi dan praktik terbaik di lapangan.',
-    link: '#'
-  },
-  {
-    title: 'Penyusunan proposal Pengentasan Kemiskinan',
-    img: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=400&q=80',
-    desc: 'Langkah-langkah detail dalam membuat proposal pengentasan kemiskinan yang berdampak.',
-    link: '#'
-  }
-];
+<script setup lang="ts">
+import { ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 
-const search = ref('');
-const filteredCourses = computed(() => {
-  return povertyCourses.filter(course => course.title.toLowerCase().includes(search.value.toLowerCase()));
-});
+interface Course {
+  id: string
+  title: string
+  slug: string
+  description: string
+  thumbnail_url?: string
+  instructor_name: string
+  created_at: string
+  is_published: boolean
+}
+
+const router = useRouter()
+const courses = ref<Course[]>([])
+const search = ref('')
+const isLoading = ref(true)
+const error = ref('')
+
+const fetchCourses = async () => {
+  isLoading.value = true
+  error.value = ''
+  try {
+    const res = await fetch('/api/course')
+    if (!res.ok) throw new Error('Gagal memuat data kursus')
+    const data = await res.json()
+    // Filter hanya kursus yang published
+    courses.value = data.filter((c: Course) => c.is_published)
+  } catch (e: any) {
+    error.value = e.message || 'Gagal memuat data kursus'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+onMounted(fetchCourses)
+
+const filteredCourses = computed(() =>
+  courses.value.filter(course =>
+    course.title.toLowerCase().includes(search.value.toLowerCase())
+  )
+)
+
+const goToCourse = (course: Course) => {
+  // Pakai id atau slug sesuai routing kamu
+  router.push(`/course/${course.id}`)
+}
 </script>
 
 <template>
@@ -49,12 +54,11 @@ const filteredCourses = computed(() => {
     <div class="container mx-auto px-4">
       <div class="flex justify-center">
         <div class="max-w-xl w-full">
-          <!-- Fitur Pencarian Menarik -->
           <div class="main-title text-center mb-8">
             <div class="relative flex items-center">
               <input
                 type="text"
-                placeholder="Cari Materi Pengentasan Kemiskinan..."
+                placeholder="Cari Kursus Pengentasan Kemiskinan..."
                 class="input input-bordered w-full py-4 pl-5 pr-14 text-lg rounded-full shadow focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
                 v-model="search"
               />
@@ -71,28 +75,49 @@ const filteredCourses = computed(() => {
           </div>
         </div>
       </div>
-      <div class="mt-8">
+
+      <div v-if="isLoading" class="text-center py-12">
+        <div class="animate-spin w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+        <p class="text-gray-500">Loading kursus...</p>
+      </div>
+      <div v-else-if="error" class="text-center py-12 text-red-600">{{ error }}</div>
+      <div v-else class="mt-8">
         <div class="w-full">
           <div class="flex gap-6 overflow-x-auto pb-4">
-            <div v-for="course in filteredCourses" :key="course.title" class="min-w-[355px]">
+            <div v-for="course in filteredCourses" :key="course.id" class="min-w-[355px]">
               <div class="top_courses ccnWithFoot hbmsu-masonry-grid-custom bg-white rounded-xl shadow-lg p-4 transition-transform duration-200 hover:-translate-y-2 hover:shadow-2xl">
                 <div class="thumb relative mb-2">
-                  <img class="img-whp rounded-lg w-full h-48 object-cover" :src="course.img" :alt="course.title">
-                  <a class="overlay absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-200 bg-black bg-opacity-30 rounded-lg" :href="course.link">
+                  <img
+                    class="img-whp rounded-lg w-full h-48 object-cover"
+                    :src="course.thumbnail_url || 'https://placehold.co/400x200?text=No+Image'"
+                    :alt="course.title"
+                  >
+                  <button
+                    class="overlay absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-200 bg-black bg-opacity-30 rounded-lg"
+                    @click="goToCourse(course)"
+                  >
                     <div class="tag bg-[#FFD966] text-[#3399FF] px-3 py-2 rounded font-semibold shadow">Lihat Materi</div>
-                  </a>
+                  </button>
                 </div>
                 <div class="details mt-2">
                   <div class="tc_content">
-                    <a :href="course.link"><h5 class="font-bold text-lg text-gray-800 mb-1">{{ course.title }}</h5></a>
-                    <p class="text-sm text-gray-600 mb-2">{{ course.desc }}</p>
+                    <h5 class="font-bold text-lg text-gray-800 mb-1">{{ course.title }}</h5>
+                    <p class="text-sm text-gray-600 mb-2">{{ course.description }}</p>
+                  </div>
+                  <div class="text-xs text-gray-500 mt-1">
+                    <span>Instruktur: {{ course.instructor_name }}</span>
+                  </div>
+                  <div class="text-xs text-gray-500">
+                    <span>Dibuat: {{ new Date(course.created_at).toLocaleDateString('id-ID') }}</span>
                   </div>
                 </div>
-                <div class="course-start-date-status text-xs text-gray-500 mt-1"><span>Self Study</span></div>
                 <div class="tc_footer flex justify-end items-center mt-2">
                   <!-- Add more info if needed -->
                 </div>
               </div>
+            </div>
+            <div v-if="filteredCourses.length === 0" class="text-center text-gray-500 w-full py-12">
+              Tidak ada kursus ditemukan.
             </div>
           </div>
         </div>
