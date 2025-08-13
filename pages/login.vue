@@ -220,10 +220,10 @@
             <div class="flex items-center justify-between gap-4">
               <div class="flex items-center gap-3">
                 <div class="bg-gradient-to-r from-blue-500 to-purple-500 w-10 h-10 rounded-full flex items-center justify-center text-white font-bold">
-                  {{ auth.user?.name?.charAt(0).toUpperCase() }}
+                  {{ auth.user?.full_name?.charAt(0).toUpperCase() }}
                 </div>
                 <div>
-                  <p class="font-semibold text-gray-800">{{ auth.user?.name }}</p>
+                  <p class="font-semibold text-gray-800">{{ auth.user?.full_name }}</p>
                   <p class="text-sm text-gray-600">Berhasil masuk</p>
                 </div>
               </div>
@@ -263,12 +263,50 @@ const password = ref('')
 const loading = ref(false)
 const errorMsg = ref('')
 
+// Di halaman login, pastikan token disimpan ke store
+const handleLogin = async () => {
+  try {
+    const response = await $fetch('/api/login', {
+      method: 'POST',
+      body: {
+        email: email.value,
+        password: password.value
+      }
+    })
+
+    if (response.success && response.user) {
+      // Simpan user dengan token ke store
+      auth.login({
+        id: String(response.user.id),
+        email: response.user.email ?? '',
+        full_name: response.user.full_name ?? '',
+        role_id: response.user.role_id,
+        token: response.user.token  // 👈 Token disimpan
+      })
+
+      // Redirect setelah login
+      const redirect = localStorage.getItem('redirectAfterSignup')
+      if (redirect) {
+        localStorage.removeItem('redirectAfterSignup')
+        router.push(redirect)
+      } else {
+        router.push('/my')
+      }
+    }
+  } catch (error) {
+    console.error('Login failed:', error)
+    errorMsg.value = (typeof error === 'object' && error !== null && 'data' in error && typeof (error as any).data?.message === 'string')
+      ? (error as any).data.message
+      : 'Login gagal'
+  }
+}
+
 async function handleSubmit() {
   loading.value = true
   errorMsg.value = ''
   try {
     type LoginResponse =
-      | { success: boolean; user: { id: string; email: string; full_name: string; role_id: number }; error?: undefined }
+      | { success: boolean; user: { id: string; email: string; full_name: string; role_id: number; token: string }; error?: undefined }
       | { error: string; success?: undefined; user?: undefined };
 
     const res: LoginResponse = await ($fetch as any)('/api/login', {
@@ -282,8 +320,10 @@ async function handleSubmit() {
     if ('success' in res && res.success && res.user) {
       auth.login({ 
         id: String(res.user.id), 
-        name: res.user.full_name, 
-        role_id: Number(res.user.role_id)
+        full_name: res.user.full_name, 
+        email: res.user.email,
+        role_id: Number(res.user.role_id),
+        token: res.user.token
       })
       // Redirect sesuai role_id
       if (res.user.role_id === 1) {

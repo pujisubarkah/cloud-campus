@@ -1,18 +1,20 @@
-
 <template>
-  <div class="min-h-screen  font-poppins pt-16">
+  <div class="min-h-screen font-poppins pt-16">
     <reimage />
     <div class="my-8"></div>
+    <div class="container mx-auto px-4">
+      <IntroAkademi />
+    </div>
     <FeaturesCourse />
     <testimoni />
     <!-- MapSection removed as requested -->
   </div>
 </template>
 
-
 <script setup>
 import reimage from '~/components/reimage.vue'
 import FeaturesCourse from '~/components/FeaturesCourse.vue'
 import testimoni from '~/components/testimoni.vue'
+import IntroAkademi from '~/components/IntroAkademi.vue'
 // Halaman selamat datang Cloud Campus
 </script>

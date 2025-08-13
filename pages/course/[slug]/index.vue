@@ -192,7 +192,7 @@
             @click="handleJoin"
             class="mt-8 w-full py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-300"
           >
-            Mulai Belajar Sekarang
+            Enroll
           </button>
         </div>
       </aside>
@@ -205,16 +205,8 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '~/stores/auth'
 
-// Extend the user type to include 'token'
-const auth = useAuthStore() as {
-  isLoggedIn: boolean;
-  user?: {
-    id: string;
-    name: string;
-    role_id: number;
-    token?: string;
-  };
-}
+// Use the actual type from useAuthStore to ensure all methods are available
+const auth = useAuthStore()
 
 interface Course {
   id: string
@@ -302,16 +294,22 @@ const fetchCourseData = async () => {
 // Update onMounted to use async/await
 onMounted(async () => {
   await fetchCourseData()
+  if (!auth.isLoggedIn) {
+    auth.loadFromStorage?.()
+  }
 })
 
 const handleJoin = async () => {
-  try {
-    if (!auth.isLoggedIn) {
-      localStorage.setItem('redirectAfterSignup', `/course/${route.params.slug}/materi`)
-      router.push('/login')
-      return
-    }
+  // Pastikan store sudah sinkron sebelum pengecekan
+  auth.loadFromStorage?.()
 
+  if (!auth.isLoggedIn || !auth.user?.token) {
+    localStorage.setItem('redirectAfterSignup', `/course/${route.params.slug}/materi`)
+    router.push('/login')
+    return
+  }
+
+  try {
     if (!course.value?.id) {
       throw new Error('Course ID not found')
     }
@@ -348,6 +346,10 @@ const handleJoin = async () => {
     alert(error instanceof Error ? error.message : 'Failed to enroll in course')
   }
 }
+
+console.log('auth.isLoggedIn:', auth.isLoggedIn)
+console.log('auth.user:', auth.user)
+console.log('auth.user?.token:', auth.user?.token)
 </script>
 
 <style>

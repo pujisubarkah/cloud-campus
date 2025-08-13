@@ -1,45 +1,68 @@
-import { eq } from 'drizzle-orm'
+import { auth } from '@/server/auth'
 import { db } from '@/server/db'
 import { users } from '@/server/database/users'
 import { readBody } from 'h3'
 import bcrypt from 'bcryptjs'
+import { eq } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
+  if (event.method !== 'POST') {
+    throw createError({
+      statusCode: 405,
+      statusMessage: 'Method not allowed'
+    })
+  }
+
   try {
-    if (event.method !== 'POST') {
-      return { error: 'Method not allowed' }
+    const { email, password } = await readBody(event)
+
+    if (!email || !password) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Email and password are required'
+      })
     }
 
-    const body = await readBody(event)
-    const { email, password } = body
-
-    // Ambil user berdasarkan email
-    const result = await db
-      .select({
-        id: users.id,
-        email: users.email,
-        full_name: users.full_name,
-        role: users.role,
-        role_id: users.role_id, // tambahkan role_id
-        passwordHash: users.password_hash
+    // Get user by email
+    const usersResult = await db.select().from(users).where(eq(users.email, email));
+    const user = usersResult[0];
+    if (!user) {
+      throw createError({
+        statusCode: 401,
+        statusMessage: 'Invalid credentials'
       })
-      .from(users)
-      .where(eq(users.email, email))
-      .limit(1)
+    }
 
-    const user = result[0]
+    // Verify password
+    const isValidPassword = await auth.verifyPassword(password, user.password_hash)
+    if (!isValidPassword) {
+      throw createError({
+        statusCode: 401,
+        statusMessage: 'Invalid credentials'
+      })
+    }
 
-    if (!user) throw new Error('Email tidak ditemukan')
+    // Generate token
+    const token = auth.generateToken({
+      id: user.id,
+      email: user.email,
+      full_name: user.full_name,
+      role_id: user.role_id
+    })
 
-    const isMatch = await bcrypt.compare(password, user.passwordHash)
-    if (!isMatch) throw new Error('Password salah')
-
-    // Buang password sebelum kirim ke client
-    const { passwordHash, ...userData } = user
-
-    return { success: true, user: userData }
-  } catch (err) {
-    console.error('Login error:', err)
-    return { error: err instanceof Error ? err.message : 'Terjadi kesalahan server' }
+    // Return user data WITH token
+    return {
+      success: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        full_name: user.full_name,
+        role_id: user.role_id,
+        token: token  // 👈 PENTING: Token harus dikembalikan
+      }
+    }
+  } catch (error) {
+    console.error('Login error:', error)
+    throw error
   }
 })

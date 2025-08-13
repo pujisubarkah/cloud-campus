@@ -28,137 +28,164 @@
       <div class="flex flex-col lg:flex-row gap-8">
         <!-- Konten Utama -->
         <div class="flex-1">
-          <!-- Kartu Statistik -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div class="bg-white rounded-2xl shadow-lg p-6 border border-blue-100">
-              <div class="flex items-center">
-                <div class="bg-blue-100 p-3 rounded-xl">
-                  <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253"/>
-                  </svg>
-                </div>
-                <div class="ml-4">
-                  <p class="text-sm text-gray-600">Total Kursus</p>
-                  <p class="text-2xl font-bold text-gray-800">{{ enrollments.length }}</p>
-                </div>
-              </div>
-            </div>
-            <div class="bg-white rounded-2xl shadow-lg p-6 border border-green-100">
-              <div class="flex items-center">
-                <div class="bg-green-100 p-3 rounded-xl">
-                  <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                  </svg>
-                </div>
-                <div class="ml-4">
-                  <p class="text-sm text-gray-600">Selesai</p>
-                  <p class="text-2xl font-bold text-gray-800">0</p>
-                </div>
-              </div>
-            </div>
-            <div class="bg-white rounded-2xl shadow-lg p-6 border border-orange-100">
-              <div class="flex items-center">
-                <div class="bg-orange-100 p-3 rounded-xl">
-                  <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                  </svg>
-                </div>
-                <div class="ml-4">
-                  <p class="text-sm text-gray-600">Sedang Berjalan</p>
-                  <p class="text-2xl font-bold text-gray-800">{{ enrollments.length }}</p>
-                </div>
-              </div>
+          <!-- Loading State -->
+          <div v-if="isLoading" class="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+            <div class="text-center py-16">
+              <div class="animate-spin w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+              <p class="text-gray-500">Memuat data kursus...</p>
             </div>
           </div>
 
-          <!-- Kartu Kursus -->
-          <div class="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-            <!-- Belum Login -->
-            <div v-if="!auth.isLoggedIn" class="text-center py-16">
-              <div class="bg-blue-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
-                <svg class="w-12 h-12 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+          <!-- Error State -->
+          <div v-else-if="error" class="bg-white rounded-2xl shadow-xl p-8 border border-red-100">
+            <div class="text-center py-16">
+              <div class="bg-red-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg class="w-12 h-12 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
               </div>
-              <h2 class="text-3xl font-bold mb-4 text-gray-800">Selamat Datang Kembali!</h2>
-              <p class="text-gray-600 mb-8 text-lg">Silakan masuk untuk mengakses materi pembelajaran dan melanjutkan perjalanan Anda.</p>
-              <NuxtLink to="/login" class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
-                </svg>
-                Masuk untuk Melanjutkan
-              </NuxtLink>
+              <h3 class="text-2xl font-bold mb-4 text-red-800">Terjadi Kesalahan</h3>
+              <p class="text-red-600 mb-8">{{ error }}</p>
+              <button @click="fetchEnrollments" class="px-6 py-3 bg-red-600 text-white font-semibold rounded-xl shadow hover:bg-red-700 transition">
+                Coba Lagi
+              </button>
             </div>
+          </div>
 
-            <!-- Belum Ada Kursus -->
-            <div v-else-if="enrollments.length === 0" class="text-center py-16">
-              <div class="bg-gray-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
-                <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253"/>
-                </svg>
-              </div>
-              <h3 class="text-2xl font-bold mb-4 text-gray-800">Belum Ada Kursus</h3>
-              <p class="text-gray-600 mb-8">Mulai perjalanan belajar Anda dengan mendaftar kursus pertama!</p>
-              <NuxtLink to="/" class="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl shadow hover:bg-blue-700 transition">
-                Jelajahi Kursus
-              </NuxtLink>
-            </div>
-
-            <!-- Daftar Kursus -->
-            <div v-else>
-              <div class="flex items-center justify-between mb-8">
-                <h2 class="text-2xl font-bold text-gray-800">Kursus Anda</h2>
-                <div class="flex items-center space-x-2 text-sm text-gray-600">
-                  <span>{{ enrollments.length }} kursus terdaftar</span>
+          <!-- Main Content -->
+          <div v-else>
+            <!-- Kartu Statistik -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <div class="bg-white rounded-2xl shadow-lg p-6 border border-blue-100">
+                <div class="flex items-center">
+                  <div class="bg-blue-100 p-3 rounded-xl">
+                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253"/>
+                    </svg>
+                  </div>
+                  <div class="ml-4">
+                    <p class="text-sm text-gray-600">Total Kursus</p>
+                    <p class="text-2xl font-bold text-gray-800">{{ enrollments.length }}</p>
+                  </div>
                 </div>
               </div>
-
-              <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div v-for="enroll in enrollments" :key="enroll.enrollmentId" 
-                     class="group bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
-                  
-                  <!-- Gambar Kursus -->
-                  <div class="relative overflow-hidden h-48">
-                    <img :src="enroll.course_thumbnail" 
-                         :alt="enroll.course_title"
-                         class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
-                    <div class="absolute top-4 right-4">
-                      <span class="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg">
-                        Terdaftar
-                      </span>
-                    </div>
+              <div class="bg-white rounded-2xl shadow-lg p-6 border border-green-100">
+                <div class="flex items-center">
+                  <div class="bg-green-100 p-3 rounded-xl">
+                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
                   </div>
+                  <div class="ml-4">
+                    <p class="text-sm text-gray-600">Selesai</p>
+                    <p class="text-2xl font-bold text-gray-800">0</p>
+                  </div>
+                </div>
+              </div>
+              <div class="bg-white rounded-2xl shadow-lg p-6 border border-orange-100">
+                <div class="flex items-center">
+                  <div class="bg-orange-100 p-3 rounded-xl">
+                    <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                  </div>
+                  <div class="ml-4">
+                    <p class="text-sm text-gray-600">Sedang Berjalan</p>
+                    <p class="text-2xl font-bold text-gray-800">{{ enrollments.length }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-                  <!-- Konten Kursus -->
-                  <div class="p-6">
-                    <div class="mb-4">
-                      <h3 class="text-xl font-bold text-gray-800 mb-2 line-clamp-2">{{ enroll.course_title }}</h3>
-                      <p class="text-gray-600 text-sm line-clamp-3">{{ enroll.course_description }}</p>
+            <!-- Kartu Kursus -->
+            <div class="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+              <!-- Belum Login -->
+              <div v-if="!auth.isLoggedIn" class="text-center py-16">
+                <div class="bg-blue-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <svg class="w-12 h-12 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                  </svg>
+                </div>
+                <h2 class="text-3xl font-bold mb-4 text-gray-800">Selamat Datang Kembali!</h2>
+                <p class="text-gray-600 mb-8 text-lg">Silakan masuk untuk mengakses materi pembelajaran dan melanjutkan perjalanan Anda.</p>
+                <NuxtLink to="/login" class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                  <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
+                  </svg>
+                  Masuk untuk Melanjutkan
+                </NuxtLink>
+              </div>
+
+              <!-- Belum Ada Kursus -->
+              <div v-else-if="enrollments.length === 0" class="text-center py-16">
+                <div class="bg-gray-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253"/>
+                  </svg>
+                </div>
+                <h3 class="text-2xl font-bold mb-4 text-gray-800">Belum Ada Kursus</h3>
+                <p class="text-gray-600 mb-8">Mulai perjalanan belajar Anda dengan mendaftar kursus pertama!</p>
+                <NuxtLink to="/" class="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl shadow hover:bg-blue-700 transition">
+                  Jelajahi Kursus
+                </NuxtLink>
+              </div>
+
+              <!-- Daftar Kursus -->
+              <div v-else>
+                <div class="flex items-center justify-between mb-8">
+                  <h2 class="text-2xl font-bold text-gray-800">Kursus Anda</h2>
+                  <div class="flex items-center space-x-2 text-sm text-gray-600">
+                    <span>{{ enrollments.length }} kursus terdaftar</span>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div v-for="enroll in enrollments" :key="enroll.enrollmentId" 
+                       class="group bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
+                    
+                    <!-- Gambar Kursus -->
+                    <div class="relative overflow-hidden h-48">
+                      <img :src="enroll.course_thumbnail" 
+                           :alt="enroll.course_title"
+                           class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                      <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+                      <div class="absolute top-4 right-4">
+                        <span class="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg">
+                          Terdaftar
+                        </span>
+                      </div>
                     </div>
 
-                    <!-- Progress Bar -->
-                    <div class="mb-4">
-                      <div class="flex justify-between text-sm text-gray-600 mb-2">
-                        <span>Kemajuan</span>
-                        <span>0%</span>
+                    <!-- Konten Kursus -->
+                    <div class="p-6">
+                      <div class="mb-4">
+                        <h3 class="text-xl font-bold text-gray-800 mb-2 line-clamp-2">{{ enroll.course_title }}</h3>
+                        <p class="text-gray-600 text-sm line-clamp-3">{{ enroll.course_description }}</p>
                       </div>
-                      <div class="w-full bg-gray-200 rounded-full h-2">
-                        <div class="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full" style="width: 0%"></div>
-                      </div>
-                    </div>
 
-                    <!-- Tombol Aksi -->
-                    <div class="flex space-x-3">
-                      <NuxtLink :to="`/course/${enroll.course_id}/materi`"
-                                class="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-center py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5">
-                        Lanjutkan Belajar
-                      </NuxtLink>
-                      <button class="px-4 py-3 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
-                        </svg>
-                      </button>
+                      <!-- Progress Bar -->
+                      <div class="mb-4">
+                        <div class="flex justify-between text-sm text-gray-600 mb-2">
+                          <span>Kemajuan</span>
+                          <span>0%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                          <div class="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full" style="width: 0%"></div>
+                        </div>
+                      </div>
+
+                      <!-- Tombol Aksi -->
+                      <div class="flex space-x-3">
+                        <NuxtLink :to="`/course/${enroll.course_slug}/materi`"
+                                  class="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-center py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5">
+                          Lanjutkan Belajar
+                        </NuxtLink>
+                        <button class="px-4 py-3 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition">
+                          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
+                          </svg>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -267,6 +294,7 @@ import { ref, onMounted } from 'vue'
 import { useAuthStore } from '~/stores/auth'
 
 const auth = useAuthStore()
+
 interface Enrollment {
   enrollmentId: string | number
   course_id: string | number
@@ -277,50 +305,95 @@ interface Enrollment {
 }
 
 const enrollments = ref<Enrollment[]>([])
+const isLoading = ref(false)
+const error = ref('')
 
-onMounted(async () => {
-  if (!auth.isLoggedIn) {
+const fetchEnrollments = async () => {
+  // Pastikan auth sinkron dengan localStorage
+  auth.loadFromStorage?.()
+
+  console.log('=== DEBUG FETCH ENROLLMENTS ===')
+  console.log('isLoggedIn:', auth.isLoggedIn)
+  console.log('user:', auth.user)
+  console.log('token:', auth.user?.token)
+
+  if (!auth.isLoggedIn || !auth.user?.token) {
+    console.log('❌ User not logged in or no token')
+    enrollments.value = []
     return
   }
 
+  console.log('✅ User logged in, fetching enrollments...')
+  isLoading.value = true
+  error.value = ''
+
   try {
-    // 1. Fetch data from the API
-    const responseData: any = await $fetch('/api/enrollment')
+    // Fetch data dari API dengan header Authorization
+    const responseData: any = await $fetch('/api/enrollment', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${auth.user.token}`,
+        'Content-Type': 'application/json'
+      }
+    })
 
-    // 2. Guard against empty or invalid responses
-    if (!responseData || typeof responseData !== 'object') {
-      enrollments.value = []
-      return
-    }
+    console.log('📥 Raw API response:', responseData)
+    console.log('📥 Response type:', typeof responseData)
+    console.log('📥 Response keys:', Object.keys(responseData || {}))
 
-    // 3. Determine the source of enrollment data from the response
+    // Parse response sesuai struktur API
     let rawEnrollments: any[] = []
-    if (Array.isArray(responseData)) {
-      // Handles case where API returns a direct array: [...]
-      rawEnrollments = responseData
-    } else if (responseData.enrollments && Array.isArray(responseData.enrollments)) {
-      // Handles case where API returns: { enrollments: [...] }
+    
+    if (responseData && responseData.success && Array.isArray(responseData.enrollments)) {
+      console.log('✅ Found enrollments in success response')
       rawEnrollments = responseData.enrollments
-    } else if (responseData.enrollment && typeof responseData.enrollment === 'object') {
-      // Handles case where API returns: { enrollment: {...} }
-      rawEnrollments = [responseData.enrollment]
+    } else if (Array.isArray(responseData)) {
+      console.log('✅ Response is direct array')
+      rawEnrollments = responseData
+    } else if (responseData && Array.isArray(responseData.data)) {
+      console.log('✅ Found enrollments in data field')
+      rawEnrollments = responseData.data
     }
 
-    // 4. Map the raw data to the structured Enrollment type, providing defaults
-    enrollments.value = rawEnrollments.map((e: any) => ({
-      enrollmentId: e.enrollmentId ?? e.id ?? '', // Use enrollmentId or id
-      course_id: e.course_id ?? '',
-      course_thumbnail: e.course_thumbnail || '/images/placeholder.jpg', // Provide a default placeholder image
-      course_title: e.course_title || 'Kursus Tanpa Judul',
-      course_slug: e.course_slug || '',
-      course_description: e.course_description || 'Tidak ada deskripsi.'
-    }))
+    console.log('📋 Raw enrollments:', rawEnrollments)
+    console.log('📋 Raw enrollments length:', rawEnrollments.length)
 
-  } catch (err) {
-    console.error("Gagal mengambil data pendaftaran:", err)
-    enrollments.value = [] // Ensure enrollments is an empty array on error
+    if (rawEnrollments.length > 0) {
+      console.log('📋 First enrollment sample:', rawEnrollments[0])
+    }
+
+    // Map data ke struktur Enrollment yang benar
+    enrollments.value = rawEnrollments.map((e: any) => {
+      const mapped = {
+        enrollmentId: e.enrollment_id ?? e.id,
+        course_id: e.course_id,
+        course_thumbnail: e.course_thumbnail || e.thumbnail_url || 'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=400&q=80',
+        course_title: e.course_title || e.title || 'Kursus Tanpa Judul',
+        course_slug: e.course_slug || e.slug || '',
+        course_description: e.course_description || e.description || 'Tidak ada deskripsi.'
+      }
+      console.log('🔄 Mapped enrollment:', mapped)
+      return mapped
+    })
+
+    console.log('✅ Final enrollments:', enrollments.value)
+    console.log('✅ Total enrollments:', enrollments.value.length)
+
+  } catch (err: any) {
+    console.error("❌ Error fetching enrollments:", err)
+    console.error("❌ Error status:", err.status)
+    console.error("❌ Error data:", err.data)
+    console.error("❌ Error message:", err.message)
+    
+    error.value = err.data?.message || err.message || 'Gagal memuat data kursus'
+    enrollments.value = []
+  } finally {
+    isLoading.value = false
+    console.log('=== END DEBUG ===')
   }
-})
+}
+
+onMounted(fetchEnrollments)
 </script>
 
 <style scoped>

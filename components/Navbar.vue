@@ -84,7 +84,7 @@
             <div class="space-y-4">
               <span class="block text-blue-50 font-medium px-4">
                 <i class="fas fa-user-circle mr-2 text-yellow-300"></i>
-                {{ auth.user?.name }}
+                {{ auth.user?.full_name }}
               </span>
               <button 
                 @click="auth.logout(); $router.push('/'); isMenuOpen = false" 
@@ -131,7 +131,7 @@
             class="flex items-center gap-2 px-4 py-2 rounded-lg text-yellow-300 font-semibold text-base hover:bg-blue-800/50 transition-all duration-200"
           >
             <i class="fas fa-user-circle text-2xl"></i>
-            <span>{{ auth.user?.name }}</span>
+            <span>{{ auth.user?.full_name }}</span>
             <svg 
               class="w-4 h-4 transition-transform duration-200"
               :class="{ 'rotate-180': isUserDropdownOpen }"
