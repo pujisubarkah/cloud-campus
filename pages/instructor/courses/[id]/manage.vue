@@ -31,6 +31,7 @@
                   <span class="text-blue-600 text-lg">#{{ content.order }}</span>
                   <a :href="content.content_url" target="_blank" class="text-blue-600 underline text-lg">{{ content.title }}</a>
                   <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">{{ content.type }}</span>
+                  <button class="btn btn-xs btn-warning text-lg" @click="openEditContentModal(content)">Edit</button>
                   <button class="btn btn-xs btn-error text-lg" @click="removeContent(content.id)">Hapus</button>
                 </li>
               </ul>
@@ -44,6 +45,7 @@
                   <span class="text-purple-600 text-lg">#{{ quiz.order }}</span>
                   <span class="text-purple-600 text-lg">{{ quiz.question }}</span>
                   <span class="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs">{{ quiz.type }}</span>
+                  <button class="btn btn-xs btn-warning text-lg" @click="openEditQuizModal(quiz)">Edit</button>
                   <button class="btn btn-xs btn-error text-lg" @click="removeQuiz(quiz.id)">Hapus</button>
                 </li>
               </ul>
@@ -202,6 +204,110 @@
         </div>
       </div>
     </div>
+
+    <!-- Modal Edit Content -->
+    <div v-if="showEditContentModal" class="fixed inset-0 flex items-center justify-center z-50">
+      <div class="modal-overlay absolute inset-0 bg-black opacity-30"></div>
+      <div class="modal-container bg-white w-11/12 md:max-w-md mx-auto rounded-lg shadow-lg z-50 overflow-y-auto">
+        <div class="modal-content py-4 text-left px-6">
+          <h2 class="text-lg font-bold mb-4">Edit Konten</h2>
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1" for="editContentTitle">Judul Konten</label>
+            <input v-model="editContentTitle" type="text" id="editContentTitle" class="input input-bordered w-full" required />
+          </div>
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1" for="editContentDescription">Deskripsi Konten</label>
+            <textarea v-model="editContentDescription" id="editContentDescription" class="input input-bordered w-full" rows="3"></textarea>
+          </div>
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1" for="editContentType">Tipe Konten</label>
+            <select v-model="editContentType" id="editContentType" class="select select-bordered w-full">
+              <option value="video">Video</option>
+              <option value="pdf">PDF</option>
+            </select>
+          </div>
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1" for="editContentOrder">Urutan Konten</label>
+            <input v-model.number="editContentOrder" type="number" id="editContentOrder" class="input input-bordered w-24" min="1" required />
+          </div>
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1" for="editContentUrl">URL Konten</label>
+            <input v-model="editContentUrl" type="url" id="editContentUrl" class="input input-bordered w-full" required />
+          </div>
+          <div class="flex justify-end gap-2">
+            <button class="btn btn-secondary" @click="showEditContentModal = false">Batal</button>
+            <button class="btn btn-primary" @click="saveEditContent">Update Konten</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Edit Quiz -->
+    <div v-if="showEditQuizModal" class="fixed inset-0 flex items-center justify-center z-50">
+      <div class="modal-overlay absolute inset-0 bg-black opacity-30"></div>
+      <div class="modal-container bg-white w-11/12 md:max-w-md mx-auto rounded-lg shadow-lg z-50 overflow-y-auto">
+        <div class="modal-content py-4 text-left px-6">
+          <h2 class="text-lg font-bold mb-4">Edit Quiz</h2>
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Tipe Quiz</label>
+            <select v-model="editQuizType" class="select select-bordered w-full">
+              <option value="multiple">Multiple Choice</option>
+              <option value="short">Short Answer</option>
+              <option value="truefalse">True or False</option>
+              <option value="fill">Fill in the Blanks</option>
+              <option value="likert">Likert Scale</option>
+            </select>
+          </div>
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1" for="editQuizQuestion">Pertanyaan Quiz</label>
+            <input v-model="editQuizQuestion" type="text" id="editQuizQuestion" class="input input-bordered w-full" required />
+          </div>
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1" for="editQuizOrder">Urutan Quiz</label>
+            <input v-model.number="editQuizOrder" type="number" id="editQuizOrder" class="input input-bordered w-24" min="1" required />
+          </div>
+          <!-- Multiple Choice -->
+          <div v-if="editQuizType === 'multiple'" class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Pilihan Jawaban</label>
+            <div v-for="(choice, idx) in editQuizChoices" :key="idx" class="flex gap-2 mb-2">
+              <input v-model="editQuizChoices[idx]" type="text" class="input input-bordered w-full" :placeholder="`Pilihan ${String.fromCharCode(65+idx)}`" required />
+              <input type="radio" :value="idx" v-model="editQuizCorrect" :name="'editQuizCorrect'" />
+              <span>Benar</span>
+            </div>
+            <button class="btn btn-xs btn-outline" @click="addEditChoice" type="button">Tambah Pilihan</button>
+          </div>
+          <!-- Short Answer -->
+          <div v-if="editQuizType === 'short'" class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1" for="editQuizAnswer">Jawaban Singkat</label>
+            <input v-model="editQuizAnswer" type="text" id="editQuizAnswer" class="input input-bordered w-full" required />
+          </div>
+          <!-- True or False -->
+          <div v-if="editQuizType === 'truefalse'" class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Jawaban</label>
+            <select v-model="editQuizAnswer" class="select select-bordered w-full">
+              <option value="true">True</option>
+              <option value="false">False</option>
+            </select>
+          </div>
+          <!-- Fill in the Blanks -->
+          <div v-if="editQuizType === 'fill'" class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1" for="editQuizAnswer">Jawaban yang Benar</label>
+            <input v-model="editQuizAnswer" type="text" id="editQuizAnswer" class="input input-bordered w-full" required />
+          </div>
+          <!-- Likert Scale -->
+          <div v-if="editQuizType === 'likert'" class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Skala Likert (1-5)</label>
+            <select v-model="editQuizAnswer" class="select select-bordered w-full">
+              <option v-for="n in 5" :key="n" :value="n">{{ n }}</option>
+            </select>
+          </div>
+          <div class="flex justify-end gap-2">
+            <button class="btn btn-secondary" @click="showEditQuizModal = false">Batal</button>
+            <button class="btn btn-primary" @click="saveEditQuiz">Update Quiz</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -238,6 +344,23 @@ const editSectionOrder = ref(1)
 const newContentOrder = ref(1) // Tambahkan ini
 const sectionContents = ref([])
 const newQuizOrder = ref(1) // Tambahkan ini
+
+// Tambahkan variabel untuk edit
+const showEditContentModal = ref(false)
+const showEditQuizModal = ref(false)
+const selectedContent = ref(null)
+const selectedQuiz = ref(null)
+const editContentTitle = ref('')
+const editContentDescription = ref('')
+const editContentUrl = ref('')
+const editContentType = ref('video')
+const editContentOrder = ref(1)
+const editQuizType = ref('multiple')
+const editQuizQuestion = ref('')
+const editQuizChoices = ref(['', ''])
+const editQuizCorrect = ref(0)
+const editQuizAnswer = ref('')
+const editQuizOrder = ref(1)
 
 async function fetchSections() {
   try {
@@ -489,4 +612,135 @@ async function fetchSectionContents(sectionId) {
 // Contoh: fetchSectionContents(selectedSection.value.id)
 
 onMounted(fetchSections)
+
+// Function untuk open edit content modal
+function openEditContentModal(content) {
+  selectedContent.value = content
+  editContentTitle.value = content.title
+  editContentDescription.value = content.deskripsi || ''
+  editContentUrl.value = content.content_url
+  editContentType.value = content.type
+  editContentOrder.value = content.order
+  showEditContentModal.value = true
+}
+
+// Function untuk save edit content
+async function saveEditContent() {
+  try {
+    console.log('=== UPDATING CONTENT ===')
+    console.log('Content ID:', selectedContent.value.id)
+    
+    const res = await $fetch(`/api/content_section/${selectedContent.value.id}`, {
+      method: 'PUT',
+      body: {
+        title: editContentTitle.value,
+        type: editContentType.value,
+        deskripsi: editContentDescription.value,
+        content_url: editContentUrl.value,
+        order: editContentOrder.value
+      }
+    })
+
+    if (res.success || res.id) {
+      showEditContentModal.value = false
+      await fetchSections() // Refresh data
+      alert('Konten berhasil diupdate!')
+    } else {
+      alert('Gagal mengupdate konten: ' + (res.error || 'Unknown error'))
+    }
+  } catch (err) {
+    console.error('Error updating content:', err)
+    alert('Gagal mengupdate konten: ' + (err.message || err))
+  }
+}
+
+// Function untuk open edit quiz modal
+function openEditQuizModal(quiz) {
+  selectedQuiz.value = quiz
+  editQuizType.value = quiz.type
+  editQuizQuestion.value = quiz.question
+  editQuizOrder.value = quiz.order
+  
+  if (quiz.type === 'multiple') {
+    editQuizChoices.value = Array.isArray(quiz.choices) ? [...quiz.choices] : ['', '']
+    editQuizCorrect.value = quiz.correct_answer || 0
+  } else {
+    editQuizAnswer.value = quiz.correct_answer || ''
+  }
+  
+  showEditQuizModal.value = true
+}
+
+// Function untuk save edit quiz - gunakan endpoint quizzes_section
+async function saveEditQuiz() {
+  try {
+    console.log('=== UPDATING QUIZ ===')
+    console.log('Quiz ID:', selectedQuiz.value.id)
+    
+    let body = {
+      quiz_id: selectedQuiz.value.id, // tambahkan quiz_id
+      type: editQuizType.value,
+      question: editQuizQuestion.value,
+      order: editQuizOrder.value
+    }
+    
+    if (editQuizType.value === 'multiple') {
+      body.choices = editQuizChoices.value
+      body.correct_answer = editQuizCorrect.value
+    } else {
+      body.correct_answer = editQuizAnswer.value
+    }
+
+    // Gunakan endpoint quizzes_section dengan method PUT
+    const res = await $fetch(`/api/quizzes_section/${selectedQuiz.value.section_id || selectedSection.value.id}`, {
+      method: 'PUT',
+      body
+    })
+
+    if (res.success || res.id) {
+      showEditQuizModal.value = false
+      await fetchSections() // Refresh data
+      alert('Quiz berhasil diupdate!')
+    } else {
+      alert('Gagal mengupdate quiz: ' + (res.error || 'Unknown error'))
+    }
+  } catch (err) {
+    console.error('Error updating quiz:', err)
+    alert('Gagal mengupdate quiz: ' + (err.message || err))
+  }
+}
+
+// Function untuk remove quiz - gunakan endpoint quizzes_section
+async function removeQuiz(quizId) {
+  if (confirm('Yakin ingin menghapus quiz ini?')) {
+    try {
+      console.log('Deleting quiz:', quizId)
+      
+      // Cari section_id dari quiz ini
+      let sectionId = null
+      for (const section of sections.value) {
+        if (section.quizzes && section.quizzes.find(q => q.id === quizId)) {
+          sectionId = section.id
+          break
+        }
+      }
+      
+      if (!sectionId) {
+        alert('Gagal menghapus quiz: Section tidak ditemukan')
+        return
+      }
+      
+      await $fetch(`/api/quizzes_section/${sectionId}`, { 
+        method: 'DELETE',
+        body: { quiz_id: quizId }
+      })
+      
+      await fetchSections() // Refresh sections
+      alert('Quiz berhasil dihapus!')
+    } catch (err) {
+      console.error('Error removing quiz:', err)
+      alert('Gagal menghapus quiz!')
+    }
+  }
+}
 </script>
