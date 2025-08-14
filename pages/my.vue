@@ -124,8 +124,8 @@
                   </svg>
                 </div>
                 <h3 class="text-2xl font-bold mb-4 text-gray-800">Belum Ada Kursus</h3>
-                <p class="text-gray-600 mb-8">Mulai perjalanan belajar Anda dengan mendaftar kursus pertama!</p>
-                <NuxtLink to="/" class="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl shadow hover:bg-blue-700 transition">
+                <p class="text-gray-600 mb-8">Ayo mulai langkah pertama Anda dengan bergabung di kursus pilihan!</p>
+                <NuxtLink to="/course" class="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl shadow hover:bg-blue-700 transition">
                   Jelajahi Kursus
                 </NuxtLink>
               </div>
@@ -312,18 +312,12 @@ const fetchEnrollments = async () => {
   // Pastikan auth sinkron dengan localStorage
   auth.loadFromStorage?.()
 
-  console.log('=== DEBUG FETCH ENROLLMENTS ===')
-  console.log('isLoggedIn:', auth.isLoggedIn)
-  console.log('user:', auth.user)
-  console.log('token:', auth.user?.token)
 
   if (!auth.isLoggedIn || !auth.user?.token) {
-    console.log('❌ User not logged in or no token')
     enrollments.value = []
     return
   }
 
-  console.log('✅ User logged in, fetching enrollments...')
   isLoading.value = true
   error.value = ''
 
@@ -337,29 +331,20 @@ const fetchEnrollments = async () => {
       }
     })
 
-    console.log('📥 Raw API response:', responseData)
-    console.log('📥 Response type:', typeof responseData)
-    console.log('📥 Response keys:', Object.keys(responseData || {}))
 
     // Parse response sesuai struktur API
     let rawEnrollments: any[] = []
     
     if (responseData && responseData.success && Array.isArray(responseData.enrollments)) {
-      console.log('✅ Found enrollments in success response')
       rawEnrollments = responseData.enrollments
     } else if (Array.isArray(responseData)) {
-      console.log('✅ Response is direct array')
       rawEnrollments = responseData
     } else if (responseData && Array.isArray(responseData.data)) {
-      console.log('✅ Found enrollments in data field')
       rawEnrollments = responseData.data
     }
 
-    console.log('📋 Raw enrollments:', rawEnrollments)
-    console.log('📋 Raw enrollments length:', rawEnrollments.length)
 
     if (rawEnrollments.length > 0) {
-      console.log('📋 First enrollment sample:', rawEnrollments[0])
     }
 
     // Map data ke struktur Enrollment yang benar
@@ -372,12 +357,9 @@ const fetchEnrollments = async () => {
         course_slug: e.course_slug || e.slug || '',
         course_description: e.course_description || e.description || 'Tidak ada deskripsi.'
       }
-      console.log('🔄 Mapped enrollment:', mapped)
       return mapped
     })
 
-    console.log('✅ Final enrollments:', enrollments.value)
-    console.log('✅ Total enrollments:', enrollments.value.length)
 
   } catch (err: any) {
     console.error("❌ Error fetching enrollments:", err)
@@ -389,7 +371,6 @@ const fetchEnrollments = async () => {
     enrollments.value = []
   } finally {
     isLoading.value = false
-    console.log('=== END DEBUG ===')
   }
 }
 

@@ -7,6 +7,7 @@ interface User {
   full_name: string
   role_id: number
   token: string  // 👈 Token wajib ada
+  avatar_seed?: string
 }
 
 export const useAuthStore = defineStore('auth', {
@@ -22,12 +23,17 @@ export const useAuthStore = defineStore('auth', {
         console.error('Token is required for login')
         return
       }
-      
-      this.user = userData
+      // Simpan avatar_seed jika ada
+      this.user = {
+        ...userData,
+        avatar_seed: userData.avatar_seed ?? undefined
+      }
       this.isLoggedIn = true
-      localStorage.setItem('user', JSON.stringify(userData))
+      localStorage.setItem('user', JSON.stringify({
+        ...userData,
+        avatar_seed: userData.avatar_seed ?? undefined
+      }))
       localStorage.setItem('isLoggedIn', 'true')
-      
       console.log('User logged in with token:', userData.token)
     },
     

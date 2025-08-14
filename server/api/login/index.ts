@@ -58,7 +58,8 @@ export default defineEventHandler(async (event) => {
         email: user.email,
         full_name: user.full_name,
         role_id: user.role_id,
-        token: token  // 👈 PENTING: Token harus dikembalikan
+        avatar_seed: user.avatar_seed, // tambahkan ini
+        token: token
       }
     }
   } catch (error) {

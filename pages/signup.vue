@@ -1,26 +1,36 @@
 <template>
   <!-- Tambahkan pt-16 di div utama untuk memberikan space dari navbar -->
-  <div class="flex flex-col md:flex-row min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 font-poppins pt-16">
+  <div class="flex flex-col md:flex-row min-h-screen bg-gradient-to-br from-blue-100 via-blue-50 to-blue-300 font-poppins pt-16">
     <!-- Ilustrasi Signup dengan overlay gradient -->
     <div class="hidden md:flex md:w-1/2 items-center justify-center relative p-8">
-      <div class="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-purple-600/20 backdrop-blur-sm rounded-3xl m-8"></div>
-      <img src="/LAN_9802.JPG" alt="signup" class="max-w-[85%] rounded-2xl shadow-2xl relative z-10" />
+      <div class="absolute inset-0 bg-gradient-to-br from-blue-500/30 via-blue-300/20 to-blue-700/20 backdrop-blur-md rounded-3xl m-8 shadow-xl"></div>
+      <img src="/LAN_9802.JPG" alt="signup" class="max-w-[85%] rounded-2xl shadow-2xl border-4 border-blue-400 relative z-10" />
     </div>
 
     <!-- Form Signup dengan design modern -->
     <div class="w-full md:w-1/2 flex flex-col items-center justify-center p-8">
       <div class="w-full max-w-lg">
-        <h1 class="text-3xl font-bold text-gray-800 text-center mb-2">Mulai Perjalananmu</h1>
+  <h1 class="text-3xl font-bold text-gray-800 text-center mb-2">Mulai Belajar</h1>
         <p class="text-gray-600 text-center mb-8">Masuki pembelajaran pengentasan kemiskinan bersama kami</p>
         
-        <form class="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl border border-gray-100 p-8" @submit.prevent="submitSignup">
+        <div v-if="registrationSuccess" class="bg-white/90 rounded-2xl shadow-xl border border-blue-200 p-8 flex flex-col items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-blue-500 mb-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707a1 1 0 00-1.414-1.414L9 11.586 7.707 10.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
+          <h2 class="text-2xl font-bold text-blue-700 mb-2 text-center">Registrasi Berhasil!</h2>
+          <p class="text-gray-700 text-center mb-6">Registrasi anda telah berhasil.<br>Silakan lanjutkan dengan login untuk mendaftar materi pembelajaran.</p>
+          <button @click="goToLogin" class="px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold text-lg shadow-lg hover:bg-blue-700 transition-all duration-300">Lanjut ke Login</button>
+        </div>
+        <form v-else class="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl border border-gray-100 p-8" @submit.prevent="submitSignup">
+          <div v-if="error" class="mb-4 px-4 py-3 rounded-lg bg-red-100 text-red-700 border border-red-300 text-sm font-medium flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10A8 8 0 11 2 10a8 8 0 0116 0zm-8 4a1 1 0 100-2 1 1 0 000 2zm-.75-7a.75.75 0 011.5 0v3a.75.75 0 01-1.5 0V7z" clip-rule="evenodd" /></svg>
+            <span>{{ error }}</span>
+          </div>
           <!-- Avatar Selection -->
           <div class="mb-6 flex flex-col items-center">
             <div class="relative">
               <img 
                 :src="avatarUrl" 
                 alt="Avatar Preview" 
-                class="w-28 h-28 rounded-full shadow-lg border-4 border-white object-cover"
+                class="w-28 h-28 rounded-full shadow-lg border-4 border-blue-500 object-cover"
               />
               <button 
                 type="button"
@@ -107,7 +117,7 @@
           <!-- Button dengan animasi hover -->
           <button id="submitdata" type="submit" 
             class="w-full py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-300">
-            Mulai Perjalanan Belajar
+            Mulai  Belajar
           </button>
         </form>
 
@@ -137,6 +147,7 @@ const password2 = ref('')
 const passwordStrength = ref(0)
 const isLoading = ref(false)
 const error = ref('')
+const registrationSuccess = ref(false)
 
 // Avatar handling
 const avatarUrl = ref('https://api.dicebear.com/7.x/avataaars/svg?seed=1')
@@ -158,10 +169,6 @@ const validateForm = () => {
     return false
   }
 
-  if (passwordStrength.value < 60) {
-    error.value = 'Password terlalu lemah'
-    return false
-  }
 
   return true
 }
@@ -194,12 +201,7 @@ const submitSignup = async () => {
     }
 
     // Registration successful
-    router.push({
-      path: '/login',
-      query: { 
-        message: 'Pendaftaran berhasil! Silakan login dengan akun Anda.' 
-      }
-    })
+    registrationSuccess.value = true
 
   } catch (e) {
     error.value = (e instanceof Error ? e.message : 'Terjadi kesalahan saat mendaftar')
@@ -207,6 +209,15 @@ const submitSignup = async () => {
   } finally {
     isLoading.value = false
   }
+}
+
+const goToLogin = () => {
+  router.push({
+    path: '/login',
+    query: { 
+      message: 'Pendaftaran berhasil! Silakan login dengan akun Anda.' 
+    }
+  })
 }
 
 // Initialize with random avatar

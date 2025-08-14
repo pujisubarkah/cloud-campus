@@ -244,7 +244,12 @@
                 <div class="bg-purple-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold">
                   {{ quiz.order }}
                 </div>
-                <span class="font-semibold text-lg text-slate-800">{{ quiz.question }}</span>
+                <div class="flex items-center justify-between mb-4">
+                  <h3 class="text-lg font-bold text-slate-800">{{ quiz.question }}</h3>
+                  <span v-if="quizScores[quiz.id] !== undefined" class="ml-4 px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm font-semibold">
+                    Skor: {{ quizScores[quiz.id] }}
+                  </span>
+                </div>
                 <span class="ml-auto px-3 py-1 rounded-full text-xs font-medium"
                   :class="{
                     'bg-purple-100 text-purple-600': quiz.type === 'multiple',
@@ -343,6 +348,11 @@
                 </div>
               </div>
 
+              <!-- Skor Quiz -->
+              <div v-if="quizScores[quiz.id] !== undefined" class="mt-4 text-emerald-700 font-semibold">
+                Skor Anda: {{ quizScores[quiz.id] }}
+              </div>
+
               <!-- Submit Button -->
               <div class="mt-6 flex justify-end">
                 <button 
@@ -393,13 +403,26 @@
           <h3 class="text-xl font-semibold text-slate-600 mb-2">Belum Ada Materi atau Quiz</h3>
           <p class="text-slate-500">Section ini belum memiliki materi maupun quiz.</p>
         </div>
+
+        <!-- Sertifikat -->
+        <div v-if="showCertificateButton" class="mt-8 flex flex-col items-center">
+          <button @click="getCertificate" :disabled="isCertificateLoading" class="px-8 py-4 bg-gradient-to-r from-blue-600 to-emerald-500 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
+            <span v-if="!isCertificateLoading">Ambil Sertifikat</span>
+            <span v-else>Mengambil Sertifikat...</span>
+          </button>
+          <div v-if="certificateUrl" class="mt-4">
+            <a :href="certificateUrl" target="_blank" class="text-blue-600 underline font-semibold">Download Sertifikat</a>
+            <br>
+            <img :src="certificateUrl" alt="Sertifikat" class="mt-2 rounded-xl shadow-lg max-w-xl" />
+          </div>
+        </div>
       </div>
     </main>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '~/stores/auth'
 
@@ -410,13 +433,18 @@ const sections = ref([])
 const selectedSection = ref(null)
 const completedSections = ref([])
 const quizAnswers = ref({}) // Tambahkan state untuk menyimpan jawaban quiz
+const certificateUrl = ref('')
+const isCertificateLoading = ref(false)
+const showCertificateButton = computed(() => {
+  // Misal: progress sudah 100% (atau completedSections.length === sections.length)
+  return completedSections.value.length === sections.value.length && sections.value.length > 0
+})
+const quizScores = ref({})
 
-// Fungsi untuk menyimpan jawaban quiz
 const saveQuizAnswer = (quizId, answer) => {
   quizAnswers.value[quizId] = answer
 }
 
-// Fungsi untuk submit quiz
 const submitQuiz = async (quiz) => {
   const userAnswer = quizAnswers.value[quiz.id]
   if (!userAnswer && userAnswer !== 0) {
@@ -469,6 +497,39 @@ const handleCompletion = async (sectionId) => {
   }
 }
 
+const getCertificate = async () => {
+  isCertificateLoading.value = true
+  try {
+    const res = await $fetch('/api/certificate', {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${auth.user.token}` },
+      params: { slug: route.params.slug }
+    })
+    certificateUrl.value = res.certificateUrl
+  } catch (err) {
+    alert('Gagal mengambil sertifikat!')
+  } finally {
+    isCertificateLoading.value = false
+  }
+}
+
+const fetchQuizScores = async () => {
+  if (!auth.user?.id) return
+  try {
+    const res = await $fetch('/api/quiz_response', {
+      method: 'GET',
+      params: { user_id: auth.user.id }
+    })
+    // Map skor per quiz_id
+    quizScores.value = {}
+    res.responses.forEach(r => {
+      quizScores.value[r.quiz_id] = r.points_earned
+    })
+  } catch (err) {
+    console.error('Gagal mengambil skor quiz:', err)
+  }
+}
+
 onMounted(async () => {
   try {
     const res = await $fetch('/api/course_section', { method: 'GET' })
@@ -496,6 +557,7 @@ onMounted(async () => {
   } catch (error) {
     console.error('Error loading sections:', error)
   }
+  fetchQuizScores()
 })
 
 function getYoutubeEmbed(url) {

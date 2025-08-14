@@ -10,6 +10,7 @@ interface RegisterRequest {
   password: string
   full_name: string
   nip?: string
+  avatar_seed?: string
 }
 
 export default defineEventHandler(async (event: H3Event) => {
@@ -53,13 +54,14 @@ export default defineEventHandler(async (event: H3Event) => {
 
     // Create new user
     const newUser = await db.insert(users).values({
-      email: body.email,
-      password_hash: hashedPassword,
-      full_name: body.full_name,
-      nip: body.nip || null,
-      role: 'user',
-      role_id: 3, // Default role_id for regular users
-      is_active: true
+  email: body.email,
+  password_hash: hashedPassword,
+  full_name: body.full_name,
+  nip: body.nip || null,
+  avatar_seed: body.avatar_seed || null,
+  role: 'user',
+  role_id: 3, // Default role_id for regular users
+  is_active: true
     })
     .returning({
       id: users.id,
