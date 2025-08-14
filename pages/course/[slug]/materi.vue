@@ -27,17 +27,19 @@
         <div class="p-6 bg-gradient-to-r from-emerald-50 to-teal-50 border-b border-slate-200">
           <div class="flex items-center justify-between mb-3">
             <span class="text-sm font-medium text-slate-600">Progress Keseluruhan</span>
-            <span class="text-sm font-bold text-emerald-600">{{ Math.round((completedSections.length / sections.length) * 100) || 0 }}%</span>
+            <span class="text-sm font-bold text-emerald-600">
+              {{ Math.round(((completedSections.length + Object.values(sectionCompletionStatus).filter(Boolean).length) / sections.length) * 100) || 0 }}%
+            </span>
           </div>
           <div class="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
             <div 
               class="bg-gradient-to-r from-emerald-500 to-teal-500 h-3 rounded-full transition-all duration-500 ease-out"
-              :style="`width: ${(completedSections.length / sections.length) * 100 || 0}%`"
+              :style="`width: ${((completedSections.length + Object.values(sectionCompletionStatus).filter(Boolean).length) / sections.length) * 100 || 0}%`"
             ></div>
           </div>
           <div class="flex justify-between text-xs text-slate-500 mt-2">
-            <span>{{ completedSections.length }} selesai</span>
-            <span>{{ sections.length - completedSections.length }} tersisa</span>
+            <span>{{ completedSections.length + Object.values(sectionCompletionStatus).filter(Boolean).length }} selesai</span>
+            <span>{{ sections.length - (completedSections.length + Object.values(sectionCompletionStatus).filter(Boolean).length) }} tersisa</span>
           </div>
         </div>
 
@@ -51,7 +53,8 @@
                   'w-full text-left p-4 rounded-xl transition-all duration-300 border-2 relative overflow-hidden': true,
                   'bg-gradient-to-r from-blue-500 to-indigo-500 text-white border-blue-500 shadow-lg transform scale-105': selectedSection?.id === section.id,
                   'bg-white hover:bg-slate-50 border-slate-200 hover:border-blue-300 hover:shadow-md text-slate-700': selectedSection?.id !== section.id,
-                  'ring-2 ring-emerald-200': completedSections.includes(section.id)
+                  'ring-2 ring-emerald-200 border-emerald-300': completedSections.includes(section.id),
+                  'ring-2 ring-blue-200 border-blue-300': sectionCompletionStatus[section.id] && !completedSections.includes(section.id)
                 }"
               >
                 <!-- Section Number -->
@@ -79,9 +82,14 @@
                   </div>
 
                   <!-- Status Badge -->
-                  <div v-if="completedSections.includes(section.id)" class="flex-shrink-0">
-                    <div class="bg-emerald-100 text-emerald-600 px-2 py-1 rounded-full text-xs font-medium">
-                      Selesai
+                  <div v-if="completedSections.includes(section.id) || sectionCompletionStatus[section.id]" class="flex-shrink-0">
+                    <div :class="{
+                      'px-2 py-1 rounded-full text-xs font-medium': true,
+                      'bg-emerald-100 text-emerald-600': completedSections.includes(section.id),
+                      'bg-blue-100 text-blue-600': sectionCompletionStatus[section.id] && !completedSections.includes(section.id)
+                    }">
+                      <span v-if="completedSections.includes(section.id)">✅ Selesai</span>
+                      <span v-else>🎯 Quiz Selesai</span>
                     </div>
                   </div>
                 </div>
@@ -239,27 +247,41 @@
 
           <!-- Tampilkan Quiz jika ada -->
           <div v-if="selectedSection.quizzes && selectedSection.quizzes.length" class="space-y-8 mt-8">
-            <div v-for="quiz in selectedSection.quizzes" :key="quiz.id" class="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
+            <div v-for="quiz in selectedSection.quizzes" 
+                 :key="quiz.id" 
+                 :data-quiz-id="quiz.id"
+                 class="bg-white rounded-2xl shadow-lg border border-slate-200 p-6 transition-all duration-300">
+              
+              <!-- Quiz header -->
               <div class="flex items-center gap-3 mb-4">
                 <div class="bg-purple-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold">
                   {{ quiz.order }}
                 </div>
-                <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center justify-between mb-4 flex-1">
                   <h3 class="text-lg font-bold text-slate-800">{{ quiz.question }}</h3>
-                  <span v-if="quizScores[quiz.id] !== undefined" class="ml-4 px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm font-semibold">
-                    Skor: {{ quizScores[quiz.id] }}
-                  </span>
+                  <div class="flex items-center gap-2">
+                    <!-- Status Quiz -->
+                    <span v-if="quizScores[quiz.id] !== undefined" 
+                          class="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm font-semibold">
+                      ✅ Sudah dijawab - Skor: {{ quizScores[quiz.id] }}
+                    </span>
+                    <!-- Quiz counter -->
+                    <span class="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-medium">
+                      Quiz {{ selectedSection.quizzes.findIndex(q => q.id === quiz.id) + 1 }} / {{ selectedSection.quizzes.length }}
+                    </span>
+                    <!-- Type Badge -->
+                    <span class="px-3 py-1 rounded-full text-xs font-medium"
+                      :class="{
+                        'bg-purple-100 text-purple-600': quiz.type === 'multiple',
+                        'bg-blue-100 text-blue-600': quiz.type === 'short',
+                        'bg-green-100 text-green-600': quiz.type === 'truefalse',
+                        'bg-orange-100 text-orange-600': quiz.type === 'fill',
+                        'bg-emerald-100 text-emerald-600': quiz.type === 'likert'
+                      }">
+                      {{ quiz.type.toUpperCase() }}
+                    </span>
+                  </div>
                 </div>
-                <span class="ml-auto px-3 py-1 rounded-full text-xs font-medium"
-                  :class="{
-                    'bg-purple-100 text-purple-600': quiz.type === 'multiple',
-                    'bg-blue-100 text-blue-600': quiz.type === 'short',
-                    'bg-green-100 text-green-600': quiz.type === 'truefalse',
-                    'bg-orange-100 text-orange-600': quiz.type === 'fill',
-                    'bg-emerald-100 text-emerald-600': quiz.type === 'likert'
-                  }">
-                  {{ quiz.type.toUpperCase() }}
-                </span>
               </div>
 
               <!-- Multiple Choice -->
@@ -422,7 +444,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '~/stores/auth'
 
@@ -432,43 +454,10 @@ const showSidebar = ref(true)
 const sections = ref([])
 const selectedSection = ref(null)
 const completedSections = ref([])
-const quizAnswers = ref({}) // Tambahkan state untuk menyimpan jawaban quiz
+const quizAnswers = ref({})
 const certificateUrl = ref('')
 const isCertificateLoading = ref(false)
-const showCertificateButton = computed(() => {
-  // Misal: progress sudah 100% (atau completedSections.length === sections.length)
-  return completedSections.value.length === sections.value.length && sections.value.length > 0
-})
 const quizScores = ref({})
-
-const saveQuizAnswer = (quizId, answer) => {
-  quizAnswers.value[quizId] = answer
-}
-
-const submitQuiz = async (quiz) => {
-  const userAnswer = quizAnswers.value[quiz.id]
-  if (!userAnswer && userAnswer !== 0) {
-    alert('Silakan pilih jawaban terlebih dahulu!')
-    return
-  }
-
-  try {
-    // Kirim jawaban ke API (jika ada endpoint untuk submit quiz)
-    // const result = await $fetch('/api/quiz_submission', {
-    //   method: 'POST',
-    //   body: {
-    //     quiz_id: quiz.id,
-    //     user_id: auth.user.id,
-    //     answer: userAnswer
-    //   }
-    // })
-    
-    alert(`Jawaban tersimpan untuk: ${quiz.question}`)
-  } catch (error) {
-    console.error('Error submitting quiz:', error)
-    alert('Gagal menyimpan jawaban!')
-  }
-}
 
 const toggleSidebar = () => {
   showSidebar.value = !showSidebar.value
@@ -478,11 +467,259 @@ const selectSection = (section) => {
   selectedSection.value = section
 }
 
+const saveQuizAnswer = (quizId, answer) => {
+  quizAnswers.value[quizId] = answer
+}
+
+// Tambahkan function yang hilang
+const calculatePoints = (quiz, userAnswer) => {
+  switch (quiz.type) {
+    case 'multiple':
+      // Untuk multiple choice, cek apakah jawaban benar (default 10 poin jika benar)
+      return userAnswer === quiz.correct_answer ? 10 : 0
+      
+    case 'truefalse':
+      // Untuk true/false, cek apakah jawaban benar
+      return userAnswer === quiz.correct_answer ? 10 : 0
+      
+    case 'short':
+    case 'fill':
+      // Untuk short answer/fill, beri poin default (nanti bisa di-review manual)
+      return 5
+      
+    case 'likert':
+      // Untuk likert scale, semua jawaban dapat poin
+      return 10
+      
+    default:
+      return 5 // Default poin
+  }
+}
+
+// Function untuk scroll ke quiz tertentu
+const scrollToQuiz = (quizId) => {
+  // Tunggu sebentar untuk DOM update
+  nextTick(() => {
+    const quizElement = document.querySelector(`[data-quiz-id="${quizId}"]`)
+    if (quizElement) {
+      quizElement.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start',
+        inline: 'nearest'
+      })
+      
+      // Highlight quiz yang akan dikerjakan
+      quizElement.classList.add('highlight-quiz')
+      setTimeout(() => {
+        quizElement.classList.remove('highlight-quiz')
+      }, 2000)
+    }
+  })
+}
+
+// Update submitQuiz dengan error handling yang lebih baik
+const submitQuiz = async (quiz) => {
+  const userAnswer = quizAnswers.value[quiz.id]
+  if (userAnswer === undefined || userAnswer === null || userAnswer === '') {
+    alert('Silakan pilih jawaban terlebih dahulu!')
+    return
+  }
+
+  if (!auth.user?.token) {
+    alert('Silakan login terlebih dahulu!')
+    return
+  }
+
+  try {
+    console.log('Submitting quiz:', quiz.id, 'Answer:', userAnswer)
+    
+    // Submit jawaban ke API
+    const response = await $fetch('/api/quiz_response', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${auth.user.token}`,
+        'Content-Type': 'application/json'
+      },
+      body: {
+        quiz_id: quiz.id,
+        user_id: auth.user.id,
+        user_answer: userAnswer,
+        points_earned: calculatePoints(quiz, userAnswer)
+      }
+    })
+
+    console.log('Quiz response saved:', response)
+
+    // Update quiz scores
+    if (response.success) {
+      quizScores.value[quiz.id] = response.points_earned || 0
+      
+      // Show success message
+      alert(`✅ Quiz berhasil disimpan!\nSkor: ${response.points_earned || 0} poin`)
+      
+      // Refresh quiz scores dari server
+      await fetchQuizScores()
+      
+      // Logic navigasi yang diperbaiki
+      await navigateAfterQuiz(quiz)
+    }
+    
+  } catch (error) {
+    console.error('Error submitting quiz:', error)
+    
+    let errorMessage = '❌ Gagal menyimpan quiz. '
+    
+    if (error.status === 401) {
+      errorMessage = '❌ Sesi login expired. Silakan login ulang!'
+      // navigateTo('/login')
+    } else if (error.status === 400) {
+      errorMessage = '❌ Data quiz tidak valid. Silakan coba lagi!'
+    } else if (error.statusMessage) {
+      errorMessage += error.statusMessage
+    } else {
+      errorMessage += 'Silakan coba lagi!'
+    }
+    
+    alert(errorMessage)
+  }
+}
+
+// Function untuk navigasi setelah submit quiz
+const navigateAfterQuiz = async (currentQuiz) => {
+  if (!selectedSection.value?.quizzes) return
+
+  const currentQuizzes = selectedSection.value.quizzes
+  const currentQuizIndex = currentQuizzes.findIndex(q => q.id === currentQuiz.id)
+  
+  // Cek apakah ada quiz berikutnya di section yang sama
+  const nextQuizInSection = currentQuizzes[currentQuizIndex + 1]
+  
+  if (nextQuizInSection) {
+    // Ada quiz berikutnya di section yang sama
+    const confirmNext = confirm(`Quiz selesai! Lanjut ke quiz berikutnya: "${nextQuizInSection.question}"?`)
+    if (confirmNext) {
+      // Scroll ke quiz berikutnya
+      scrollToQuiz(nextQuizInSection.id)
+    }
+  } else {
+    // Tidak ada quiz lagi di section ini
+    // Auto-complete section karena semua quiz sudah selesai
+    await autoCompleteSection(selectedSection.value.id)
+    
+    const currentSectionIndex = sections.value.findIndex(s => s.id === selectedSection.value.id)
+    const nextSection = sections.value[currentSectionIndex + 1]
+    
+    if (nextSection) {
+      // Ada section berikutnya
+      const continueToNext = confirm(`🎉 Section "${selectedSection.value.title}" selesai!\n\nLanjut ke section berikutnya: "${nextSection.title}"?`)
+      if (continueToNext) {
+        selectSection(nextSection)
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      }
+    } else {
+      // Sudah di section terakhir - semua sections selesai
+      alert('🎉 Selamat! Anda telah menyelesaikan semua section di course ini!')
+      
+      // Cek apakah bisa dapat sertifikat
+      if (showCertificateButton.value) {
+        const getCert = confirm('Semua section selesai! Ingin mengambil sertifikat sekarang?')
+        if (getCert) {
+          getCertificate()
+        }
+      }
+    }
+  }
+}
+
+// Function untuk auto-complete section ketika semua quiz selesai
+const autoCompleteSection = async (sectionId) => {
+  // Cek apakah section sudah di-mark sebagai completed
+  if (completedSections.value.includes(sectionId)) {
+    console.log(`Section ${sectionId} already marked as completed`)
+    return
+  }
+
+  try {
+    console.log(`🎯 Auto-completing section: ${sectionId} (all quizzes finished)`)
+    
+    const response = await $fetch('/api/section_progress', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${auth.user?.token}`,
+        'Content-Type': 'application/json'
+      },
+      body: {
+        user_id: auth.user.id,
+        section_id: sectionId,
+        progress_percent: 100,
+        is_completed: true
+      }
+    })
+    
+    // Update local state
+    completedSections.value.push(sectionId)
+    
+    console.log(`✅ Section ${sectionId} auto-marked as completed`)
+    console.log('API Response:', response)
+    
+  } catch (error) {
+    console.error('❌ Error auto-completing section:', error)
+    // Fallback: tetap update local state meskipun API error
+    if (!completedSections.value.includes(sectionId)) {
+      completedSections.value.push(sectionId)
+    }
+  }
+}
+
+// Function untuk cek apakah section sudah selesai berdasarkan quiz completion
+const checkSectionCompletion = (section) => {
+  // Jika tidak ada quiz dan tidak ada content, section tidak bisa diselesaikan
+  if ((!section.quizzes || section.quizzes.length === 0) && 
+      (!section.contents || section.contents.length === 0)) {
+    return false
+  }
+  
+  // Jika ada quiz, semua quiz harus sudah dijawab
+  if (section.quizzes && section.quizzes.length > 0) {
+    const completedQuizzes = section.quizzes.filter(quiz => 
+      quizScores.value[quiz.id] !== undefined
+    )
+    return completedQuizzes.length === section.quizzes.length
+  }
+  
+  // Jika hanya ada content tanpa quiz, biarkan user manual mark complete
+  return false
+}
+
+// Computed untuk section completion status
+const sectionCompletionStatus = computed(() => {
+  const status = {}
+  sections.value.forEach(section => {
+    // Section dianggap auto-completed jika semua quiz selesai
+    status[section.id] = checkSectionCompletion(section)
+  })
+  return status
+})
+
+// Update computed untuk certificate button
+const showCertificateButton = computed(() => {
+  // Certificate tersedia jika semua section sudah completed (manual atau auto)
+  const totalCompletedSections = sections.value.filter(section => 
+    completedSections.value.includes(section.id) || 
+    sectionCompletionStatus.value[section.id]
+  ).length
+  
+  return totalCompletedSections === sections.value.length && sections.value.length > 0
+})
+
 const handleCompletion = async (sectionId) => {
   if (!completedSections.value.includes(sectionId)) {
     try {
       await $fetch('/api/section_progress', {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${auth.user?.token}`
+        },
         body: {
           user_id: auth.user.id,
           section_id: sectionId,
@@ -518,11 +755,13 @@ const fetchQuizScores = async () => {
   try {
     const res = await $fetch('/api/quiz_response', {
       method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${auth.user?.token}`
+      },
       params: { user_id: auth.user.id }
     })
-    // Map skor per quiz_id
     quizScores.value = {}
-    res.responses.forEach(r => {
+    res.responses?.forEach(r => {
       quizScores.value[r.quiz_id] = r.points_earned
     })
   } catch (err) {
@@ -531,32 +770,100 @@ const fetchQuizScores = async () => {
 }
 
 onMounted(async () => {
+  auth.loadFromStorage?.()
+
+  console.log('=== LOADING MATERI ===')
+  console.log('Route slug:', route.params.slug)
+
   try {
-    const res = await $fetch('/api/course_section', { method: 'GET' })
-    const courseId = route.params.slug
-    const filtered = (res.sections || []).filter(s => s.course_id === courseId)
-    // Fetch quizzes for each section
-    for (const section of filtered) {
+    // Get course by slug
+    const courseRes = await $fetch(`/api/course/${route.params.slug}`)
+    
+    if (!courseRes.course) {
+      console.error('Course not found')
+      return
+    }
+
+    const courseId = courseRes.course.id
+    console.log('Course ID:', courseId)
+
+    // Get sections with contents (sudah include contents dari API)
+    const sectionsRes = await $fetch('/api/course_section', { 
+      method: 'GET',
+      params: { course_id: courseId }
+    })
+
+    console.log('Sections response:', sectionsRes)
+
+    let courseSections = []
+    
+    if (Array.isArray(sectionsRes)) {
+      courseSections = sectionsRes
+    } else if (sectionsRes.sections && Array.isArray(sectionsRes.sections)) {
+      courseSections = sectionsRes.sections
+    }
+
+    console.log('Parsed sections:', courseSections)
+
+    // Fetch quizzes untuk setiap section
+    for (const section of courseSections) {
+      console.log(`Section: ${section.title}`)
+      console.log(`Contents count: ${section.contents?.length || 0}`)
+      
+      // Log sample content jika ada
+      if (section.contents && section.contents.length > 0) {
+        console.log('Sample content:', section.contents[0])
+      }
+
+      // Fetch quizzes
       try {
         const quizRes = await $fetch(`/api/quizzes_section/${section.id}`)
-        section.quizzes = quizRes.quizzes || []
-      } catch {
+        
+        if (Array.isArray(quizRes)) {
+          section.quizzes = quizRes
+        } else if (quizRes.quizzes && Array.isArray(quizRes.quizzes)) {
+          section.quizzes = quizRes.quizzes
+        } else {
+          section.quizzes = []
+        }
+        
+        console.log(`Quizzes for ${section.title}:`, section.quizzes.length)
+      } catch (error) {
+        console.error(`Error fetching quizzes for section ${section.id}:`, error)
         section.quizzes = []
       }
     }
-    sections.value = filtered
+
+    sections.value = courseSections
     selectedSection.value = sections.value[0] || null
 
+    console.log('Final sections:', sections.value)
+    console.log('Selected section:', selectedSection.value)
+    console.log('Selected section contents:', selectedSection.value?.contents)
+
+    // Load user progress
     if (auth.user?.id) {
-      const progressRes = await $fetch('/api/section_progress', { method: 'GET' })
-      const userProgress = (progressRes.progress || []).filter(
-        p => p.user_id === auth.user.id && p.is_completed
-      )
-      completedSections.value = userProgress.map(p => p.section_id)
+      try {
+        const progressRes = await $fetch('/api/section_progress', { 
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${auth.user.token}`
+          },
+          params: { user_id: auth.user.id }
+        })
+        const userProgress = (progressRes.progress || []).filter(
+          p => p.user_id === auth.user.id && p.is_completed
+        )
+        completedSections.value = userProgress.map(p => p.section_id)
+      } catch (error) {
+        console.error('Error loading progress:', error)
+      }
     }
+
   } catch (error) {
     console.error('Error loading sections:', error)
   }
+
   fetchQuizScores()
 })
 
@@ -616,5 +923,26 @@ body {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
+}
+
+/* Highlight effect untuk quiz yang akan dikerjakan */
+.highlight-quiz {
+  box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.75);
+  animation: pulse-highlight 1s ease-in-out;
+}
+
+@keyframes pulse-highlight {
+  0% { 
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.7);
+  }
+  50% { 
+    transform: scale(1.02);
+    box-shadow: 0 0 0 10px rgba(251, 191, 36, 0);
+  }
+  100% { 
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0);
+  }
 }
 </style>

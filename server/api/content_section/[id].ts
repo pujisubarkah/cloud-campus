@@ -1,20 +1,44 @@
+// server/api/content_section/[id].ts
+import { db } from '@/server/db'
 import { sectionContents } from '@/server/database/content_section'
-import { db } from '~/server/db'
 import { eq } from 'drizzle-orm'
 
 export default defineEventHandler(async (event) => {
-  // Ambil section_id dari URL param [id]
-  const section_id = event.context.params?.id
+  const contentId = getRouterParam(event, 'id')
+  const method = event.method
 
-  if (!section_id) {
-    return { error: 'section_id wajib diisi di URL' }
+  console.log('=== DELETE_CONTENT API ===')
+  console.log('Content ID:', contentId)
+  console.log('Method:', method)
+
+  if (method === 'DELETE') {
+    if (!contentId) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Content ID is required'
+      })
+    }
+    try {
+      await db
+        .delete(sectionContents)
+        .where(eq(sectionContents.id, contentId))
+
+      console.log('Content deleted')
+      return { 
+        success: true,
+        message: 'Content deleted successfully'
+      }
+    } catch (error) {
+      console.error('Error deleting content:', error)
+      throw createError({
+        statusCode: 500,
+        statusMessage: 'Failed to delete content'
+      })
+    }
   }
 
-  // GET: Ambil semua konten untuk section_id tertentu
-  const contents = await db
-    .select()
-    .from(sectionContents)
-    .where(eq(sectionContents.section_id, section_id))
-    .orderBy(sectionContents.order) // Sudah diurutkan berdasarkan order
-  return contents
+  throw createError({
+    statusCode: 405,
+    statusMessage: 'Method not allowed'
+  })
 })

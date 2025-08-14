@@ -240,23 +240,77 @@ const sectionContents = ref([])
 const newQuizOrder = ref(1) // Tambahkan ini
 
 async function fetchSections() {
-  const res = await $fetch(`/api/course_section`, { method: 'GET' })
-  // Filter sections berdasarkan courseId dan ambil yang sudah include contents
-  const filteredSections = (res.sections || [])
-    .filter(s => s.course_id === courseId)
-    .sort((a, b) => a.order - b.order)
-  
-  // Fetch quiz untuk setiap section
-  for (let section of filteredSections) {
-    try {
-      const quizRes = await $fetch(`/api/quizzes_section/${section.id}`)
-      section.quizzes = quizRes.quizzes || []
-    } catch (err) {
-      section.quizzes = []
+  try {
+    console.log('=== FETCHING SECTIONS ===')
+    console.log('Course ID:', courseId)
+    
+    // Gunakan endpoint yang sudah ada dengan parameter course_id
+    const res = await $fetch('/api/course_section', { 
+      method: 'GET',
+      params: { course_id: courseId }
+    })
+    
+    console.log('API Response:', res)
+    
+    let sectionsData = []
+    
+    if (Array.isArray(res)) {
+      sectionsData = res
+    } else if (res.sections && Array.isArray(res.sections)) {
+      sectionsData = res.sections
     }
+    
+    console.log('Parsed sections data:', sectionsData)
+    
+    // Fetch contents dan quiz untuk setiap section
+    for (let section of sectionsData) {
+      // Fetch contents menggunakan API content_section
+      try {
+        const contentsRes = await $fetch('/api/content_section', {
+          method: 'GET',
+          params: { section_id: section.id }
+        })
+        
+        if (Array.isArray(contentsRes)) {
+          section.contents = contentsRes
+        } else if (contentsRes.contents && Array.isArray(contentsRes.contents)) {
+          section.contents = contentsRes.contents
+        } else {
+          section.contents = []
+        }
+        
+        console.log(`Contents for section ${section.title}:`, section.contents.length)
+      } catch (err) {
+        console.error(`Error fetching contents for section ${section.id}:`, err)
+        section.contents = []
+      }
+      
+      // Fetch quiz
+      try {
+        const quizRes = await $fetch(`/api/quizzes_section/${section.id}`)
+        
+        if (Array.isArray(quizRes)) {
+          section.quizzes = quizRes
+        } else if (quizRes.quizzes && Array.isArray(quizRes.quizzes)) {
+          section.quizzes = quizRes.quizzes
+        } else {
+          section.quizzes = []
+        }
+        
+        console.log(`Quiz for section ${section.title}:`, section.quizzes.length)
+      } catch (err) {
+        console.error(`Error fetching quiz for section ${section.id}:`, err)
+        section.quizzes = []
+      }
+    }
+    
+    sections.value = sectionsData.sort((a, b) => a.order - b.order)
+    console.log('Final sections:', sections.value)
+    
+  } catch (error) {
+    console.error('Error fetching sections:', error)
+    sectionError.value = 'Gagal memuat sections: ' + (error.message || error)
   }
-  
-  sections.value = filteredSections
 }
 
 async function addSection() {
@@ -324,28 +378,61 @@ function openAddContentModal(section) {
 
 async function addContent() {
   try {
-    const res = await $fetch(`/api/course_section/${selectedSection.value.id}/content`, {
+    console.log('=== ADDING CONTENT ===')
+    console.log('Selected Section:', selectedSection.value.id)
+    console.log('Content Data:', {
+      title: newContentTitle.value,
+      type: newContentType.value,
+      deskripsi: newContentDescription.value,
+      content_url: newContentUrl.value,
+      order: newContentOrder.value
+    })
+
+    // Gunakan API /api/content_section yang sudah dibuat
+    const res = await $fetch('/api/content_section', {
       method: 'POST',
       body: {
+        section_id: selectedSection.value.id,
         title: newContentTitle.value,
         type: newContentType.value,
-        deskripsi: newContentDescription.value, // harus 'deskripsi'
-        content_url: newContentUrl.value,       // harus 'content_url'
+        deskripsi: newContentDescription.value,
+        content_url: newContentUrl.value,
         order: newContentOrder.value
       }
     })
-    showAddContentModal.value = false
-    fetchSections()
-    alert('Konten berhasil ditambahkan!')
+
+    console.log('API Response:', res)
+
+    if (res.success || res.id) {
+      showAddContentModal.value = false
+      await fetchSections() // Refresh data
+      alert('Konten berhasil ditambahkan!')
+    } else {
+      alert('Gagal menambahkan konten: ' + (res.error || 'Unknown error'))
+    }
   } catch (err) {
-    alert('Gagal menambahkan konten!')
+    console.error('Error adding content:', err)
+    alert('Gagal menambahkan konten: ' + (err.message || err))
   }
 }
 
-async function removeContent(sectionId, idx) {
-  // Hapus konten dari backend, misal PATCH/DELETE
-  await $fetch(`/api/course_section/${sectionId}/content/${idx}`, { method: 'DELETE' })
-  fetchSections()
+async function removeContent(contentId) {
+  if (confirm('Yakin ingin menghapus konten ini?')) {
+    try {
+      console.log('Deleting content:', contentId)
+      
+      // Gunakan API DELETE content_section dengan ID
+      await $fetch(`/api/content_section/${contentId}`, { 
+        method: 'DELETE' 
+      })
+      
+      await fetchSections() // Refresh sections
+      alert('Konten berhasil dihapus!')
+    } catch (err) {
+      console.error('Error removing content:', err)
+      alert('Gagal menghapus konten!')
+    }
+  }
 }
 
 function addChoice() {

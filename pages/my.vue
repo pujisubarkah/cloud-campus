@@ -176,7 +176,7 @@
 
                       <!-- Tombol Aksi -->
                       <div class="flex space-x-3">
-                        <NuxtLink :to="`/course/${enroll.course_slug}/materi`"
+                        <NuxtLink :to="`/course/${enroll.course_id}/materi`"
                                   class="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-center py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5">
                           Lanjutkan Belajar
                         </NuxtLink>
@@ -326,49 +326,12 @@ const fetchEnrollments = async () => {
     const responseData: any = await $fetch('/api/enrollment', {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${auth.user.token}`,
-        'Content-Type': 'application/json'
+        Authorization: `Bearer ${auth.user.token}`
       }
     })
-
-
-    // Parse response sesuai struktur API
-    let rawEnrollments: any[] = []
-    
-    if (responseData && responseData.success && Array.isArray(responseData.enrollments)) {
-      rawEnrollments = responseData.enrollments
-    } else if (Array.isArray(responseData)) {
-      rawEnrollments = responseData
-    } else if (responseData && Array.isArray(responseData.data)) {
-      rawEnrollments = responseData.data
-    }
-
-
-    if (rawEnrollments.length > 0) {
-    }
-
-    // Map data ke struktur Enrollment yang benar
-    enrollments.value = rawEnrollments.map((e: any) => {
-      const mapped = {
-        enrollmentId: e.enrollment_id ?? e.id,
-        course_id: e.course_id,
-        course_thumbnail: e.course_thumbnail || e.thumbnail_url || 'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=400&q=80',
-        course_title: e.course_title || e.title || 'Kursus Tanpa Judul',
-        course_slug: e.course_slug || e.slug || '',
-        course_description: e.course_description || e.description || 'Tidak ada deskripsi.'
-      }
-      return mapped
-    })
-
-
+    enrollments.value = responseData.enrollments || []
   } catch (err: any) {
-    console.error("❌ Error fetching enrollments:", err)
-    console.error("❌ Error status:", err.status)
-    console.error("❌ Error data:", err.data)
-    console.error("❌ Error message:", err.message)
-    
-    error.value = err.data?.message || err.message || 'Gagal memuat data kursus'
-    enrollments.value = []
+    error.value = err?.message || 'Gagal memuat data kursus.'
   } finally {
     isLoading.value = false
   }
@@ -376,20 +339,3 @@ const fetchEnrollments = async () => {
 
 onMounted(fetchEnrollments)
 </script>
-
-<style scoped>
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-.line-clamp-3 {
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-</style>

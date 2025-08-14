@@ -1,42 +1,60 @@
 import { db } from '@/server/db'
 import { courseSections } from '@/server/database/course_section'
 import { sectionContents } from '@/server/database/content_section'
-import { readBody } from 'h3'
-import { eq } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 
 // GET: Ambil semua section beserta kontennya
 export default defineEventHandler(async (event) => {
-  if (event.method === 'GET') {
-    const sections = await db
+  const query = getQuery(event)
+  const courseId = query.course_id
+
+  console.log('=== COURSE_SECTION API ===')
+  console.log('Course ID:', courseId)
+
+  if (!courseId) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'course_id parameter required'
+    })
+  }
+
+  try {
+    // First get sections
+    const sectionsData = await db
       .select()
       .from(courseSections)
-      .orderBy(courseSections.order) // Urutkan berdasarkan order
-    // Ambil semua konten
-    const contents = await db.select().from(sectionContents)
-    // Gabungkan konten ke masing-masing section
-    const sectionsWithContents = sections.map(section => ({
-      ...section,
-      contents: contents.filter(content => content.section_id === section.id)
-    }))
-    return { sections: sectionsWithContents }
-  }
+      .where(eq(courseSections.course_id, String(courseId)))
+      .orderBy(courseSections.order)
 
-  // POST: Tambah section baru
-  if (event.method === 'POST') {
-    const body = await readBody(event)
-    const { course_id, title, order } = body
+    console.log('Raw sections from DB:', sectionsData)
 
-    if (!course_id || !title) {
-      return { error: 'course_id dan title wajib diisi' }
+    // Then get contents for each section
+    const sectionsWithContents = await Promise.all(
+      sectionsData.map(async (section) => {
+        const contents = await db
+          .select()
+          .from(sectionContents)
+          .where(eq(sectionContents.section_id, section.id))
+          .orderBy(sectionContents.order)
+
+        return {
+          ...section,
+          contents: contents || []
+        }
+      })
+    )
+
+    console.log('Sections with contents:', sectionsWithContents)
+
+    return {
+      success: true,
+      sections: sectionsWithContents
     }
-
-    const [newSection] = await db
-      .insert(courseSections)
-      .values({ course_id, title, order })
-      .returning()
-
-    return { success: true, section: newSection }
+  } catch (error) {
+    console.error('Error fetching sections:', error)
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'Failed to fetch sections'
+    })
   }
-
-  return { error: 'Method not allowed' }
 })
