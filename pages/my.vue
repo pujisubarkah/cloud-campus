@@ -259,6 +259,48 @@
             </div>
           </div>
 
+          <!-- Webinar Saya -->
+          <div class="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+            <div class="flex items-center mb-6">
+              <div class="bg-purple-100 p-2 rounded-lg">
+                <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10V3m-6 7V3m-4 8h16M5 21h14a2 2 0 002-2V11a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                </svg>
+              </div>
+              <h3 class="text-lg font-bold text-gray-800 ml-3">Webinar Saya</h3>
+            </div>
+
+            <div v-if="isLoadingWebinar" class="text-center py-8">
+              <div class="animate-spin w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+              <p class="text-gray-500 text-sm">Memuat webinar...</p>
+            </div>
+            <div v-else-if="webinars.length === 0" class="text-center py-8">
+              <div class="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10V3m-6 7V3m-4 8h16M5 21h14a2 2 0 002-2V11a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                </svg>
+              </div>
+              <p class="text-gray-500 text-sm">Belum ada webinar yang Anda ikuti</p>
+            </div>
+            <div v-else class="space-y-4">
+              <div v-for="webinar in webinars" :key="webinar.id" class="flex items-start space-x-3 p-3 bg-purple-50 rounded-xl border border-purple-100">
+                <div class="bg-purple-100 p-2 rounded-lg">
+                  <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10V3m-6 7V3m-4 8h16M5 21h14a2 2 0 002-2V11a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                  </svg>
+                </div>
+                <div class="flex-1">
+                  <h4 class="font-semibold text-gray-800 text-sm">{{ webinar.title }}</h4>
+                  <p class="text-xs text-gray-600">{{ webinar.date }} | {{ webinar.time }}</p>
+                  <p class="text-xs text-gray-500">{{ webinar.description }}</p>
+                </div>
+              </div>
+            </div>
+            <div class="mt-4 pt-4 border-t border-gray-100">
+              <a href="/webinar" class="text-purple-600 hover:text-purple-700 text-sm font-medium">Lihat semua webinar →</a>
+            </div>
+          </div>
+
           <!-- Tips Belajar -->
           <div class="bg-gradient-to-br from-green-50 to-blue-50 rounded-2xl shadow-xl p-6 border border-green-100">
             <div class="flex items-center mb-4">
@@ -308,6 +350,24 @@ const enrollments = ref<Enrollment[]>([])
 const isLoading = ref(false)
 const error = ref('')
 
+const webinars = ref([
+  {
+    id: 1,
+    title: 'Webinar: Strategi Pengentasan Kemiskinan',
+    date: 'Senin, 4 Agustus',
+    time: '10:00 - 12:00',
+    description: 'Webinar bersama pakar ekonomi membahas strategi terbaru.'
+  },
+  {
+    id: 2,
+    title: 'Webinar: Diskusi Kelompok',
+    date: 'Rabu, 6 Agustus',
+    time: '14:00 - 15:30',
+    description: 'Diskusi interaktif bersama peserta lain.'
+  }
+])
+const isLoadingWebinar = ref(false)
+
 const fetchEnrollments = async () => {
   // Pastikan auth sinkron dengan localStorage
   auth.loadFromStorage?.()
@@ -337,5 +397,26 @@ const fetchEnrollments = async () => {
   }
 }
 
-onMounted(fetchEnrollments)
+const fetchWebinars = async () => {
+  isLoadingWebinar.value = true
+  try {
+    // Ganti endpoint sesuai API webinar peserta
+    const response: any = await $fetch('/api/webinar/my', {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${auth.user?.token}`
+      }
+    })
+    webinars.value = response.webinars || []
+  } catch (err: any) {
+    webinars.value = []
+  } finally {
+    isLoadingWebinar.value = false
+  }
+}
+
+onMounted(() => {
+  fetchEnrollments()
+  fetchWebinars()
+})
 </script>

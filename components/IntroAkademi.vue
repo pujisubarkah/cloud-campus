@@ -131,6 +131,13 @@
       </div>
     </div>
   </div>
+
+  <!-- Tambahkan di tempat judul Akademi Pengentasan Kemiskinan -->
+  <h1
+    class="text-2xl sm:text-3xl md:text-5xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 via-yellow-400 to-yellow-500 !leading-[1.25] px-2"
+  >
+    Akademi Pengentasan Kemiskinan
+  </h1>
 </template>
 
 <style scoped>
