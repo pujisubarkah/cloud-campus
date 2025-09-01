@@ -122,22 +122,15 @@
       <!-- Call to Action -->
       <div class="text-center mt-8 pt-6 border-t border-white/20">
         <p class="text-blue-100 mb-4">Mari bergabung dalam upaya pengentasan kemiskinan melalui pendidikan dan pembelajaran yang berkualitas</p>
-        <div class="inline-flex items-center gap-2 bg-yellow-400 text-blue-800 px-6 py-3 rounded-full font-bold hover:bg-yellow-300 transition-colors cursor-pointer">
+        <NuxtLink to="/login" class="inline-flex items-center gap-2 bg-yellow-400 text-blue-800 px-6 py-3 rounded-full font-bold hover:bg-yellow-300 transition-colors cursor-pointer">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
           </svg>
           Mulai Belajar Sekarang
-        </div>
+        </NuxtLink>
       </div>
     </div>
   </div>
-
-  <!-- Tambahkan di tempat judul Akademi Pengentasan Kemiskinan -->
-  <h1
-    class="text-2xl sm:text-3xl md:text-5xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 via-yellow-400 to-yellow-500 !leading-[1.25] px-2"
-  >
-    Akademi Pengentasan Kemiskinan
-  </h1>
 </template>
 
 <style scoped>

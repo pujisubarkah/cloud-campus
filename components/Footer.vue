@@ -1,5 +1,5 @@
 <script setup>
-import { Instagram, Youtube, Linkedin } from 'lucide-vue-next';
+import { Instagram, Youtube, Facebook, Twitter } from 'lucide-vue-next';
 </script>
 
 
@@ -16,7 +16,7 @@ import { Instagram, Youtube, Linkedin } from 'lucide-vue-next';
             </div>
             <p class="text-xs text-blue-100/80">Hak Cipta </p>
             <p class="text-xs text-blue-100/80">Lembaga Administrasi Negara Republik Indonesia</p>
-            <p class="text-xs text-blue-100/80">Manajemen Situs Badan Pengentasan Kemiskinan</p>
+            <p class="text-xs text-blue-100/80">Kedeputian Transformasi Pembelajaran ASN</p>
             <p class="text-xs text-blue-100/80">Jl. Veteran No. 10, Jakarta Pusat</p>
           </div>
         </div>
@@ -25,7 +25,7 @@ import { Instagram, Youtube, Linkedin } from 'lucide-vue-next';
           <p class="text-lg font-bold mb-4 text-blue-200">Akademi Pengentasan Kemiskinan</p>
           <ul class="space-y-2">
             <li><NuxtLink to="/" class="hover:text-[#FFD966] transition-colors">Beranda</NuxtLink></li>
-            <li><NuxtLink to="/course" class="hover:text-[#FFD966] transition-colors">Kursus</NuxtLink></li>
+            <li><NuxtLink to="/course" class="hover:text-[#FFD966] transition-colors">Materi</NuxtLink></li>
             <li><NuxtLink to="/tentang" class="hover:text-[#FFD966] transition-colors">Tentang</NuxtLink></li>
             <li><NuxtLink to="/kontak" class="hover:text-[#FFD966] transition-colors">Kontak</NuxtLink></li>
           </ul>
@@ -34,17 +34,17 @@ import { Instagram, Youtube, Linkedin } from 'lucide-vue-next';
         <div>
           <p class="text-lg font-bold mb-4 text-blue-200">Ikuti Kami</p>
           <div class="space-y-3">
-            <a href="https://www.facebook.com/bppk.kemenkeu/" target="_blank" class="flex items-center gap-3 hover:text-[#FFD966] transition-colors">
-              <span class="icon"><Instagram :size="24" /></span> <span class="ml-2">LAN RI</span>
+            <a href="https://www.facebook.com/HumasLANRI" target="_blank" class="flex items-center gap-3 hover:text-[#FFD966] transition-colors">
+              <span class="icon"><Facebook :size="24" /></span> <span class="ml-2">Humas LAN RI</span>
             </a>
-            <a href="https://twitter.com/bppkkemenkeu" target="_blank" class="flex items-center gap-3 hover:text-[#FFD966] transition-colors">
-              <span class="icon"><Linkedin :size="24" /></span> <span class="ml-2">@LAN_RI</span>
+            <a href="https://x.com/LAN_RI" target="_blank" class="flex items-center gap-3 hover:text-[#FFD966] transition-colors">
+              <span class="icon"><Twitter :size="24" /></span> <span class="ml-2">@LAN_RI</span>
             </a>
-            <a href="https://www.youtube.com/channel/UCDBqV8WfMOK2pwHQZvONb7g" target="_blank" class="flex items-center gap-3 hover:text-[#FFD966] transition-colors">
-              <span class="icon"><Youtube :size="24" /></span> <span class="ml-2">Badan Pengentasan Kemiskinan</span>
+            <a href="https://www.youtube.com/@LembagaAdministrasiNegaraRI" target="_blank" class="flex items-center gap-3 hover:text-[#FFD966] transition-colors">
+              <span class="icon"><Youtube :size="24" /></span> <span class="ml-2">Lembaga Administrasi Negara RI</span>
             </a>
-            <a href="https://www.instagram.com/bppkkemenkeu/" target="_blank" class="flex items-center gap-3 hover:text-[#FFD966] transition-colors">
-              <span class="icon"><Instagram :size="24" /></span> <span class="ml-2">LAN RI</span>
+            <a href="https://www.instagram.com/humas_lan" target="_blank" class="flex items-center gap-3 hover:text-[#FFD966] transition-colors">
+              <span class="icon"><Instagram :size="24" /></span> <span class="ml-2">humas_lan</span>
             </a>
           </div>
         </div>

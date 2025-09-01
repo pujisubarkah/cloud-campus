@@ -60,20 +60,40 @@
           </li>
           <li>
             <a 
-              href="/course/" 
+              href="/course" 
               class="block px-4 py-3 rounded-xl font-medium text-base text-blue-50 hover:bg-blue-700/50 hover:text-yellow-300 transition-all duration-300"
               @click="isMenuOpen = false"
             >
               Materi
             </a>
           </li>
+          <template v-if="auth.isLoggedIn">
+            <li>
+              <a 
+                href="/my" 
+                class="block px-4 py-3 rounded-xl font-medium text-base text-blue-50 hover:bg-blue-700/50 hover:text-yellow-300 transition-all duration-300"
+                @click="isMenuOpen = false"
+              >
+                Kursus Saya
+              </a>
+            </li>
+          </template>
           <li>
             <a 
-              href="/my/" 
+              href="/tentang" 
               class="block px-4 py-3 rounded-xl font-medium text-base text-blue-50 hover:bg-blue-700/50 hover:text-yellow-300 transition-all duration-300"
               @click="isMenuOpen = false"
             >
-              Kursus Saya
+              Tentang
+            </a>
+          </li>
+          <li>
+            <a 
+              href="/kontak" 
+              class="block px-4 py-3 rounded-xl font-medium text-base text-blue-50 hover:bg-blue-700/50 hover:text-yellow-300 transition-all duration-300"
+              @click="isMenuOpen = false"
+            >
+              Helpdesk
             </a>
           </li>
         </ul>
@@ -114,10 +134,18 @@
           <a href="/" class="px-4 py-2 rounded-lg font-semibold text-base transition-all duration-200 text-blue-50 hover:bg-yellow-400 hover:text-blue-900 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-yellow-300/50">Beranda</a>
         </li>
         <li>
-          <a href="/course/" class="px-4 py-2 rounded-lg font-semibold text-base transition-all duration-200 text-blue-50 hover:bg-yellow-400 hover:text-blue-900 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-yellow-300/50">Materi</a>
+          <a href="/course" class="px-4 py-2 rounded-lg font-semibold text-base transition-all duration-200 text-blue-50 hover:bg-yellow-400 hover:text-blue-900 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-yellow-300/50">Materi</a>
+        </li>
+        <template v-if="auth.isLoggedIn">
+          <li>
+            <a href="/my" class="px-4 py-2 rounded-lg font-semibold text-base transition-all duration-200 text-blue-50 hover:bg-yellow-400 hover:text-blue-900 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-yellow-300/50">Kursus Saya</a>
+          </li>
+        </template>
+        <li>
+          <a href="/tentang" class="px-4 py-2 rounded-lg font-semibold text-base transition-all duration-200 text-blue-50 hover:bg-yellow-400 hover:text-blue-900 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-yellow-300/50">Tentang</a>
         </li>
         <li>
-          <a href="/my/" class="px-4 py-2 rounded-lg font-semibold text-base transition-all duration-200 text-blue-50 hover:bg-yellow-400 hover:text-blue-900 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-yellow-300/50">Kursus Saya</a>
+          <a href="/kontak" class="px-4 py-2 rounded-lg font-semibold text-base transition-all duration-200 text-blue-50 hover:bg-yellow-400 hover:text-blue-900 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-yellow-300/50">Helpdesk</a>
         </li>
       </ul>
     </div>
