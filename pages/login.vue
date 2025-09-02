@@ -69,7 +69,7 @@
                   </svg>
                 </div>
                 <h2 class="text-2xl font-bold text-gray-800">Masuk ke Akun</h2>
-                <p class="text-gray-600 px-2">Masuk dengan email dan kata sandi CloudCampus Anda</p>
+                <p class="text-gray-600 px-2">Masuk dengan email dan kata sandi Anda</p>
               </div>
 
               <!-- Login Form -->
@@ -140,7 +140,7 @@
 
               <!-- Register Section -->
               <div class="bg-gradient-to-r from-gray-50 to-blue-50 rounded-2xl p-6 text-center border border-gray-200 mt-8">
-                <p class="text-gray-700 font-medium mb-4">Belum punya akun CloudCampus?</p>
+                <p class="text-gray-700 font-medium mb-4">Belum punya akun?</p>
                 <NuxtLink to="/signup" class="inline-flex items-center gap-2 bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-300">
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>

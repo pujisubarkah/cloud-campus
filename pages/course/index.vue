@@ -32,18 +32,12 @@
             <div class="flex flex-col md:flex-row gap-6 items-center">
               <!-- Search Form -->
               <div class="w-full">
-                <form 
-                  autocomplete="off" 
-                  action="https://cloudcampus.hbmsu.ac.ae/search/index.php" 
-                  method="get" 
-                  class="flex gap-4"
-                >
-                  <input type="hidden" name="areaids" value="core_course-course" />
+                <div class="flex gap-4">
                   <div class="flex-1 relative">
                     <input 
                       type="text" 
-                      name="q"
                       v-model="searchQuery"
+                      @input="handleSearch"
                       placeholder="Cari kursus berdasarkan nama, kategori, atau topik..." 
                       class="w-full px-6 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 placeholder-gray-400 text-lg"
                     />
@@ -54,16 +48,22 @@
                     </div>
                   </div>
                   <button 
-                    type="submit"
-                    class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-2xl font-semibold hover:from-blue-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center space-x-2"
+                    @click="clearSearch"
+                    v-if="searchQuery"
+                    class="bg-gray-500 text-white px-6 py-4 rounded-2xl font-semibold hover:bg-gray-600 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center space-x-2"
                   >
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
-                    <span>Cari</span>
+                    <span>Bersihkan</span>
                   </button>
-                </form>
+                </div>
               </div>
+            </div>
+            
+            <!-- Search Results Info -->
+            <div v-if="searchQuery" class="mt-4 text-sm text-gray-600">
+              Menampilkan {{ filteredCourses.length }} dari {{ courses.length }} kursus untuk pencarian "<strong>{{ searchQuery }}</strong>"
             </div>
             
             <!-- Quick Filter Tags -->
@@ -72,8 +72,13 @@
               <button 
                 v-for="tag in popularTags" 
                 :key="tag"
-                @click="searchQuery = tag"
-                class="px-4 py-2 bg-blue-100 text-blue-600 rounded-full text-sm font-medium hover:bg-blue-200 transition-colors duration-300"
+                @click="setSearchTag(tag)"
+                :class="[
+                  'px-4 py-2 rounded-full text-sm font-medium transition-colors duration-300',
+                  searchQuery === tag 
+                    ? 'bg-blue-500 text-white' 
+                    : 'bg-blue-100 text-blue-600 hover:bg-blue-200'
+                ]"
               >
                 {{ tag }}
               </button>
@@ -143,7 +148,7 @@
         </div>
 
         <!-- Empty State -->
-        <div v-if="courses.length === 0" class="text-center py-20">
+        <div v-if="courses.length === 0 && !isLoading" class="text-center py-20">
           <div class="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl p-12 border border-white/50 max-w-md mx-auto">
             <div class="bg-gradient-to-br from-blue-100 to-purple-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
               <svg class="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -157,6 +162,55 @@
             <button class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-300">
               Hubungi Admin
             </button>
+          </div>
+        </div>
+
+        <!-- No Search Results -->
+        <div v-else-if="courses.length > 0 && sortedCourses.length === 0" class="text-center py-20">
+          <div class="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl p-12 border border-white/50 max-w-md mx-auto">
+            <div class="bg-gradient-to-br from-yellow-100 to-orange-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg class="w-10 h-10 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+              </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-800 mb-4">Tidak Ada Hasil</h3>
+            <p class="text-gray-600 mb-6 leading-relaxed">
+              Tidak ditemukan kursus untuk pencarian "<strong>{{ searchQuery }}</strong>". Coba gunakan kata kunci yang berbeda.
+            </p>
+            <div class="space-y-3">
+              <button 
+                @click="clearSearch"
+                class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-300"
+              >
+                Tampilkan Semua Kursus
+              </button>
+              <div class="text-sm text-gray-500">atau coba kata kunci populer:</div>
+              <div class="flex flex-wrap gap-2 justify-center">
+                <button 
+                  v-for="tag in popularTags.slice(0, 3)" 
+                  :key="tag"
+                  @click="setSearchTag(tag)"
+                  class="px-3 py-1 bg-blue-100 text-blue-600 rounded-full text-sm font-medium hover:bg-blue-200 transition-colors duration-300"
+                >
+                  {{ tag }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loading State -->
+        <div v-else-if="isLoading" class="text-center py-20">
+          <div class="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl p-12 border border-white/50 max-w-md mx-auto">
+            <div class="bg-gradient-to-br from-blue-100 to-purple-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
+              <svg class="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253"/>
+              </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-800 mb-4">Memuat Kursus...</h3>
+            <p class="text-gray-600 leading-relaxed">
+              Sedang mengambil data kursus terbaru untuk Anda.
+            </p>
           </div>
         </div>
       </div>
@@ -192,25 +246,58 @@ const popularTags = ref([
   'Teknologi Digital'
 ])
 
-// Computed
-const sortedCourses = computed(() => {
+// Computed properties
+const filteredCourses = computed(() => {
   let filtered = [...courses.value]
   
-  // Sort logic
+  // Apply search filter
+  if (searchQuery.value.trim()) {
+    const query = searchQuery.value.toLowerCase().trim()
+    filtered = filtered.filter(course => {
+      return (
+        course.title?.toLowerCase().includes(query) ||
+        course.description?.toLowerCase().includes(query) ||
+        course.category?.toLowerCase().includes(query) ||
+        course.tags?.some(tag => tag.toLowerCase().includes(query)) ||
+        course.instructor_name?.toLowerCase().includes(query)
+      )
+    })
+  }
+  
+  return filtered
+})
+
+const sortedCourses = computed(() => {
+  let filtered = [...filteredCourses.value]
+  
+  // Apply sorting
   switch (sortBy.value) {
     case 'newest':
-      filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+      filtered.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
       break
     case 'popular':
       filtered.sort((a, b) => (b.enrollments || 0) - (a.enrollments || 0))
       break
     case 'name':
-      filtered.sort((a, b) => a.title.localeCompare(b.title))
+      filtered.sort((a, b) => (a.title || '').localeCompare(b.title || ''))
       break
   }
   
   return filtered
 })
+
+// Methods
+const handleSearch = () => {
+  // Real-time search - no need for additional logic as computed property handles it
+}
+
+const clearSearch = () => {
+  searchQuery.value = ''
+}
+
+const setSearchTag = (tag) => {
+  searchQuery.value = searchQuery.value === tag ? '' : tag
+}
 
 // Methods
 const fetchCourses = async () => {

@@ -1,311 +1,783 @@
 <template>
-  <div class="p-6 pt-20"> <!-- Tambahkan pt-20 untuk menghindari navbar -->
-    <h1 class="text-3xl font-bold mb-6">📚 Daftar Section Kursus</h1>
-    <!-- Form tambah section -->
-    <form class="flex gap-2 items-center mb-8">
-      <input v-model="newSectionTitle" type="text" class="input input-bordered text-lg" placeholder="Judul Section" required />
-      <input v-model.number="newSectionOrder" type="number" class="input input-bordered w-24 text-lg" placeholder="Urutan" min="1" required />
-      <button type="submit" class="btn btn-primary text-lg" @click.prevent="addSection">Tambah Section</button>
-    </form>
-    <div v-if="sectionError" class="text-red-500 mb-4 text-lg">{{ sectionError }}</div>
-    <!-- Tabel Section -->
-    <table class="table w-full bg-white border border-gray-200 text-lg">
-      <thead class="bg-gray-100">
-        <tr>
-          <th class="py-3 px-4 text-left text-xl">Order</th>
-          <th class="py-3 px-4 text-left text-xl">Section</th>
-          <th class="py-3 px-4 text-left text-xl">Content</th>
-          <th class="py-3 px-4 text-left text-xl">Aksi</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="section in sections" :key="section.id" class="border-t">
-          <td class="py-3 px-4">{{ section.order }}</td>
-          <td class="py-3 px-4">{{ section.title }}</td>
-          <td class="py-3 px-4">
-            <!-- Konten -->
-            <div v-if="section.contents && section.contents.length" class="mb-4">
-              <h4 class="font-semibold text-gray-700 mb-2">📄 Konten:</h4>
-              <ul>
-                <li v-for="content in section.contents" :key="content.id" class="flex items-center gap-2 mb-1">
-                  <span class="text-blue-600 text-lg">#{{ content.order }}</span>
-                  <a :href="content.content_url" target="_blank" class="text-blue-600 underline text-lg">{{ content.title }}</a>
-                  <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">{{ content.type }}</span>
-                  <button class="btn btn-xs btn-warning text-lg" @click="openEditContentModal(content)">Edit</button>
-                  <button class="btn btn-xs btn-error text-lg" @click="removeContent(content.id)">Hapus</button>
-                </li>
-              </ul>
-            </div>
-
-            <!-- Quiz -->
-            <div v-if="section.quizzes && section.quizzes.length" class="mb-4">
-              <h4 class="font-semibold text-gray-700 mb-2">❓ Quiz:</h4>
-              <ul>
-                <li v-for="quiz in section.quizzes" :key="quiz.id" class="flex items-center gap-2 mb-1">
-                  <span class="text-purple-600 text-lg">#{{ quiz.order }}</span>
-                  <span class="text-purple-600 text-lg">{{ quiz.question }}</span>
-                  <span class="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs">{{ quiz.type }}</span>
-                  <button class="btn btn-xs btn-warning text-lg" @click="openEditQuizModal(quiz)">Edit</button>
-                  <button class="btn btn-xs btn-error text-lg" @click="removeQuiz(quiz.id)">Hapus</button>
-                </li>
-              </ul>
-            </div>
-
-            <!-- Pesan jika tidak ada konten dan quiz -->
-            <div v-if="(!section.contents || section.contents.length === 0) && (!section.quizzes || section.quizzes.length === 0)" class="text-gray-400 mb-2 text-lg">
-              Belum ada konten atau quiz
-            </div>
-
-            <!-- Tombol Aksi -->
-            <div class="flex gap-2 mt-3">
-              <button class="btn btn-xs btn-primary text-lg" @click="openAddContentModal(section)">Tambah Konten</button>
-              <button class="btn btn-xs btn-warning text-lg" @click="openAddQuizModal(section)">Tambah Quiz</button>
-            </div>
-          </td>
-          <td class="py-3 px-4">
-            <div class="flex gap-2">
-              <button class="btn btn-sm btn-outline text-lg flex items-center gap-1" @click="editSection(section)">
-                <Pencil class="w-5 h-5" /> Edit
-              </button>
-              <button class="btn btn-sm btn-error text-white text-lg flex items-center gap-1" @click="deleteSection(section.id)">
-                <Trash2 class="w-5 h-5" /> Delete
-              </button>
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-
-    
-
-    <!-- Modal Tambah Konten -->
-    <div v-if="showAddContentModal" class="fixed inset-0 flex items-center justify-center z-50">
-      <div class="modal-overlay absolute inset-0 bg-black opacity-30"></div>
-      <div class="modal-container bg-white w-11/12 md:max-w-md mx-auto rounded-lg shadow-lg z-50 overflow-y-auto">
-        <div class="modal-content py-4 text-left px-6">
-          <h2 class="text-lg font-bold mb-4">Tambah Konten ke {{ selectedSection?.title }}</h2>
-          <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-1" for="contentTitle">Judul Konten</label>
-            <input v-model="newContentTitle" type="text" id="contentTitle" class="input input-bordered w-full" placeholder="Judul Konten" required />
-          </div>
-          <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-1" for="contentDescription">Deskripsi Konten</label>
-            <textarea v-model="newContentDescription" id="contentDescription" class="input input-bordered w-full" placeholder="Deskripsi singkat tentang konten ini" rows="3"></textarea>
-          </div>
-          <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-1" for="contentType">Tipe Konten</label>
-            <select v-model="newContentType" id="contentType" class="select select-bordered w-full">
-              <option value="video">Video</option>
-              <option value="pdf">PDF</option>
-            </select>
-          </div>
-          <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-1" for="contentOrder">Urutan Konten</label>
-            <input v-model.number="newContentOrder" type="number" id="contentOrder" class="input input-bordered w-24" min="1" placeholder="Urutan" required />
-          </div>
-          <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-1" for="contentUrl">URL Konten</label>
-            <input v-model="newContentUrl" type="url" id="contentUrl" class="input input-bordered w-full" placeholder="https://example.com" required />
-          </div>
-          <div class="flex justify-end gap-2">
-            <button class="btn btn-secondary" @click="showAddContentModal = false">Batal</button>
-            <button class="btn btn-primary" @click="addContent">Simpan Konten</button>
+  <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 pt-20">
+    <div class="max-w-7xl mx-auto px-6 lg:px-8 py-8">
+      <!-- Header Section -->
+      <div class="bg-white/70 backdrop-blur-lg rounded-2xl shadow-lg border border-white/30 p-8 mb-8">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+          <div class="flex-1">
+            <h1 class="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-3">
+              📚 Kelola Materi Kursus
+            </h1>
+            <p class="text-gray-600 text-lg">Atur dan kelola section, konten, serta quiz dalam kursus Anda</p>
           </div>
         </div>
+      </div>
+
+      <!-- Add Section Form -->
+      <div class="bg-white/70 backdrop-blur-lg rounded-2xl shadow-lg border border-white/30 p-8 mb-8">
+        <h2 class="text-xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
+          <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+          </svg>
+          Tambah Section Baru
+        </h2>
+        
+        <form class="flex flex-col lg:flex-row gap-4 items-end" @submit.prevent="addSection">
+          <div class="flex-1">
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Judul Section</label>
+            <input 
+              v-model="newSectionTitle" 
+              type="text" 
+              class="w-full px-4 py-3 bg-white/80 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300" 
+              placeholder="Masukkan judul section..."
+              required 
+            />
+          </div>
+          <div class="lg:w-32">
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Urutan</label>
+            <input 
+              v-model.number="newSectionOrder" 
+              type="number" 
+              class="w-full px-4 py-3 bg-white/80 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300" 
+              placeholder="1"
+              min="1" 
+              required 
+            />
+          </div>
+          <button 
+            type="submit" 
+            class="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 whitespace-nowrap"
+          >
+            <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+            </svg>
+            Tambah Section
+          </button>
+        </form>
+        
+        <div v-if="sectionError" class="mt-4 p-4 bg-red-50 border-l-4 border-red-400 rounded-xl">
+          <div class="flex items-center">
+            <svg class="w-5 h-5 text-red-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <p class="text-red-700 font-medium">{{ sectionError }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sections List -->
+      <div v-if="sections.length === 0" class="text-center py-16">
+        <div class="bg-white/70 backdrop-blur-lg rounded-2xl shadow-lg border border-white/30 p-12 max-w-md mx-auto">
+          <div class="text-6xl mb-6">📝</div>
+          <h3 class="text-xl font-semibold text-gray-700 mb-3">Belum Ada Section</h3>
+          <p class="text-gray-500">Mulai dengan membuat section pertama untuk kursus Anda!</p>
+        </div>
+      </div>
+
+      <div v-else class="space-y-6">
+        <div
+          v-for="section in sections"
+          :key="section.id"
+          class="bg-white/70 backdrop-blur-lg rounded-2xl shadow-lg border border-white/30 overflow-hidden hover:shadow-xl transition-all duration-300"
+        >
+          <!-- Section Header -->
+          <div class="bg-gradient-to-r from-blue-600 to-purple-600 p-6">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              <div class="text-white">
+                <div class="flex items-center gap-3 mb-2">
+                  <span class="inline-flex items-center justify-center w-8 h-8 bg-white/20 rounded-full text-sm font-bold">
+                    {{ section.order }}
+                  </span>
+                  <h3 class="text-xl font-bold">{{ section.title }}</h3>
+                </div>
+                <p class="text-blue-100">
+                  {{ (section.contents?.length || 0) + (section.quizzes?.length || 0) }} item materi
+                </p>
+              </div>
+              <div class="flex gap-3">
+                <button 
+                  class="inline-flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 text-white font-medium rounded-xl transition-all duration-300" 
+                  @click="editSection(section)"
+                >
+                  <Pencil class="w-4 h-4" /> 
+                  Edit
+                </button>
+                <button 
+                  class="inline-flex items-center gap-2 px-4 py-2 bg-red-500/80 hover:bg-red-600 text-white font-medium rounded-xl transition-all duration-300" 
+                  @click="deleteSection(section.id)"
+                >
+                  <Trash2 class="w-4 h-4" /> 
+                  Hapus
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section Content -->
+          <div class="p-8">
+            <!-- Content List -->
+            <div v-if="section.contents && section.contents.length" class="mb-8">
+              <h4 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                📄 Konten Materi
+              </h4>
+              <div class="grid gap-4">
+                <div 
+                  v-for="content in section.contents" 
+                  :key="content.id" 
+                  class="bg-blue-50/50 rounded-xl p-4 border-l-4 border-blue-500"
+                >
+                  <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                    <div class="flex-1">
+                      <div class="flex items-center gap-3 mb-2">
+                        <span class="inline-flex items-center justify-center w-6 h-6 bg-blue-500 text-white text-xs font-bold rounded-full">
+                          {{ content.order }}
+                        </span>
+                        <a 
+                          :href="content.content_url" 
+                          target="_blank" 
+                          class="text-blue-700 hover:text-blue-900 font-semibold hover:underline"
+                        >
+                          {{ content.title }}
+                        </a>
+                        <span class="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-800 bg-blue-200 rounded-full">
+                          {{ content.type }}
+                        </span>
+                      </div>
+                      <p v-if="content.deskripsi" class="text-gray-600 text-sm">{{ content.deskripsi }}</p>
+                    </div>
+                    <div class="flex gap-2">
+                      <button 
+                        class="px-3 py-1 bg-yellow-100 hover:bg-yellow-200 text-yellow-800 text-sm font-medium rounded-lg transition-all duration-300" 
+                        @click="openEditContentModal(content)"
+                      >
+                        Edit
+                      </button>
+                      <button 
+                        class="px-3 py-1 bg-red-100 hover:bg-red-200 text-red-800 text-sm font-medium rounded-lg transition-all duration-300" 
+                        @click="removeContent(content.id)"
+                      >
+                        Hapus
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Quiz List -->
+            <div v-if="section.quizzes && section.quizzes.length" class="mb-8">
+              <h4 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                ❓ Quiz & Evaluasi
+              </h4>
+              <div class="grid gap-4">
+                <div 
+                  v-for="quiz in section.quizzes" 
+                  :key="quiz.id" 
+                  class="bg-purple-50/50 rounded-xl p-4 border-l-4 border-purple-500"
+                >
+                  <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                    <div class="flex-1">
+                      <div class="flex items-center gap-3 mb-2">
+                        <span class="inline-flex items-center justify-center w-6 h-6 bg-purple-500 text-white text-xs font-bold rounded-full">
+                          {{ quiz.order }}
+                        </span>
+                        <span class="text-purple-700 font-semibold">{{ quiz.question }}</span>
+                        <span class="inline-flex items-center px-2 py-1 text-xs font-medium text-purple-800 bg-purple-200 rounded-full">
+                          {{ quiz.type }}
+                        </span>
+                      </div>
+                    </div>
+                    <div class="flex gap-2">
+                      <button 
+                        class="px-3 py-1 bg-yellow-100 hover:bg-yellow-200 text-yellow-800 text-sm font-medium rounded-lg transition-all duration-300" 
+                        @click="openEditQuizModal(quiz)"
+                      >
+                        Edit
+                      </button>
+                      <button 
+                        class="px-3 py-1 bg-red-100 hover:bg-red-200 text-red-800 text-sm font-medium rounded-lg transition-all duration-300" 
+                        @click="removeQuiz(quiz.id)"
+                      >
+                        Hapus
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Empty State -->
+            <div v-if="(!section.contents || section.contents.length === 0) && (!section.quizzes || section.quizzes.length === 0)" class="text-center py-12">
+              <div class="text-4xl mb-4">📝</div>
+              <p class="text-gray-500 mb-6">Belum ada konten atau quiz di section ini</p>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">
+              <button 
+                class="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300" 
+                @click="openAddContentModal(section)"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+                Tambah Konten
+              </button>
+              <button 
+                class="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300" 
+                @click="openAddQuizModal(section)"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Tambah Quiz
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Tambah Konten -->
+    <div v-if="showAddContentModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div class="bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/30 p-8 w-full max-w-2xl relative transform transition-all duration-300">
+        <button class="absolute top-6 right-6 p-2 hover:bg-gray-100 rounded-full transition-colors duration-300" @click="showAddContentModal = false">
+          <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+        
+        <div class="mb-8">
+          <h2 class="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+            📄 Tambah Konten Baru
+          </h2>
+          <p class="text-gray-600">Tambahkan materi ke section "{{ selectedSection?.title }}"</p>
+        </div>
+
+        <form @submit.prevent="addContent" class="space-y-6">
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-3">Judul Konten</label>
+            <input 
+              v-model="newContentTitle" 
+              type="text" 
+              class="w-full px-4 py-3 bg-white/80 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300" 
+              placeholder="Masukkan judul konten..."
+              required 
+            />
+          </div>
+          
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-3">Deskripsi Konten</label>
+            <textarea 
+              v-model="newContentDescription" 
+              class="w-full px-4 py-3 bg-white/80 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 h-32 resize-none" 
+              placeholder="Jelaskan tentang konten ini..."
+            ></textarea>
+          </div>
+          
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-3">Tipe Konten</label>
+              <select 
+                v-model="newContentType" 
+                class="w-full px-4 py-3 bg-white/80 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300"
+              >
+                <option value="video">📹 Video</option>
+                <option value="pdf">📄 PDF</option>
+              </select>
+            </div>
+            
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-3">Urutan Konten</label>
+              <input 
+                v-model.number="newContentOrder" 
+                type="number" 
+                class="w-full px-4 py-3 bg-white/80 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300" 
+                min="1" 
+                placeholder="1"
+                required 
+              />
+            </div>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-3">URL Konten</label>
+            <input 
+              v-model="newContentUrl" 
+              type="url" 
+              class="w-full px-4 py-3 bg-white/80 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300" 
+              placeholder="https://example.com/content"
+              required 
+            />
+          </div>
+          
+          <div class="flex gap-4 pt-6">
+            <button 
+              type="button" 
+              class="flex-1 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-all duration-300" 
+              @click="showAddContentModal = false"
+            >
+              Batal
+            </button>
+            <button 
+              type="submit" 
+              class="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+            >
+              Simpan Konten
+            </button>
+          </div>
+        </form>
       </div>
     </div>
 
     <!-- Modal Tambah Quiz -->
-    <div v-if="showAddQuizModal" class="fixed inset-0 flex items-center justify-center z-50">
-      <div class="modal-overlay absolute inset-0 bg-black opacity-30"></div>
-      <div class="modal-container bg-white w-11/12 md:max-w-md mx-auto rounded-lg shadow-lg z-50 overflow-y-auto">
-        <div class="modal-content py-4 text-left px-6">
-          <h2 class="text-lg font-bold mb-4">Tambah Quiz ke {{ selectedSection?.title }}</h2>
-          <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Tipe Quiz</label>
-            <select v-model="newQuizType" class="select select-bordered w-full">
-              <option value="multiple">Multiple Choice</option>
-              <option value="short">Short Answer</option>
-              <option value="truefalse">True or False</option>
-              <option value="fill">Fill in the Blanks</option>
-              <option value="likert">Likert Scale</option>
-            </select>
-          </div>
-          <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-1" for="quizQuestion">Pertanyaan Quiz</label>
-            <input v-model="newQuizQuestion" type="text" id="quizQuestion" class="input input-bordered w-full" placeholder="Pertanyaan" required />
-          </div>
-          <!-- Tambahkan input order -->
-          <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-1" for="quizOrder">Urutan Quiz</label>
-            <input v-model.number="newQuizOrder" type="number" id="quizOrder" class="input input-bordered w-24" min="1" placeholder="Urutan" required />
-          </div>
-          <!-- Multiple Choice -->
-          <div v-if="newQuizType === 'multiple'" class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Pilihan Jawaban</label>
-            <div v-for="(choice, idx) in newQuizChoices" :key="idx" class="flex gap-2 mb-2">
-              <input v-model="newQuizChoices[idx]" type="text" class="input input-bordered w-full" :placeholder="`Pilihan ${String.fromCharCode(65+idx)}`" required />
-              <input type="radio" :value="idx" v-model="newQuizCorrect" :name="'quizCorrect'" />
-              <span>Benar</span>
-            </div>
-            <button class="btn btn-xs btn-outline" @click="addChoice" type="button">Tambah Pilihan</button>
-          </div>
-          <!-- Short Answer -->
-          <div v-if="newQuizType === 'short'" class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-1" for="quizAnswer">Jawaban Singkat</label>
-            <input v-model="newQuizAnswer" type="text" id="quizAnswer" class="input input-bordered w-full" placeholder="Jawaban" required />
-          </div>
-          <!-- True or False -->
-          <div v-if="newQuizType === 'truefalse'" class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Jawaban</label>
-            <select v-model="newQuizAnswer" class="select select-bordered w-full">
-              <option value="true">True</option>
-              <option value="false">False</option>
-            </select>
-          </div>
-          <!-- Fill in the Blanks -->
-          <div v-if="newQuizType === 'fill'" class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-1" for="quizAnswer">Jawaban yang Benar</label>
-            <input v-model="newQuizAnswer" type="text" id="quizAnswer" class="input input-bordered w-full" placeholder="Jawaban" required />
-          </div>
-          <!-- Likert Scale -->
-          <div v-if="newQuizType === 'likert'" class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Skala Likert (1-5)</label>
-            <select v-model="newQuizAnswer" class="select select-bordered w-full">
-              <option v-for="n in 5" :key="n" :value="n">{{ n }}</option>
-            </select>
-          </div>
-          <div class="flex justify-end gap-2">
-            <button class="btn btn-secondary" @click="showAddQuizModal = false">Batal</button>
-            <button class="btn btn-primary" @click="addQuiz">Simpan Quiz</button>
-          </div>
+    <div v-if="showAddQuizModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div class="bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/30 p-8 w-full max-w-2xl relative transform transition-all duration-300 max-h-[90vh] overflow-y-auto">
+        <button class="absolute top-6 right-6 p-2 hover:bg-gray-100 rounded-full transition-colors duration-300" @click="showAddQuizModal = false">
+          <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+        
+        <div class="mb-8">
+          <h2 class="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
+            ❓ Tambah Quiz Baru
+          </h2>
+          <p class="text-gray-600">Tambahkan quiz ke section "{{ selectedSection?.title }}"</p>
         </div>
+
+        <form @submit.prevent="addQuiz" class="space-y-6">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-3">Tipe Quiz</label>
+              <select 
+                v-model="newQuizType" 
+                class="w-full px-4 py-3 bg-white/80 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300"
+              >
+                <option value="multiple">📋 Multiple Choice</option>
+                <option value="short">✏️ Short Answer</option>
+                <option value="truefalse">✅ True or False</option>
+                <option value="fill">📝 Fill in the Blanks</option>
+                <option value="likert">📊 Likert Scale</option>
+              </select>
+            </div>
+            
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-3">Urutan Quiz</label>
+              <input 
+                v-model.number="newQuizOrder" 
+                type="number" 
+                class="w-full px-4 py-3 bg-white/80 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300" 
+                min="1" 
+                placeholder="1"
+                required 
+              />
+            </div>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-3">Pertanyaan Quiz</label>
+            <input 
+              v-model="newQuizQuestion" 
+              type="text" 
+              class="w-full px-4 py-3 bg-white/80 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300" 
+              placeholder="Masukkan pertanyaan quiz..."
+              required 
+            />
+          </div>
+          
+          <!-- Multiple Choice Options -->
+          <div v-if="newQuizType === 'multiple'" class="space-y-4">
+            <label class="block text-sm font-semibold text-gray-700">Pilihan Jawaban</label>
+            <div v-for="(choice, idx) in newQuizChoices" :key="idx" class="flex gap-3 items-center">
+              <input 
+                v-model="newQuizChoices[idx]" 
+                type="text" 
+                class="flex-1 px-4 py-3 bg-white/80 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300" 
+                :placeholder="`Pilihan ${String.fromCharCode(65+idx)}`"
+                required 
+              />
+              <label class="flex items-center gap-2 text-sm">
+                <input type="radio" :value="idx" v-model="newQuizCorrect" class="text-purple-600" />
+                <span class="text-gray-600">Jawaban Benar</span>
+              </label>
+            </div>
+            <button 
+              type="button" 
+              class="px-4 py-2 bg-purple-100 hover:bg-purple-200 text-purple-700 font-medium rounded-lg transition-all duration-300" 
+              @click="addChoice"
+            >
+              + Tambah Pilihan
+            </button>
+          </div>
+          
+          <!-- Short Answer -->
+          <div v-if="newQuizType === 'short'">
+            <label class="block text-sm font-semibold text-gray-700 mb-3">Jawaban Singkat</label>
+            <input 
+              v-model="newQuizAnswer" 
+              type="text" 
+              class="w-full px-4 py-3 bg-white/80 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300" 
+              placeholder="Jawaban yang diharapkan..."
+              required 
+            />
+          </div>
+          
+          <!-- True or False -->
+          <div v-if="newQuizType === 'truefalse'">
+            <label class="block text-sm font-semibold text-gray-700 mb-3">Jawaban</label>
+            <select 
+              v-model="newQuizAnswer" 
+              class="w-full px-4 py-3 bg-white/80 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300"
+            >
+              <option value="true">✅ True</option>
+              <option value="false">❌ False</option>
+            </select>
+          </div>
+          
+          <!-- Fill in the Blanks -->
+          <div v-if="newQuizType === 'fill'">
+            <label class="block text-sm font-semibold text-gray-700 mb-3">Jawaban yang Benar</label>
+            <input 
+              v-model="newQuizAnswer" 
+              type="text" 
+              class="w-full px-4 py-3 bg-white/80 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300" 
+              placeholder="Jawaban untuk mengisi titik-titik..."
+              required 
+            />
+          </div>
+          
+          <!-- Likert Scale -->
+          <div v-if="newQuizType === 'likert'">
+            <label class="block text-sm font-semibold text-gray-700 mb-3">Skala Likert (1-5)</label>
+            <select 
+              v-model="newQuizAnswer" 
+              class="w-full px-4 py-3 bg-white/80 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300"
+            >
+              <option v-for="n in 5" :key="n" :value="n">{{ n }} - {{ ['Sangat Tidak Setuju', 'Tidak Setuju', 'Netral', 'Setuju', 'Sangat Setuju'][n-1] }}</option>
+            </select>
+          </div>
+          
+          <div class="flex gap-4 pt-6">
+            <button 
+              type="button" 
+              class="flex-1 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-all duration-300" 
+              @click="showAddQuizModal = false"
+            >
+              Batal
+            </button>
+            <button 
+              type="submit" 
+              class="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+            >
+              Simpan Quiz
+            </button>
+          </div>
+        </form>
       </div>
     </div>
 
     <!-- Modal Edit Section -->
-    <div v-if="showEditSectionModal" class="fixed inset-0 flex items-center justify-center z-50">
-      <div class="modal-overlay absolute inset-0 bg-black opacity-30"></div>
-      <div class="modal-container bg-white w-11/12 md:max-w-md mx-auto rounded-lg shadow-lg z-50 overflow-y-auto">
-        <div class="modal-content py-4 text-left px-6">
-          <h2 class="text-lg font-bold mb-4">Edit Section</h2>
-          <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-1" for="editSectionTitle">Judul Section</label>
-            <input v-model="editSectionTitle" type="text" id="editSectionTitle" class="input input-bordered w-full text-lg" required />
-          </div>
-          <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-1" for="editSectionOrder">Urutan</label>
-            <input v-model.number="editSectionOrder" type="number" id="editSectionOrder" class="input input-bordered w-24 text-lg" min="1" required />
-          </div>
-          <div class="flex justify-end gap-2">
-            <button class="btn btn-secondary" @click="showEditSectionModal = false">Batal</button>
-            <button class="btn btn-primary" @click="saveEditSection">Simpan Perubahan</button>
-          </div>
+    <div v-if="showEditSectionModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div class="bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/30 p-8 w-full max-w-lg relative transform transition-all duration-300">
+        <button class="absolute top-6 right-6 p-2 hover:bg-gray-100 rounded-full transition-colors duration-300" @click="showEditSectionModal = false">
+          <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+        
+        <div class="mb-8">
+          <h2 class="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+            ✏️ Edit Section
+          </h2>
+          <p class="text-gray-600">Perbarui informasi section</p>
         </div>
+
+        <form @submit.prevent="saveEditSection" class="space-y-6">
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-3">Judul Section</label>
+            <input 
+              v-model="editSectionTitle" 
+              type="text" 
+              class="w-full px-4 py-3 bg-white/80 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300" 
+              placeholder="Masukkan judul section..."
+              required 
+            />
+          </div>
+          
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-3">Urutan</label>
+            <input 
+              v-model.number="editSectionOrder" 
+              type="number" 
+              class="w-full px-4 py-3 bg-white/80 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300" 
+              min="1" 
+              placeholder="1"
+              required 
+            />
+          </div>
+          
+          <div class="flex gap-4 pt-6">
+            <button 
+              type="button" 
+              class="flex-1 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-all duration-300" 
+              @click="showEditSectionModal = false"
+            >
+              Batal
+            </button>
+            <button 
+              type="submit" 
+              class="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+            >
+              Simpan Perubahan
+            </button>
+          </div>
+        </form>
       </div>
     </div>
 
     <!-- Modal Edit Content -->
-    <div v-if="showEditContentModal" class="fixed inset-0 flex items-center justify-center z-50">
-      <div class="modal-overlay absolute inset-0 bg-black opacity-30"></div>
-      <div class="modal-container bg-white w-11/12 md:max-w-md mx-auto rounded-lg shadow-lg z-50 overflow-y-auto">
-        <div class="modal-content py-4 text-left px-6">
-          <h2 class="text-lg font-bold mb-4">Edit Konten</h2>
-          <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-1" for="editContentTitle">Judul Konten</label>
-            <input v-model="editContentTitle" type="text" id="editContentTitle" class="input input-bordered w-full" required />
-          </div>
-          <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-1" for="editContentDescription">Deskripsi Konten</label>
-            <textarea v-model="editContentDescription" id="editContentDescription" class="input input-bordered w-full" rows="3"></textarea>
-          </div>
-          <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-1" for="editContentType">Tipe Konten</label>
-            <select v-model="editContentType" id="editContentType" class="select select-bordered w-full">
-              <option value="video">Video</option>
-              <option value="pdf">PDF</option>
-            </select>
-          </div>
-          <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-1" for="editContentOrder">Urutan Konten</label>
-            <input v-model.number="editContentOrder" type="number" id="editContentOrder" class="input input-bordered w-24" min="1" required />
-          </div>
-          <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-1" for="editContentUrl">URL Konten</label>
-            <input v-model="editContentUrl" type="url" id="editContentUrl" class="input input-bordered w-full" required />
-          </div>
-          <div class="flex justify-end gap-2">
-            <button class="btn btn-secondary" @click="showEditContentModal = false">Batal</button>
-            <button class="btn btn-primary" @click="saveEditContent">Update Konten</button>
-          </div>
+    <div v-if="showEditContentModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div class="bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/30 p-8 w-full max-w-2xl relative transform transition-all duration-300">
+        <button class="absolute top-6 right-6 p-2 hover:bg-gray-100 rounded-full transition-colors duration-300" @click="showEditContentModal = false">
+          <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+        
+        <div class="mb-8">
+          <h2 class="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
+            📝 Edit Konten
+          </h2>
+          <p class="text-gray-600">Perbarui informasi konten</p>
         </div>
+
+        <form @submit.prevent="saveEditContent" class="space-y-6">
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-3">Judul Konten</label>
+            <input 
+              v-model="editContentTitle" 
+              type="text" 
+              class="w-full px-4 py-3 bg-white/80 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300" 
+              placeholder="Masukkan judul konten..."
+              required 
+            />
+          </div>
+          
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-3">Deskripsi Konten</label>
+            <textarea 
+              v-model="editContentDescription" 
+              class="w-full px-4 py-3 bg-white/80 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 h-32 resize-none" 
+              placeholder="Jelaskan tentang konten ini..."
+            ></textarea>
+          </div>
+          
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-3">Tipe Konten</label>
+              <select 
+                v-model="editContentType" 
+                class="w-full px-4 py-3 bg-white/80 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300"
+              >
+                <option value="video">📹 Video</option>
+                <option value="pdf">📄 PDF</option>
+              </select>
+            </div>
+            
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-3">Urutan Konten</label>
+              <input 
+                v-model.number="editContentOrder" 
+                type="number" 
+                class="w-full px-4 py-3 bg-white/80 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300" 
+                min="1" 
+                placeholder="1"
+                required 
+              />
+            </div>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-3">URL Konten</label>
+            <input 
+              v-model="editContentUrl" 
+              type="url" 
+              class="w-full px-4 py-3 bg-white/80 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300" 
+              placeholder="https://example.com/content"
+              required 
+            />
+          </div>
+          
+          <div class="flex gap-4 pt-6">
+            <button 
+              type="button" 
+              class="flex-1 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-all duration-300" 
+              @click="showEditContentModal = false"
+            >
+              Batal
+            </button>
+            <button 
+              type="submit" 
+              class="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+            >
+              Update Konten
+            </button>
+          </div>
+        </form>
       </div>
     </div>
 
     <!-- Modal Edit Quiz -->
-    <div v-if="showEditQuizModal" class="fixed inset-0 flex items-center justify-center z-50">
-      <div class="modal-overlay absolute inset-0 bg-black opacity-30"></div>
-      <div class="modal-container bg-white w-11/12 md:max-w-md mx-auto rounded-lg shadow-lg z-50 overflow-y-auto">
-        <div class="modal-content py-4 text-left px-6">
-          <h2 class="text-lg font-bold mb-4">Edit Quiz</h2>
-          <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Tipe Quiz</label>
-            <select v-model="editQuizType" class="select select-bordered w-full">
-              <option value="multiple">Multiple Choice</option>
-              <option value="short">Short Answer</option>
-              <option value="truefalse">True or False</option>
-              <option value="fill">Fill in the Blanks</option>
-              <option value="likert">Likert Scale</option>
-            </select>
-          </div>
-          <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-1" for="editQuizQuestion">Pertanyaan Quiz</label>
-            <input v-model="editQuizQuestion" type="text" id="editQuizQuestion" class="input input-bordered w-full" required />
-          </div>
-          <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-1" for="editQuizOrder">Urutan Quiz</label>
-            <input v-model.number="editQuizOrder" type="number" id="editQuizOrder" class="input input-bordered w-24" min="1" required />
-          </div>
-          <!-- Multiple Choice -->
-          <div v-if="editQuizType === 'multiple'" class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Pilihan Jawaban</label>
-            <div v-for="(choice, idx) in editQuizChoices" :key="idx" class="flex gap-2 mb-2">
-              <input v-model="editQuizChoices[idx]" type="text" class="input input-bordered w-full" :placeholder="`Pilihan ${String.fromCharCode(65+idx)}`" required />
-              <input type="radio" :value="idx" v-model="editQuizCorrect" :name="'editQuizCorrect'" />
-              <span>Benar</span>
-            </div>
-            <button class="btn btn-xs btn-outline" @click="addEditChoice" type="button">Tambah Pilihan</button>
-          </div>
-          <!-- Short Answer -->
-          <div v-if="editQuizType === 'short'" class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-1" for="editQuizAnswer">Jawaban Singkat</label>
-            <input v-model="editQuizAnswer" type="text" id="editQuizAnswer" class="input input-bordered w-full" required />
-          </div>
-          <!-- True or False -->
-          <div v-if="editQuizType === 'truefalse'" class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Jawaban</label>
-            <select v-model="editQuizAnswer" class="select select-bordered w-full">
-              <option value="true">True</option>
-              <option value="false">False</option>
-            </select>
-          </div>
-          <!-- Fill in the Blanks -->
-          <div v-if="editQuizType === 'fill'" class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-1" for="editQuizAnswer">Jawaban yang Benar</label>
-            <input v-model="editQuizAnswer" type="text" id="editQuizAnswer" class="input input-bordered w-full" required />
-          </div>
-          <!-- Likert Scale -->
-          <div v-if="editQuizType === 'likert'" class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Skala Likert (1-5)</label>
-            <select v-model="editQuizAnswer" class="select select-bordered w-full">
-              <option v-for="n in 5" :key="n" :value="n">{{ n }}</option>
-            </select>
-          </div>
-          <div class="flex justify-end gap-2">
-            <button class="btn btn-secondary" @click="showEditQuizModal = false">Batal</button>
-            <button class="btn btn-primary" @click="saveEditQuiz">Update Quiz</button>
-          </div>
+    <div v-if="showEditQuizModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div class="bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/30 p-8 w-full max-w-2xl relative transform transition-all duration-300 max-h-[90vh] overflow-y-auto">
+        <button class="absolute top-6 right-6 p-2 hover:bg-gray-100 rounded-full transition-colors duration-300" @click="showEditQuizModal = false">
+          <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+        
+        <div class="mb-8">
+          <h2 class="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
+            ✏️ Edit Quiz
+          </h2>
+          <p class="text-gray-600">Perbarui informasi quiz</p>
         </div>
+
+        <form @submit.prevent="saveEditQuiz" class="space-y-6">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-3">Tipe Quiz</label>
+              <select 
+                v-model="editQuizType" 
+                class="w-full px-4 py-3 bg-white/80 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300"
+              >
+                <option value="multiple">📋 Multiple Choice</option>
+                <option value="short">✏️ Short Answer</option>
+                <option value="truefalse">✅ True or False</option>
+                <option value="fill">📝 Fill in the Blanks</option>
+                <option value="likert">📊 Likert Scale</option>
+              </select>
+            </div>
+            
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-3">Urutan Quiz</label>
+              <input 
+                v-model.number="editQuizOrder" 
+                type="number" 
+                class="w-full px-4 py-3 bg-white/80 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300" 
+                min="1" 
+                placeholder="1"
+                required 
+              />
+            </div>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-3">Pertanyaan Quiz</label>
+            <input 
+              v-model="editQuizQuestion" 
+              type="text" 
+              class="w-full px-4 py-3 bg-white/80 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300" 
+              placeholder="Masukkan pertanyaan quiz..."
+              required 
+            />
+          </div>
+          
+          <!-- Multiple Choice Options -->
+          <div v-if="editQuizType === 'multiple'" class="space-y-4">
+            <label class="block text-sm font-semibold text-gray-700">Pilihan Jawaban</label>
+            <div v-for="(choice, idx) in editQuizChoices" :key="idx" class="flex gap-3 items-center">
+              <input 
+                v-model="editQuizChoices[idx]" 
+                type="text" 
+                class="flex-1 px-4 py-3 bg-white/80 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300" 
+                :placeholder="`Pilihan ${String.fromCharCode(65+idx)}`"
+                required 
+              />
+              <label class="flex items-center gap-2 text-sm">
+                <input type="radio" :value="idx" v-model="editQuizCorrect" class="text-purple-600" />
+                <span class="text-gray-600">Jawaban Benar</span>
+              </label>
+            </div>
+            <button 
+              type="button" 
+              class="px-4 py-2 bg-purple-100 hover:bg-purple-200 text-purple-700 font-medium rounded-lg transition-all duration-300" 
+              @click="addEditChoice"
+            >
+              + Tambah Pilihan
+            </button>
+          </div>
+          
+          <!-- Short Answer -->
+          <div v-if="editQuizType === 'short'">
+            <label class="block text-sm font-semibold text-gray-700 mb-3">Jawaban Singkat</label>
+            <input 
+              v-model="editQuizAnswer" 
+              type="text" 
+              class="w-full px-4 py-3 bg-white/80 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300" 
+              placeholder="Jawaban yang diharapkan..."
+              required 
+            />
+          </div>
+          
+          <!-- True or False -->
+          <div v-if="editQuizType === 'truefalse'">
+            <label class="block text-sm font-semibold text-gray-700 mb-3">Jawaban</label>
+            <select 
+              v-model="editQuizAnswer" 
+              class="w-full px-4 py-3 bg-white/80 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300"
+            >
+              <option value="true">✅ True</option>
+              <option value="false">❌ False</option>
+            </select>
+          </div>
+          
+          <!-- Fill in the Blanks -->
+          <div v-if="editQuizType === 'fill'">
+            <label class="block text-sm font-semibold text-gray-700 mb-3">Jawaban yang Benar</label>
+            <input 
+              v-model="editQuizAnswer" 
+              type="text" 
+              class="w-full px-4 py-3 bg-white/80 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300" 
+              placeholder="Jawaban untuk mengisi titik-titik..."
+              required 
+            />
+          </div>
+          
+          <!-- Likert Scale -->
+          <div v-if="editQuizType === 'likert'">
+            <label class="block text-sm font-semibold text-gray-700 mb-3">Skala Likert (1-5)</label>
+            <select 
+              v-model="editQuizAnswer" 
+              class="w-full px-4 py-3 bg-white/80 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300"
+            >
+              <option v-for="n in 5" :key="n" :value="n">{{ n }} - {{ ['Sangat Tidak Setuju', 'Tidak Setuju', 'Netral', 'Setuju', 'Sangat Setuju'][n-1] }}</option>
+            </select>
+          </div>
+          
+          <div class="flex gap-4 pt-6">
+            <button 
+              type="button" 
+              class="flex-1 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-all duration-300" 
+              @click="showEditQuizModal = false"
+            >
+              Batal
+            </button>
+            <button 
+              type="submit" 
+              class="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+            >
+              Update Quiz
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   </div>

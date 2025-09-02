@@ -126,17 +126,10 @@
             </div>
           </div>
 
-          <!-- reCAPTCHA dengan spacing yang lebih baik -->
-          <div class="my-8 flex justify-center">
-            <div class="bg-gray-50 rounded-xl border border-gray-200 w-[304px] h-[78px] flex items-center justify-center text-gray-500 text-sm shadow-sm">
-              [reCAPTCHA]
-            </div>
-          </div>
-
           <!-- Button dengan spacing yang lebih baik -->
           <button id="submitdata" type="submit" 
             class="w-full py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-300 mt-8">
-            Mulai Belajar
+            Daftar
           </button>
         </form>
 

@@ -317,16 +317,6 @@
           </div>
         </div>
       </div>
-
-      <!-- Kembali ke Beranda -->
-      <div class="text-center mt-12">
-        <NuxtLink to="/" class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-gray-600 to-gray-700 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-          </svg>
-          Kembali ke Beranda
-        </NuxtLink>
-      </div>
     </div>
   </div>
 </template>
