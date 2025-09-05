@@ -1,5 +1,5 @@
 <script setup>
-import { Instagram, Youtube, Facebook, Twitter } from 'lucide-vue-next';
+import { Instagram, Youtube, Facebook } from 'lucide-vue-next';
 </script>
 
 
@@ -38,7 +38,12 @@ import { Instagram, Youtube, Facebook, Twitter } from 'lucide-vue-next';
               <span class="icon"><Facebook :size="24" /></span> <span class="ml-2">Humas LAN RI</span>
             </a>
             <a href="https://x.com/LAN_RI" target="_blank" class="flex items-center gap-3 hover:text-[#FFD966] transition-colors">
-              <span class="icon"><Twitter :size="24" /></span> <span class="ml-2">@LAN_RI</span>
+                <span class="icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 4L20 20M20 4L4 20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+                <span class="ml-2">@LAN_RI</span>
             </a>
             <a href="https://www.youtube.com/@LembagaAdministrasiNegaraRI" target="_blank" class="flex items-center gap-3 hover:text-[#FFD966] transition-colors">
               <span class="icon"><Youtube :size="24" /></span> <span class="ml-2">Lembaga Administrasi Negara RI</span>

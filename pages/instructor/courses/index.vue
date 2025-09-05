@@ -93,18 +93,26 @@ async function onThumbnailChange(e) {
     thumbnailError.value = 'Ukuran gambar maksimal 2 MB.'
     return
   }
-
   const formData = new FormData()
-  formData.append('image', file)
+  formData.append('file', file)
+  formData.append('upload_preset', 'Makarti_corpu')
   try {
-    const res = await $fetch('https://api.imgbb.com/1/upload?key=1a1425b30d0fc0b7340bdb0a031ca255', {
+    const res = await fetch('https://api.cloudinary.com/v1_1/dqlfyyigk/image/upload', {
       method: 'POST',
-      body: formData,
+      body: formData
     })
-    // Link gambar dari imgbb ada di res.data.url
-    form.value.thumbnail_url = res.data?.url || ''
+    const data = await res.json()
+    console.log('Cloudinary upload response:', data)
+    if (data.secure_url) {
+      form.value.thumbnail_url = data.secure_url
+    } else {
+      thumbnailError.value = data.error?.message || 'Gagal upload gambar ke Cloudinary.'
+      console.error('Cloudinary error:', data)
+    }
   } catch (err) {
-    thumbnailError.value = 'Gagal upload gambar ke ImgBB.'
+    thumbnailError.value = 'Gagal upload gambar ke Cloudinary.'
+    console.error('Cloudinary upload exception:', err)
+    console.log('Cloudinary upload error detail:', err)
   }
 }
 
@@ -139,6 +147,13 @@ async function handleAddCourse() {
   const res = await $fetch(`/api/instructor/${auth.user.id}/course`)
   courses.value = Array.isArray(res) ? res : []
 }
+
+onMounted(async () => {
+  if (auth.user?.id) {
+    const res = await $fetch(`/api/instructor/${auth.user.id}/course`)
+    courses.value = Array.isArray(res) ? res : []
+  }
+})
 
 onMounted(async () => {
   if (auth.user?.id) {

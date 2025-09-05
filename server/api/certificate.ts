@@ -7,87 +7,112 @@ import { eq, and } from 'drizzle-orm'
 import sharp from 'sharp'
 import path from 'path'
 import fs from 'fs/promises'
+import jwt from 'jsonwebtoken'
 
 export default defineEventHandler(async (event: H3Event) => {
-  // Only allow GET method
-  if (event.method !== 'GET') {
-    throw createError({
-      statusCode: 405,
-      message: 'Method not allowed'
-    })
-  }
+  try {
+    console.log('--- Certificate API called ---');
+    if (event.method !== 'GET') {
+      console.log('Method not allowed:', event.method);
+      throw createError({
+        statusCode: 405,
+        message: 'Method not allowed'
+      })
+    }
 
-  // Get user from token (assume JWT in Authorization header)
-  const authHeader = event.req.headers['authorization']
-  if (!authHeader) {
-    throw createError({ statusCode: 401, message: 'Unauthorized' })
-  }
-  const token = authHeader.replace('Bearer ', '')
-  // TODO: verify token and get userId
-  // For example purposes, assume userId is in token (decode JWT)
-  const userId = decodeUserIdFromToken(token) // implement this function
+    const authHeader = event.req.headers['authorization']
+    console.log('Auth header:', authHeader);
+    if (!authHeader) {
+      console.log('No Authorization header');
+      throw createError({ statusCode: 401, message: 'Unauthorized' })
+    }
+    const token = authHeader.replace('Bearer ', '')
+    let userId = null;
+    try {
+      userId = decodeUserIdFromToken(token)
+      console.log('Decoded userId:', userId);
+    } catch (err) {
+      console.log('Error decoding token:', err);
+      throw createError({ statusCode: 401, message: 'Invalid token' })
+    }
 
-  // Get course slug from query
-  const courseSlug = getQuery(event).slug
-  if (!courseSlug) {
-    throw createError({ statusCode: 400, message: 'Course slug is required' })
-  }
+    const courseSlug = getQuery(event).slug
+    console.log('Course slug:', courseSlug);
+    if (!courseSlug) {
+      console.log('No course slug');
+      throw createError({ statusCode: 400, message: 'Course slug is required' })
+    }
 
-  // Get course_id from slug
-  const courseRes = await db.select().from(courses).where(eq(courses.slug, String(courseSlug))).limit(1)
-  if (!courseRes[0]) {
-    throw createError({ statusCode: 404, message: 'Course not found' })
-  }
-  const courseId = courseRes[0].id
+    const courseRes = await db.select().from(courses).where(eq(courses.slug, String(courseSlug))).limit(1)
+    console.log('Course result:', courseRes);
+    if (!courseRes[0]) {
+      console.log('Course not found');
+      throw createError({ statusCode: 404, message: 'Course not found' })
+    }
+    const courseId = courseRes[0].id
 
-  // Check if user has completed the course
-  const progress = await db.select().from(courseProgress)
-    .where(and(eq(courseProgress.user_id, String(userId)), eq(courseProgress.course_id, String(courseId))))
-    .limit(1)
-  if (!progress || !progress[0] || (progress[0].progress_percent ?? 0) < 100) {
-    throw createError({ statusCode: 403, message: 'Course not completed' })
-  }
+    const progress = await db.select().from(courseProgress)
+      .where(and(eq(courseProgress.user_id, String(userId)), eq(courseProgress.course_id, String(courseId))))
+      .limit(1)
+    console.log('Progress:', progress);
+    if (!progress || !progress[0] || (progress[0].progress_percent ?? 0) < 100) {
+      console.log('Course not completed or progress < 100');
+      throw createError({ statusCode: 403, message: 'Course not completed' })
+    }
 
-  // Ambil data user dan course untuk sertifikat
-  const userRes = await db.select().from(users).where(eq(users.id, userId)).limit(1)
-  const userName = userRes[0]?.full_name || 'Peserta'
-  const courseTitle = courseRes[0]?.title || 'Kursus'
-  const date = new Date().toLocaleDateString('id-ID')
+    const userRes = await db.select().from(users).where(eq(users.id, userId)).limit(1)
+    console.log('User result:', userRes);
+    const userName = userRes[0]?.full_name || 'Peserta'
+    const courseTitle = courseRes[0]?.title || 'Kursus'
+    const date = new Date().toLocaleDateString('id-ID')
 
-  // Path template dan output
-  const templatePath = path.join(process.cwd(), 'public', 'certificate_template.png')
-  const outputFile = `certificate-${userId}-${courseSlug}.png`
-  const outputPath = path.join(process.cwd(), 'public', 'certificates', outputFile)
+    const templatePath = path.join(process.cwd(), 'public', 'certificate_template.png')
+    const outputFile = `certificate-${userId}-${courseSlug}.png`
+    const outputPath = path.join(process.cwd(), 'public', 'certificates', outputFile)
+    console.log('Template path:', templatePath);
+    console.log('Output path:', outputPath);
 
-  // Generate sertifikat PNG dengan overlay SVG
-  await sharp(templatePath)
-    .composite([
-      {
-        input: Buffer.from(
-          `<svg width="1200" height="900">
-            <text x="600" y="400" font-size="48" font-family="Arial, sans-serif" text-anchor="middle" fill="#222">${userName}</text>
-            <text x="600" y="480" font-size="32" font-family="Arial, sans-serif" text-anchor="middle" fill="#222">${courseTitle}</text>
-            <text x="600" y="560" font-size="28" font-family="Arial, sans-serif" text-anchor="middle" fill="#222">${date}</text>
-          </svg>`
-        ),
-        top: 0,
-        left: 0
-      }
-    ])
-    .png()
-    .toFile(outputPath)
+    try {
+      await sharp(templatePath)
+        .composite([
+          {
+            input: Buffer.from(
+              `<svg width="1200" height="900">
+                <text x="600" y="400" font-size="48" font-family="Arial, sans-serif" text-anchor="middle" fill="#222">${userName}</text>
+                <text x="600" y="480" font-size="32" font-family="Arial, sans-serif" text-anchor="middle" fill="#222">${courseTitle}</text>
+                <text x="600" y="560" font-size="28" font-family="Arial, sans-serif" text-anchor="middle" fill="#222">${date}</text>
+              </svg>`
+            ),
+            top: 0,
+            left: 0
+          }
+        ])
+        .png()
+        .toFile(outputPath)
+      console.log('Certificate generated successfully');
+    } catch (err) {
+      console.log('Error generating certificate:', err);
+      throw createError({ statusCode: 500, message: 'Failed to generate certificate' })
+    }
 
-  // Kembalikan URL sertifikat PNG
-  return {
-    success: true,
-    message: 'Certificate generated',
-    certificateUrl: `/certificates/${outputFile}`
+    return {
+      success: true,
+      message: 'Certificate generated',
+      certificateUrl: `/certificates/${outputFile}`
+    }
+  } catch (err) {
+    console.log('Certificate API error:', err);
+    throw err;
   }
 })
 
 // Dummy function for JWT decoding
 function decodeUserIdFromToken(token: string): string {
-  // Implement JWT decoding here
-  // For demo, just return token
-  return token
+  try {
+    const secret = process.env.SECRET_KEY || 'your-secret-key';
+    const payload = jwt.verify(token, secret) as any;
+    return payload.id;
+  } catch (err) {
+    throw createError({ statusCode: 401, message: 'Invalid token' });
+  }
 }
