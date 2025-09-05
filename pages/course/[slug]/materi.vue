@@ -28,18 +28,18 @@
           <div class="flex items-center justify-between mb-3">
             <span class="text-sm font-medium text-slate-600">Progress Keseluruhan</span>
             <span class="text-sm font-bold text-emerald-600">
-              {{ Math.round(((completedSections.length + Object.values(sectionCompletionStatus).filter(Boolean).length) / sections.length) * 100) || 0 }}%
+              {{ progressPercent }}%
             </span>
           </div>
           <div class="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
             <div 
               class="bg-gradient-to-r from-emerald-500 to-teal-500 h-3 rounded-full transition-all duration-500 ease-out"
-              :style="`width: ${((completedSections.length + Object.values(sectionCompletionStatus).filter(Boolean).length) / sections.length) * 100 || 0}%`"
+              :style="`width: ${progressPercent}%`"
             ></div>
           </div>
           <div class="flex justify-between text-xs text-slate-500 mt-2">
-            <span>{{ completedSections.length + Object.values(sectionCompletionStatus).filter(Boolean).length }} selesai</span>
-            <span>{{ sections.length - (completedSections.length + Object.values(sectionCompletionStatus).filter(Boolean).length) }} tersisa</span>
+            <span>{{ totalCompletedSet.size }} selesai</span>
+            <span>{{ sections.length - totalCompletedSet.size }} tersisa</span>
           </div>
         </div>
 
@@ -246,7 +246,7 @@
           </div>
 
           <!-- Tampilkan Quiz jika ada -->
-          <div v-if="selectedSection.quizzes && selectedSection.quizzes.length" class="space-y-8 mt-8">
+          <div v-if="selectedSection && selectedSection.quizzes && selectedSection.quizzes.length" class="space-y-8 mt-8">
             <div v-for="quiz in selectedSection.quizzes" 
                  :key="quiz.id" 
                  :data-quiz-id="quiz.id"
@@ -427,8 +427,8 @@
         </div>
 
         <!-- Sertifikat -->
-        <div v-if="showCertificateButton" class="mt-8 flex flex-col items-center">
-          <button @click="getCertificate" :disabled="isCertificateLoading" class="px-8 py-4 bg-gradient-to-r from-blue-600 to-emerald-500 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
+        <div v-if="showCertificateButton && isPassed" class="mt-8 flex flex-col items-center">
+          <button @click="getCertificate" :disabled="isCertificateLoading" aria-label="Ambil Sertifikat" class="px-8 py-4 bg-gradient-to-r from-blue-600 to-emerald-500 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
             <span v-if="!isCertificateLoading">Ambil Sertifikat</span>
             <span v-else>Mengambil Sertifikat...</span>
           </button>
@@ -438,13 +438,39 @@
             <img :src="certificateUrl" alt="Sertifikat" class="mt-2 rounded-xl shadow-lg max-w-xl" />
           </div>
         </div>
+        <div v-else-if="showCertificateButton && !isPassed" class="mt-8 text-red-600 font-semibold text-center">Skor Anda belum cukup untuk mendapatkan sertifikat. Silakan ulangi quiz hingga skor minimal 80.</div>
+
+        <!-- Tambahan Info Skor dan Kelulusan -->
+        <div v-if="selectedSection && selectedSection.quizzes && selectedSection.quizzes.length" class="mt-4 text-lg font-bold text-blue-600">
+          Skor Anda: {{ userQuizPoints }} / {{ totalQuizPoints }}
+          <div v-if="isPassed" class="mt-2 text-emerald-600 font-semibold">✅ Anda lulus materi ini!</div>
+        </div>
       </div>
     </main>
+  </div>
+
+  <!-- Pop-up Modal Lulus -->
+  <div v-if="showPassedPopup" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+    <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
+      <div class="text-4xl mb-4">🎉</div>
+      <h2 class="text-2xl font-bold text-emerald-600 mb-2">Lulus Materi!</h2>
+      <p class="text-lg text-gray-700 mb-6">{{ passedMessage }}</p>
+      <button @click="getCertificate" :disabled="isCertificateLoading" class="px-6 py-3 bg-gradient-to-r from-blue-600 to-emerald-500 text-white font-semibold rounded-xl shadow hover:bg-blue-700 transition mb-4">
+        <span v-if="!isCertificateLoading">Ambil Sertifikat</span>
+        <span v-else>Mengambil Sertifikat...</span>
+      </button>
+      <div v-if="certificateUrl" class="mt-2">
+        <a :href="certificateUrl" target="_blank" class="text-blue-600 underline font-semibold">Download Sertifikat</a>
+        <br>
+        <img :src="certificateUrl" alt="Sertifikat" class="mt-2 rounded-xl shadow-lg max-w-xs mx-auto" />
+      </div>
+      <button @click="showPassedPopup = false" class="px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-xl shadow hover:bg-gray-300 transition mt-4">Tutup</button>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed, nextTick } from 'vue'
+import { ref, onMounted, computed, nextTick, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '~/stores/auth'
 
@@ -458,6 +484,8 @@ const quizAnswers = ref({})
 const certificateUrl = ref('')
 const isCertificateLoading = ref(false)
 const quizScores = ref({})
+const showPassedPopup = ref(false)
+const passedMessage = ref('')
 
 const toggleSidebar = () => {
   showSidebar.value = !showSidebar.value
@@ -517,7 +545,7 @@ const scrollToQuiz = (quizId) => {
   })
 }
 
-// Update submitQuiz dengan error handling yang lebih baik
+// Integrasi endpoint baru: submitQuiz ke /api/quizzes_section/[id]/answer
 const submitQuiz = async (quiz) => {
   const userAnswer = quizAnswers.value[quiz.id]
   if (userAnswer === undefined || userAnswer === null || userAnswer === '') {
@@ -532,19 +560,16 @@ const submitQuiz = async (quiz) => {
 
   try {
     console.log('Submitting quiz:', quiz.id, 'Answer:', userAnswer)
-    
-    // Submit jawaban ke API
-    const response = await $fetch('/api/quiz_response', {
+
+    // Submit jawaban ke endpoint baru
+    const response = await $fetch(`/api/quizzes_section/${quiz.id}/answer`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${auth.user.token}`,
         'Content-Type': 'application/json'
       },
       body: {
-        quiz_id: quiz.id,
-        user_id: auth.user.id,
-        user_answer: userAnswer,
-        points_earned: calculatePoints(quiz, userAnswer)
+        user_answer: userAnswer
       }
     })
 
@@ -553,22 +578,22 @@ const submitQuiz = async (quiz) => {
     // Update quiz scores
     if (response.success) {
       quizScores.value[quiz.id] = response.points_earned || 0
-      
+
       // Show success message
       alert(`✅ Quiz berhasil disimpan!\nSkor: ${response.points_earned || 0} poin`)
-      
+
       // Refresh quiz scores dari server
       await fetchQuizScores()
-      
+
       // Logic navigasi yang diperbaiki
       await navigateAfterQuiz(quiz)
     }
-    
+
   } catch (error) {
     console.error('Error submitting quiz:', error)
-    
+
     let errorMessage = '❌ Gagal menyimpan quiz. '
-    
+
     if (error.status === 401) {
       errorMessage = '❌ Sesi login expired. Silakan login ulang!'
       // navigateTo('/login')
@@ -579,7 +604,7 @@ const submitQuiz = async (quiz) => {
     } else {
       errorMessage += 'Silakan coba lagi!'
     }
-    
+
     alert(errorMessage)
   }
 }
@@ -691,25 +716,61 @@ const checkSectionCompletion = (section) => {
   return false
 }
 
+// Tambahkan computed untuk total poin dan kelulusan
+const totalQuizPoints = computed(() => {
+  if (!selectedSection.value || !selectedSection.value.quizzes) return 0
+  return selectedSection.value.quizzes.reduce((sum, quiz) => sum + (quiz.points || 10), 0)
+})
+
+const userQuizPoints = computed(() => {
+  if (!selectedSection.value || !selectedSection.value.quizzes) return 0
+  return selectedSection.value.quizzes.reduce((sum, quiz) => sum + (quizScores.value[quiz.id] || 0), 0)
+})
+
+const isPassed = computed(() => {
+  if (totalQuizPoints.value === 0) return false
+  return (userQuizPoints.value / totalQuizPoints.value) * 100 >= 80
+})
+
 // Computed untuk section completion status
 const sectionCompletionStatus = computed(() => {
   const status = {}
   sections.value.forEach(section => {
-    // Section dianggap auto-completed jika semua quiz selesai
     status[section.id] = checkSectionCompletion(section)
   })
   return status
 })
 
-// Update computed untuk certificate button
+// Pastikan hanya id section yang valid dihitung
+const sectionIds = computed(() => sections.value.map(s => s.id))
+const totalCompletedSet = computed(() => {
+  return new Set(
+    [...completedSections.value, ...Object.keys(sectionCompletionStatus.value).filter(id => sectionCompletionStatus.value[id])]
+      .filter(id => sectionIds.value.includes(id))
+  )
+})
+
 const showCertificateButton = computed(() => {
-  // Certificate tersedia jika semua section sudah completed (manual atau auto)
-  const totalCompletedSections = sections.value.filter(section => 
-    completedSections.value.includes(section.id) || 
-    sectionCompletionStatus.value[section.id]
-  ).length
-  
-  return totalCompletedSections === sections.value.length && sections.value.length > 0
+  return totalCompletedSet.value.size === sections.value.length && sections.value.length > 0
+})
+
+const progressPercent = computed(() => {
+  if (sections.value.length === 0) return 0
+  return Math.round((totalCompletedSet.value.size / sections.value.length) * 100) || 0
+})
+
+// Watch untuk menampilkan modal lulus setelah semua computed didefinisikan
+watch([isPassed, showCertificateButton], ([passed, completed]) => {
+  if (passed && completed) {
+    showPassedPopup.value = true
+    passedMessage.value = '🎉 Selamat! Anda lulus materi ini dan bisa download sertifikat.'
+    nextTick(() => {
+      const certBtn = document.querySelector('button[aria-label="Ambil Sertifikat"]')
+      if (certBtn) certBtn.scrollIntoView({ behavior: 'smooth' })
+    })
+  } else {
+    showPassedPopup.value = false
+  }
 })
 
 const handleCompletion = async (sectionId) => {
@@ -736,14 +797,23 @@ const handleCompletion = async (sectionId) => {
 
 const getCertificate = async () => {
   isCertificateLoading.value = true
+  const token = auth.user?.token
+  console.log('[getCertificate] Token:', token)
+  if (!token) {
+    alert('Sesi login Anda sudah habis. Silakan login ulang untuk mengambil sertifikat.')
+    window.location.href = '/login'
+    isCertificateLoading.value = false
+    return
+  }
   try {
     const res = await $fetch('/api/certificate', {
       method: 'GET',
-      headers: { Authorization: `Bearer ${auth.user.token}` },
+      headers: { Authorization: `Bearer ${token}` },
       params: { slug: route.params.slug }
     })
     certificateUrl.value = res.certificateUrl
   } catch (err) {
+    console.error('[getCertificate] Error:', err)
     alert('Gagal mengambil sertifikat!')
   } finally {
     isCertificateLoading.value = false

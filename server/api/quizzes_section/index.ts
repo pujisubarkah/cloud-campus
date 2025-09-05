@@ -24,6 +24,9 @@ export default defineEventHandler(async (event: H3Event) => {
   // POST: Tambah quiz ke section tertentu
   if (event.method === 'POST') {
     const body = await readBody(event)
+    // Debug log untuk payload dan correct_answer
+    console.log('POST /api/quizzes_section payload:', body)
+    console.log('Nilai correct_answer:', body.correct_answer)
 
     if (!body.question || !body.type) {
       return { error: 'question dan type wajib diisi' }

@@ -66,7 +66,7 @@
 import { Bell, Mail, User as UserIcon, Settings as SettingsIcon, LogOut as LogoutIcon } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 
 interface HeaderProps {
   title: string
@@ -83,8 +83,8 @@ const props = defineProps<HeaderProps>()
 
 const auth = useAuthStore()
 const router = useRouter()
-const userName = ref(auth.user?.full_name || '')
-const avatarUrl = ref(`https://ui-avatars.com/api/?name=${encodeURIComponent(userName.value)}&background=random`)
+const userName = computed(() => auth.user?.full_name || '')
+const avatarUrl = computed(() => `https://ui-avatars.com/api/?name=${encodeURIComponent(userName.value)}&background=random`)
 interface Notification {
   id: string
   pesan: string

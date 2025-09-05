@@ -140,7 +140,7 @@
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div v-for="enroll in enrollments" :key="enroll.enrollmentId" 
+                  <div v-for="enroll in enrollments" :key="enroll.id" 
                        class="group bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
                     
                     <!-- Gambar Kursus -->
@@ -167,19 +167,30 @@
                       <div class="mb-4">
                         <div class="flex justify-between text-sm text-gray-600 mb-2">
                           <span>Kemajuan</span>
-                          <span>0%</span>
+                          <span>
+                            {{ courseProgress[enroll.course_id]?.overall_percent || 0 }}%
+                            <span v-if="courseProgress[enroll.course_id]?.completed_sections !== undefined && courseProgress[enroll.course_id]?.total_sections !== undefined">
+                              &nbsp;({{ courseProgress[enroll.course_id]?.completed_sections }}/{{ courseProgress[enroll.course_id]?.total_sections }} section selesai)
+                            </span>
+                          </span>
                         </div>
                         <div class="w-full bg-gray-200 rounded-full h-2">
-                          <div class="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full" style="width: 0%"></div>
+                          <div class="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full" 
+                               :style="{ width: `${courseProgress[enroll.course_id]?.overall_percent || 0}%` }"></div>
                         </div>
                       </div>
 
                       <!-- Tombol Aksi -->
                       <div class="flex space-x-3">
-                        <NuxtLink :to="`/course/${enroll.course_id}/materi`"
-                                  class="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-center py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5">
+                        <NuxtLink
+                          v-if="enroll.course_id"
+                          :to="`/course/${enroll.course_id}/materi`"
+                          class="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-center py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5">
                           Lanjutkan Belajar
                         </NuxtLink>
+                        <button v-else disabled class="flex-1 bg-gray-200 text-gray-400 text-center py-3 rounded-xl font-semibold shadow cursor-not-allowed">
+                          Lanjutkan Belajar
+                        </button>
                         <button class="px-4 py-3 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition">
                           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
@@ -306,7 +317,7 @@
             <div class="flex items-center mb-4">
               <div class="bg-green-100 p-2 rounded-lg">
                 <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 01-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
                 </svg>
               </div>
               <h3 class="text-lg font-bold text-gray-800 ml-3">Tips Belajar</h3>
@@ -326,16 +337,15 @@ import { ref, onMounted } from 'vue'
 import { useAuthStore } from '~/stores/auth'
 
 const auth = useAuthStore()
-
+const userId = auth.user?.id
 interface Enrollment {
-  enrollmentId: string | number
-  course_id: string | number
-  course_thumbnail: string
+  id: number
+  course_id: number
   course_title: string
-  course_slug: string
   course_description: string
+  course_thumbnail: string
+  // tambahkan properti lain sesuai kebutuhan
 }
-
 const enrollments = ref<Enrollment[]>([])
 const isLoading = ref(false)
 const error = ref('')
@@ -358,6 +368,15 @@ const webinars = ref([
 ])
 const isLoadingWebinar = ref(false)
 
+const courses = ref<Enrollment[]>([]) // Daftar course user
+interface CourseProgress {
+  overall_percent: number
+  completed_sections?: number
+  total_sections?: number
+  // tambahkan properti lain sesuai kebutuhan
+}
+const courseProgress = ref<Record<number, CourseProgress>>({}) // Key: course_id, Value: { overall_percent, ... }
+
 const fetchEnrollments = async () => {
   // Pastikan auth sinkron dengan localStorage
   auth.loadFromStorage?.()
@@ -371,42 +390,42 @@ const fetchEnrollments = async () => {
   isLoading.value = true
   error.value = ''
 
-  try {
-    // Fetch data dari API dengan header Authorization
-    const responseData: any = await $fetch('/api/enrollment', {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${auth.user.token}`
+    try {
+      // Fetch data dari API dengan header Authorization
+      const responseData: any = await $fetch('/api/enrollment', {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${auth.user?.token || ''}`
+        }
+      })
+      enrollments.value = responseData.enrollments || []
+      // Jika ada progress, bisa diisi di sini
+      courseProgress.value = responseData.progress || {}
+    } catch (err: any) {
+      error.value = err?.message || 'Gagal memuat data kursus.'
+      enrollments.value = []
+    } finally {
+      isLoading.value = false
+    }
+  }
+  
+  const fetchProgressForCourses = async () => {
+  for (const enroll of enrollments.value) {
+    if (enroll.course_id) {
+      const progressRes = await $fetch('/api/course_progress', {
+        method: 'GET',
+        params: { user_id: userId, course_id: enroll.course_id }
+      })
+      if ('overall_percent' in progressRes) {
+        courseProgress.value[enroll.course_id] = progressRes
+      } else {
+        courseProgress.value[enroll.course_id] = { overall_percent: 0 }
       }
-    })
-    enrollments.value = responseData.enrollments || []
-  } catch (err: any) {
-    error.value = err?.message || 'Gagal memuat data kursus.'
-  } finally {
-    isLoading.value = false
+    }
   }
 }
 
-const fetchWebinars = async () => {
-  isLoadingWebinar.value = true
-  try {
-    // Ganti endpoint sesuai API webinar peserta
-    const response: any = await $fetch('/api/webinar/my', {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${auth.user?.token}`
-      }
-    })
-    webinars.value = response.webinars || []
-  } catch (err: any) {
-    webinars.value = []
-  } finally {
-    isLoadingWebinar.value = false
-  }
-}
-
-onMounted(() => {
-  fetchEnrollments()
-  fetchWebinars()
-})
-</script>
+  onMounted(() => {
+    fetchEnrollments()
+  })
+  </script>

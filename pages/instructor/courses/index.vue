@@ -12,6 +12,16 @@ const courses = ref([])
 const showModal = ref(false)
 const selectedCourse = ref({})
 const showAddModal = ref(false)
+const showCourseInfoModal = ref(false)
+const newCourseId = ref('')
+const courseInfoForm = ref({
+  level: '',
+  duration: 0,
+  language: '',
+  mode: '',
+  certificate: false,
+  mobile_friendly: true
+})
 const showDeleteModal = ref(false)
 const courseToDelete = ref({})
 const isDeleting = ref(false)
@@ -108,6 +118,10 @@ async function onThumbnailChange(e) {
     } else {
       thumbnailError.value = data.error?.message || 'Gagal upload gambar ke Cloudinary.'
       console.error('Cloudinary error:', data)
+      if (data.error) {
+        console.log('Cloudinary error message:', data.error.message)
+        console.log('Cloudinary error details:', data.error)
+      }
     }
   } catch (err) {
     thumbnailError.value = 'Gagal upload gambar ke Cloudinary.'
@@ -127,7 +141,7 @@ async function handleAddCourse() {
     instructor_id: auth.user.id,
     is_published: false,
   }
-  await $fetch('/api/instructor/' + auth.user.id + '/course', {
+  const courseRes = await $fetch('/api/instructor/' + auth.user.id + '/course', {
     method: 'POST',
     body: newCourse,
   })
@@ -143,9 +157,32 @@ async function handleAddCourse() {
     }
   })
 
+  if (courseRes?.id) {
+    newCourseId.value = courseRes.id
+    showCourseInfoModal.value = true
+  }
   closeAddModal()
   const res = await $fetch(`/api/instructor/${auth.user.id}/course`)
   courses.value = Array.isArray(res) ? res : []
+}
+
+async function handleAddCourseInfo() {
+  if (!newCourseId.value) return
+  const infoRes = await $fetch('/api/course_info', {
+    method: 'POST',
+    body: { ...courseInfoForm.value, course_id: newCourseId.value }
+  })
+  showCourseInfoModal.value = false
+  // Reset form
+  courseInfoForm.value = {
+    level: '',
+    duration: 0,
+    language: '',
+    mode: '',
+    certificate: false,
+    mobile_friendly: true
+  }
+  newCourseId.value = ''
 }
 
 onMounted(async () => {
@@ -465,4 +502,55 @@ onMounted(async () => {
       </div>
     </div>
   </div>
+    <!-- Modal Tambah Info Kursus -->
+    <div v-if="showCourseInfoModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div class="bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/30 p-8 w-full max-w-xl relative transform transition-all duration-300">
+        <h3 class="text-2xl font-bold mb-6 text-blue-700">Tambahkan Informasi Kursus</h3>
+        <form @submit.prevent="handleAddCourseInfo" class="space-y-6">
+          <div>
+            <label class="block text-sm font-semibold mb-2">Level</label>
+            <select v-model="courseInfoForm.level" class="w-full px-4 py-2 border rounded-xl" required>
+              <option value="">Pilih Level</option>
+              <option value="Beginner">Beginner</option>
+              <option value="Intermediate">Intermediate</option>
+              <option value="Advanced">Advanced</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-semibold mb-2">Durasi (menit)</label>
+            <input v-model.number="courseInfoForm.duration" type="number" min="1" class="w-full px-4 py-2 border rounded-xl" required />
+          </div>
+          <div>
+            <label class="block text-sm font-semibold mb-2">Bahasa</label>
+            <select v-model="courseInfoForm.language" class="w-full px-4 py-2 border rounded-xl" required>
+              <option value="">Pilih Bahasa</option>
+              <option value="Indonesia">Indonesia</option>
+              <option value="English">English</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-semibold mb-2">Mode</label>
+            <select v-model="courseInfoForm.mode" class="w-full px-4 py-2 border rounded-xl" required>
+              <option value="">Pilih Mode</option>
+              <option value="Online">Online</option>
+              <option value="Offline">Offline</option>
+              <option value="Hybrid">Hybrid</option>
+            </select>
+          </div>
+          <div class="flex gap-4">
+            <label class="flex items-center gap-2">
+              <input type="checkbox" v-model="courseInfoForm.certificate" /> Sertifikat
+            </label>
+            <label class="flex items-center gap-2">
+              <input type="checkbox" v-model="courseInfoForm.mobile_friendly" /> Mobile Friendly
+            </label>
+          </div>
+          <div class="flex gap-4 pt-4">
+            <button type="button" class="flex-1 px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl" @click="showCourseInfoModal = false">Batal</button>
+            <button type="submit" class="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl">Simpan Info Kursus</button>
+          </div>
+        </form>
+      </div>
+    </div>
 </template>

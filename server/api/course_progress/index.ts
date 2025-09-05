@@ -12,13 +12,37 @@ export default defineEventHandler(async (event) => {
     if (section_id) filters.push(eq(courseProgress.section_id, String(section_id)))
 
     let queryBuilder = db.select().from(courseProgress)
-    let data
+    let progressRows
     if (filters.length > 0) {
-      data = await db.select().from(courseProgress).where(and(...filters))
+      progressRows = await db.select().from(courseProgress).where(and(...filters))
     } else {
-      data = await queryBuilder
+      progressRows = await queryBuilder
     }
-    return data
+
+    // Hitung jumlah section di course
+    let totalSections = 0
+    if (course_id) {
+      const sections = await db.select().from(require('../../database/course_section').courseSections)
+        .where(eq(require('../../database/course_section').courseSections.course_id, String(course_id)))
+      totalSections = sections.length
+    }
+
+    // Hitung jumlah section selesai
+    const completedSections = progressRows.filter(row => (row.progress_percent ?? 0) >= 100).map(row => row.section_id)
+
+    // Hitung overall percent (persentase section selesai dari total section)
+    let overallPercent = 0
+    if (totalSections > 0) {
+      overallPercent = Math.round((completedSections.length / totalSections) * 100)
+    }
+
+    return {
+      success: true,
+      overall_percent: overallPercent,
+      completed_sections: completedSections.length,
+      total_sections: totalSections,
+      progress_rows: progressRows
+    }
   }
 
   if (event.method === 'POST') {

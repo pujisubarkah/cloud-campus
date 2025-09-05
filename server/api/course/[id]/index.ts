@@ -165,20 +165,28 @@ export default defineEventHandler(async (event: H3Event) => {
 
       // Delete related records first to avoid foreign key constraint errors
       console.log(`Starting deletion process for course: ${courseId}`)
-      
+
+      // Delete course_info first
+      try {
+        const { course_info } = await import('~/server/database/course_info')
+        await db.delete(course_info).where(eq(course_info.course_id, courseId))
+        console.log('Course info deleted successfully')
+      } catch (error) {
+        console.log('Course info table does not exist or no data to delete')
+      }
+
       // Get all section IDs for this course first
       const sectionsToDelete = await db
         .select({ id: courseSections.id })
         .from(courseSections)
         .where(eq(courseSections.course_id, courseId))
-      
+
       console.log(`Found ${sectionsToDelete.length} sections to delete`)
       const sectionIds = sectionsToDelete.map(section => section.id)
-      
+
       // Delete section-related data if there are sections
       if (sectionIds.length > 0) {
         console.log('Deleting section-related data...')
-        
         // Delete section progress (user progress in sections)
         try {
           const deletedProgress = await db.delete(sectionProgress).where(inArray(sectionProgress.section_id, sectionIds))
@@ -187,7 +195,7 @@ export default defineEventHandler(async (event: H3Event) => {
           console.log('Section progress table does not exist or no data to delete')
         }
       }
-      
+
       // Delete course progress records (user progress in overall course)
       try {
         const deletedCourseProgress = await db.delete(courseProgress).where(eq(courseProgress.course_id, courseId))
@@ -195,7 +203,7 @@ export default defineEventHandler(async (event: H3Event) => {
       } catch (error) {
         console.log('Course progress table does not exist or no data to delete')
       }
-      
+
       // Delete enrollments (student enrollments in course)
       try {
         const deletedEnrollments = await db.delete(enrollments).where(eq(enrollments.course_id, courseId))
@@ -203,7 +211,7 @@ export default defineEventHandler(async (event: H3Event) => {
       } catch (error) {
         console.log('Enrollments table does not exist or no data to delete')
       }
-      
+
       // Delete course sections
       if (sectionIds.length > 0) {
         try {
@@ -213,14 +221,14 @@ export default defineEventHandler(async (event: H3Event) => {
           console.log('Course sections table does not exist or no data to delete')
         }
       }
-      
+
       // Finally delete the course
       console.log('Deleting main course record...')
       await db.delete(courses).where(eq(courses.id, courseId))
       console.log('Course deleted successfully')
 
-      return { 
-        success: true, 
+      return {
+        success: true,
         message: 'Course and all related data deleted successfully',
         deletedCourse: existingCourse[0]
       }

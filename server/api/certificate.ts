@@ -36,20 +36,20 @@ export default defineEventHandler(async (event: H3Event) => {
       throw createError({ statusCode: 401, message: 'Invalid token' })
     }
 
-    const courseSlug = getQuery(event).slug
-    console.log('Course slug:', courseSlug);
-    if (!courseSlug) {
-      console.log('No course slug');
-      throw createError({ statusCode: 400, message: 'Course slug is required' })
+    const courseId = getQuery(event).slug
+    console.log('Course id:', courseId);
+    if (!courseId) {
+      console.log('No course id');
+      throw createError({ statusCode: 400, message: 'Course id is required' })
     }
 
-    const courseRes = await db.select().from(courses).where(eq(courses.slug, String(courseSlug))).limit(1)
+    const courseRes = await db.select().from(courses).where(eq(courses.id, String(courseId))).limit(1)
     console.log('Course result:', courseRes);
     if (!courseRes[0]) {
       console.log('Course not found');
       throw createError({ statusCode: 404, message: 'Course not found' })
     }
-    const courseId = courseRes[0].id
+    // courseId sudah didapat dari parameter
 
     const progress = await db.select().from(courseProgress)
       .where(and(eq(courseProgress.user_id, String(userId)), eq(courseProgress.course_id, String(courseId))))
@@ -65,24 +65,85 @@ export default defineEventHandler(async (event: H3Event) => {
     const userName = userRes[0]?.full_name || 'Peserta'
     const courseTitle = courseRes[0]?.title || 'Kursus'
     const date = new Date().toLocaleDateString('id-ID')
+    
+    console.log('Certificate data:');
+    console.log('- User name:', userName);
+    console.log('- Course title:', courseTitle);
+    console.log('- Date:', date);
 
     const templatePath = path.join(process.cwd(), 'public', 'certificate_template.png')
-    const outputFile = `certificate-${userId}-${courseSlug}.png`
+  const outputFile = `certificate-${userId}-${courseId}.png`
     const outputPath = path.join(process.cwd(), 'public', 'certificates', outputFile)
     console.log('Template path:', templatePath);
     console.log('Output path:', outputPath);
 
     try {
+      const svgOverlay = `
+        <svg width="4000" height="2828" xmlns="http://www.w3.org/2000/svg">
+          <!-- Judul SERTIFIKAT -->
+          <text x="2000" y="850"
+                font-family="Georgia, serif" font-size="200" font-weight="bold"
+                text-anchor="middle" fill="#2c3e50" letter-spacing="8">
+            SERTIFIKAT
+          </text>
+
+          <!-- Subjudul -->
+          <text x="2000" y="1050"
+                font-family="Arial, sans-serif" font-size="80" font-style="italic"
+                text-anchor="middle" fill="#7f8c8d">
+            Dengan ini diberikan kepada
+          </text>
+
+          <!-- Nama Peserta -->
+          <text x="2000" y="1350"
+                font-family="Georgia, serif" font-size="160" font-weight="bold"
+                text-anchor="middle" fill="#2c3e50">
+            ${userName}
+          </text>
+
+          <!-- Keterangan -->
+          <text x="2000" y="1550"
+                font-family="Arial, sans-serif" font-size="70"
+                text-anchor="middle" fill="#7f8c8d">
+            Atas partisipasinya dalam menyelesaikan kursus
+          </text>
+
+          <!-- Judul Kursus -->
+          <text x="2000" y="1750"
+                font-family="Georgia, serif" font-size="110" font-weight="bold" font-style="italic"
+                text-anchor="middle" fill="#2c3e50">
+            "${courseTitle}"
+          </text>
+
+          <!-- Tanggal -->
+          <text x="2000" y="2000"
+                font-family="Arial, sans-serif" font-size="70"
+                text-anchor="middle" fill="#7f8c8d">
+            Diberikan pada tanggal ${date}
+          </text>
+
+          <!-- Signature area kiri -->
+          <text x="1000" y="2500"
+                font-family="Arial, sans-serif" font-size="60"
+                text-anchor="middle" fill="#34495e">
+            Deputi Bidang Transformasi Pembelajaran ASN
+          </text>
+          <line x1="800" y1="2450" x2="1200" y2="2450" stroke="#34495e" stroke-width="5"/>
+
+          <!-- Signature area kanan -->
+          <text x="3000" y="2500"
+                font-family="Arial, sans-serif" font-size="60"
+                text-anchor="middle" fill="#34495e">
+            Kepala LAN
+          </text>
+          <line x1="2800" y1="2450" x2="3200" y2="2450" stroke="#34495e" stroke-width="5"/>
+        </svg>
+      `;
+
       await sharp(templatePath)
         .composite([
           {
-            input: Buffer.from(
-              `<svg width="1200" height="900">
-                <text x="600" y="400" font-size="48" font-family="Arial, sans-serif" text-anchor="middle" fill="#222">${userName}</text>
-                <text x="600" y="480" font-size="32" font-family="Arial, sans-serif" text-anchor="middle" fill="#222">${courseTitle}</text>
-                <text x="600" y="560" font-size="28" font-family="Arial, sans-serif" text-anchor="middle" fill="#222">${date}</text>
-              </svg>`
-            ),
+            input: Buffer.from(svgOverlay),
             top: 0,
             left: 0
           }
@@ -109,7 +170,7 @@ export default defineEventHandler(async (event: H3Event) => {
 // Dummy function for JWT decoding
 function decodeUserIdFromToken(token: string): string {
   try {
-    const secret = process.env.SECRET_KEY || 'your-secret-key';
+    const secret = process.env.JWT_SECRET || 'your-default-secret-key';
     const payload = jwt.verify(token, secret) as any;
     return payload.id;
   } catch (err) {
