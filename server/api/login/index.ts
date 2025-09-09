@@ -33,6 +33,14 @@ export default defineEventHandler(async (event) => {
       })
     }
 
+    // Only allow login if user is verified
+    if (!user.is_verified) {
+      throw createError({
+        statusCode: 403,
+        statusMessage: 'Akun Anda belum terverifikasi. Silakan hubungi admin.'
+      })
+    }
+
     // Verify password
     const isValidPassword = await auth.verifyPassword(password, user.password_hash)
     if (!isValidPassword) {

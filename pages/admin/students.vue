@@ -8,19 +8,33 @@
           <tr>
             <th>Nama</th>
             <th>Email</th>
+            <th>NIP</th>
             <th>Kursus Diikuti</th>
             <th>Status</th>
             <th>Aksi</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="student in students" :key="student.id">
-            <td>{{ student.name }}</td>
-            <td>{{ student.email }}</td>
-            <td>{{ student.courses }}</td>
+          <tr v-if="loading">
+            <td colspan="6" class="text-center">Loading...</td>
+          </tr>
+          <tr v-else-if="students.length === 0">
+            <td colspan="6" class="text-center">Tidak ada data siswa</td>
+          </tr>
+          <tr v-else v-for="student in students" :key="student.id">
             <td>
-              <span :class="student.status === 'active' ? 'badge badge-success' : 'badge badge-warning'">
-                {{ student.status }}
+              <div class="flex items-center gap-3">
+                <img :src="`https://ui-avatars.com/api/?name=${encodeURIComponent(student.full_name)}&background=random&seed=${student.avatar_seed}`" 
+                     class="w-8 h-8 rounded-full" />
+                <span>{{ student.full_name }}</span>
+              </div>
+            </td>
+            <td>{{ student.email }}</td>
+            <td>{{ student.nip || '-' }}</td>
+            <td>{{ student.total_courses }} kursus</td>
+            <td>
+              <span :class="student.is_active ? 'badge badge-success' : 'badge badge-warning'">
+                {{ student.is_active ? 'Aktif' : 'Tidak Aktif' }}
               </span>
             </td>
             <td>
@@ -35,31 +49,30 @@
 </template>
 
 <script setup>
+import { ref, onMounted } from 'vue'
+
 definePageMeta({
   layout: 'admin'
 })
 
-const students = [
-  {
-    id: 1,
-    name: 'Ahmad Setiawan',
-    email: 'ahmad@example.com',
-    courses: 3,
-    status: 'active'
-  },
-  {
-    id: 2,
-    name: 'Dewi Lestari',
-    email: 'dewi@example.com',
-    courses: 2,
-    status: 'inactive'
-  },
-  {
-    id: 3,
-    name: 'Budi Prasetyo',
-    email: 'budi@example.com',
-    courses: 1,
-    status: 'active'
+const students = ref([])
+const loading = ref(true)
+
+async function fetchStudents() {
+  loading.value = true
+  try {
+    const response = await $fetch('/api/users/students')
+    if ('users' in response && Array.isArray(response.users)) {
+      students.value = response.users
+    } else {
+      students.value = []
+    }
+  } catch (error) {
+    console.error('Error fetching students:', error)
+    students.value = []
   }
-]
+  loading.value = false
+}
+
+onMounted(fetchStudents)
 </script>

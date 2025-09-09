@@ -1,3 +1,4 @@
+
 <template>
   <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-100 flex items-center justify-center py-8 px-4 sm:px-6 lg:px-8">
     <div class="w-full max-w-7xl mx-auto">
@@ -252,6 +253,7 @@ const handleLogin = async () => {
 async function handleSubmit() {
   loading.value = true
   errorMsg.value = ''
+  console.log('Login attempt:', { email: email.value, password: '***' })
   try {
     type LoginResponse =
       | { success: boolean; user: { id: string; email: string; full_name: string; role_id: number; token: string }; error?: undefined }
@@ -264,6 +266,8 @@ async function handleSubmit() {
         password: password.value
       }
     })
+    
+    console.log('Login response:', res)
 
     if ('success' in res && res.success && res.user) {
       auth.login({ 
@@ -282,10 +286,19 @@ async function handleSubmit() {
         router.push('/my')
       }
     } else {
+      console.error('Login failed:', res)
       errorMsg.value = res.error || 'Login gagal. Silakan coba lagi.'
     }
-  } catch (err) {
-    errorMsg.value = 'Terjadi kesalahan. Silakan coba lagi.'
+  } catch (err: any) {
+    console.error('Login error:', err)
+    // Ambil pesan error dari response backend jika ada
+    if (err && typeof err === 'object' && 'data' in err && err.data && typeof err.data.statusMessage === 'string') {
+      errorMsg.value = err.data.statusMessage
+    } else if (err && typeof err === 'object' && 'message' in err && typeof err.message === 'string') {
+      errorMsg.value = err.message
+    } else {
+      errorMsg.value = 'Terjadi kesalahan. Silakan coba lagi.'
+    }
   } finally {
     loading.value = false
   }
