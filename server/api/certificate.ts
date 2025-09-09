@@ -81,62 +81,62 @@ export default defineEventHandler(async (event: H3Event) => {
       const svgOverlay = `
         <svg width="4000" height="2828" xmlns="http://www.w3.org/2000/svg">
           <!-- Judul SERTIFIKAT -->
-          <text x="2000" y="850"
-                font-family="Georgia, serif" font-size="200" font-weight="bold"
-                text-anchor="middle" fill="#2c3e50" letter-spacing="8">
+          <text x="2000" y="600"
+                font-family="Georgia, serif" font-size="240" font-weight="bold"
+                text-anchor="middle" fill="#2c3e50" letter-spacing="12">
             SERTIFIKAT
           </text>
 
           <!-- Subjudul -->
-          <text x="2000" y="1050"
+          <text x="2000" y="800"
                 font-family="Arial, sans-serif" font-size="80" font-style="italic"
                 text-anchor="middle" fill="#7f8c8d">
             Dengan ini diberikan kepada
           </text>
 
           <!-- Nama Peserta -->
-          <text x="2000" y="1350"
+          <text x="2000" y="1130"
                 font-family="Georgia, serif" font-size="160" font-weight="bold"
                 text-anchor="middle" fill="#2c3e50">
             ${userName}
           </text>
 
           <!-- Keterangan -->
-          <text x="2000" y="1550"
-                font-family="Arial, sans-serif" font-size="70"
+          <text x="2000" y="1360"
+                font-family="Arial, sans-serif" font-size="66"
                 text-anchor="middle" fill="#7f8c8d">
             Atas partisipasinya dalam menyelesaikan kursus
           </text>
 
           <!-- Judul Kursus -->
-          <text x="2000" y="1750"
-                font-family="Georgia, serif" font-size="110" font-weight="bold" font-style="italic"
+          <text x="2000" y="1600"
+                font-family="Georgia, serif" font-size="106" font-weight="bold" font-style="italic"
                 text-anchor="middle" fill="#2c3e50">
             "${courseTitle}"
           </text>
 
           <!-- Tanggal -->
-          <text x="2000" y="2000"
-                font-family="Arial, sans-serif" font-size="70"
+          <text x="2000" y="1930"
+                font-family="Arial, sans-serif" font-size="66"
                 text-anchor="middle" fill="#7f8c8d">
             Diberikan pada tanggal ${date}
           </text>
 
           <!-- Signature area kiri -->
-          <text x="1000" y="2500"
-                font-family="Arial, sans-serif" font-size="60"
+          <text x="1000" y="2330"
+                font-family="Arial, sans-serif" font-size="53"
                 text-anchor="middle" fill="#34495e">
             Deputi Bidang Transformasi Pembelajaran ASN
           </text>
-          <line x1="800" y1="2450" x2="1200" y2="2450" stroke="#34495e" stroke-width="5"/>
+          <line x1="666" y1="2400" x2="1333" y2="2400" stroke="#34495e" stroke-width="6"/>
 
           <!-- Signature area kanan -->
-          <text x="3000" y="2500"
-                font-family="Arial, sans-serif" font-size="60"
+          <text x="3000" y="2330"
+                font-family="Arial, sans-serif" font-size="53"
                 text-anchor="middle" fill="#34495e">
             Kepala LAN
           </text>
-          <line x1="2800" y1="2450" x2="3200" y2="2450" stroke="#34495e" stroke-width="5"/>
+          <line x1="2833" y1="2400" x2="3166" y2="2400" stroke="#34495e" stroke-width="6"/>
         </svg>
       `;
 
