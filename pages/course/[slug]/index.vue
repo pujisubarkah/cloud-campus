@@ -43,11 +43,6 @@
           <p class="text-gray-700 text-lg leading-relaxed mb-4">{{ course.description }}</p>
           
           <!-- Course Info -->
-          <div class="flex items-center gap-4 text-sm text-gray-500">
-            <span>ID: {{ course.id }}</span>
-            <span>•</span>
-            <span>Dibuat: {{ new Date(course.created_at).toLocaleDateString() }}</span>
-          </div>
         </div>
 
         <!-- Error State -->
@@ -274,14 +269,13 @@ const fetchCourseData = async () => {
       // Handle sections - API returns array directly
       if (sectionsRes.ok) {
         const sectionsData = await sectionsRes.json()
-        // API returns array directly, no need to access .sections
         sections.value = sectionsData.sort((a: Section, b: Section) => a.order - b.order)
       }
 
-      // Handle course info - API returns object with course_info property
+      // Handle course info - API returns object with course_info property (from /api/course_info/[course_id])
       if (infoRes.ok) {
-        const { course_info } = await infoRes.json()
-        courseInfo.value = course_info
+        const infoData = await infoRes.json()
+        courseInfo.value = infoData.course_info
       }
     }
   } catch (error) {
