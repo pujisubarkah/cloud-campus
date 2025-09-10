@@ -61,7 +61,7 @@
           </div>
           <div>
             <label class="font-semibold">Pangkat/Golongan</label>
-            <input v-model="identitas.pangkat" type="text" class="input input-bordered w-full" />
+            <input v-model="identitas.pangkat_golongan" type="text" class="input input-bordered w-full" />
           </div>
         </div>
         <button type="submit" class="btn btn-primary">Simpan Identitas</button>
@@ -78,18 +78,98 @@ import ProfileSidebar from '~/components/ProfileSidebar.vue';
 import { useAuthStore } from '~/stores/auth';
 
 const selectedMenu = ref('profile');
-const identitas = ref({ unit_kerja: '', jabatan: '', pangkat: '' });
+const identitas = ref({ id: '', unit_kerja: '', jabatan: '', pangkat_golongan: '', foto_url: '' });
 const identitasSuccess = ref(false);
 const identitasError = ref('');
+
+async function fetchIdentitas() {
+  identitasSuccess.value = false;
+  identitasError.value = '';
+  try {
+    if (!auth.user || !auth.user.id) {
+      identitasError.value = 'User belum login.';
+      return;
+    }
+    const res = await fetch(`/api/user_identity?user_id=${auth.user.id}`);
+    const data = await res.json();
+    if (data.success && data.data.length > 0) {
+      const item = data.data[0];
+      identitas.value = {
+        id: item.id,
+        unit_kerja: item.unit_kerja || '',
+        jabatan: item.jabatan || '',
+        pangkat_golongan: item.pangkat_golongan || '',
+        foto_url: item.foto_url || '',
+      };
+    } else {
+      identitas.value = { id: '', unit_kerja: '', jabatan: '', pangkat_golongan: '', foto_url: '' };
+    }
+  } catch (e) {
+    identitasError.value = 'Gagal memuat identitas.';
+  }
+}
 
 async function handleSaveIdentitas() {
   identitasSuccess.value = false;
   identitasError.value = '';
-  // Simpan ke backend di sini (endpoint khusus atau gabung PUT profile)
-  // Untuk demo, langsung sukses
-  setTimeout(() => {
-    identitasSuccess.value = true;
-  }, 500);
+  try {
+    let res, data;
+    if (identitas.value.id) {
+      // Update
+      res = await fetch(`/api/user_identity/${identitas.value.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          unit_kerja: identitas.value.unit_kerja,
+          jabatan: identitas.value.jabatan,
+          pangkat_golongan: identitas.value.pangkat_golongan,
+          foto_url: identitas.value.foto_url,
+        }),
+      });
+    } else {
+      // Create
+      res = await fetch(`/api/user_identity`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: auth.user?.id ?? '',
+          unit_kerja: identitas.value.unit_kerja,
+          jabatan: identitas.value.jabatan,
+          pangkat_golongan: identitas.value.pangkat_golongan,
+          foto_url: identitas.value.foto_url,
+        }),
+      });
+    }
+    data = await res.json();
+    if (data.success) {
+      identitasSuccess.value = true;
+      await fetchIdentitas();
+    } else {
+      identitasError.value = data.message || 'Gagal menyimpan identitas.';
+    }
+  } catch (e) {
+    identitasError.value = 'Gagal menyimpan identitas.';
+  }
+}
+
+async function handleDeleteIdentitas() {
+  identitasSuccess.value = false;
+  identitasError.value = '';
+  if (!identitas.value.id) return;
+  try {
+    const res = await fetch(`/api/user_identity/${identitas.value.id}`, {
+      method: 'DELETE',
+    });
+    const data = await res.json();
+    if (data.success) {
+      identitas.value = { id: '', unit_kerja: '', jabatan: '', pangkat_golongan: '', foto_url: '' };
+      identitasSuccess.value = true;
+    } else {
+      identitasError.value = 'Gagal menghapus identitas.';
+    }
+  } catch (e) {
+    identitasError.value = 'Gagal menghapus identitas.';
+  }
 }
 
 const auth = useAuthStore();
@@ -113,9 +193,7 @@ function formatDate(dateStr: string) {
 onMounted(async () => {
   loading.value = true;
   error.value = '';
-  // Pastikan Pinia store sudah sinkron dengan localStorage
   auth.loadFromStorage();
-  // Pastikan user sudah login
   if (!auth.isLoggedIn || !auth.user) {
     error.value = 'Anda belum login.';
     loading.value = false;
@@ -134,9 +212,10 @@ onMounted(async () => {
         ? `https://api.dicebear.com/7.x/identicon/svg?seed=${form.value.avatar_seed}`
         : '/lanri_.png';
     }
-  } catch (e: any) {
-    error.value = e.message || 'Gagal memuat data';
+  } catch (e) {
+    error.value = 'Gagal memuat data';
   }
+  await fetchIdentitas();
   loading.value = false;
 });
 
@@ -180,11 +259,42 @@ async function handleSubmit() {
   saving.value = false;
 }
 
-function onAvatarChange(e: Event) {
+const fotoError = ref('');
+async function onAvatarChange(e: Event) {
   const input = e.target as HTMLInputElement;
   if (input.files && input.files[0]) {
-    avatarFile.value = input.files[0];
-    avatarPreviewUrl.value = URL.createObjectURL(input.files[0]);
+    const file = input.files[0];
+    avatarFile.value = file;
+    avatarPreviewUrl.value = URL.createObjectURL(file);
+    fotoError.value = '';
+    if (file.size > 2 * 1024 * 1024) {
+      fotoError.value = 'Ukuran gambar maksimal 2 MB.';
+      return;
+    }
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', 'Makarti_corpu');
+    try {
+      const res = await fetch('https://api.cloudinary.com/v1_1/dqlfyyigk/image/upload', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      if (data.secure_url) {
+        identitas.value.foto_url = data.secure_url;
+        fotoError.value = '';
+      } else {
+        fotoError.value = data.error?.message || 'Gagal upload gambar ke Cloudinary.';
+        console.error('Cloudinary error:', data);
+        if (data.error) {
+          console.log('Cloudinary error message:', data.error.message);
+          console.log('Cloudinary error details:', data.error);
+        }
+      }
+    } catch (err) {
+      fotoError.value = 'Gagal upload gambar ke Cloudinary.';
+      console.error('Cloudinary upload exception:', err);
+    }
   } else {
     avatarFile.value = null;
     avatarPreviewUrl.value = '';
