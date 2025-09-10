@@ -22,13 +22,27 @@
             <h2 class="text-2xl lg:text-3xl font-bold text-blue-700 mb-4 text-center">Registrasi Berhasil!</h2>
             <p class="text-gray-700 text-center mb-8 leading-relaxed px-4">
               Registrasi anda telah berhasil.<br>
-              Silakan lanjutkan dengan login untuk mendaftar materi pembelajaran.
+              Silakan menunggu verifikasi dari admin sebelum dapat login dan mendaftar materi pembelajaran.
             </p>
             <button @click="goToLogin" class="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold text-lg shadow-lg hover:bg-blue-700 transform hover:scale-105 transition-all duration-300">
               Lanjut ke Login
             </button>
           </div>
-          <form v-else class="bg-white/80 backdrop-blur-md rounded-3xl shadow-2xl border-2 border-blue-100 p-6 sm:p-8 lg:p-10 space-y-8 animate-in" @submit.prevent="submitSignup">
+          <form v-else class="bg-white/80 backdrop-blur-md rounded-3xl shadow-2xl border-2 border-blue-100 p-6 sm:p-8 lg:p-10 space-y-8 animate-in" @submit.prevent="openConfirmModal">
+      <!-- Modal Konfirmasi -->
+      <div v-if="showConfirmModal" class="fixed inset-0 z-[999999] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md mx-auto flex flex-col items-center">
+          <h3 class="text-xl font-bold text-blue-700 mb-4 text-center">Konfirmasi Data</h3>
+          <p class="text-gray-700 mb-4 text-center">Apakah Anda yakin data yang terinput sudah benar?</p>
+          <div class="mb-4 text-sm text-blue-700 bg-blue-50 rounded-lg border border-blue-200 p-4 w-full">
+            <div><span class="font-semibold">Email Anda:</span> {{ email }}</div>
+          </div>
+          <div class="flex gap-4 mt-2">
+            <button type="button" @click="showConfirmModal = false" class="px-6 py-3 rounded-xl bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300">Batal</button>
+            <button type="button" @click="handleConfirmSubmit" class="px-6 py-3 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700">Ya, kirim</button>
+          </div>
+        </div>
+      </div>
           <!-- Error Message -->
           <transition name="fade">
             <div v-if="error" class="mb-6 px-5 py-4 rounded-xl bg-red-100 text-red-700 border border-red-300 text-sm font-medium flex items-center gap-3 animate-in">
@@ -101,11 +115,11 @@
                 <div class="text-xs text-blue-700 space-y-2 p-4 bg-blue-50 rounded-lg border border-blue-200">
                   <p class="font-medium mb-2">Password harus memiliki:</p>
                   <ul class="list-disc list-inside space-y-1">
-                    <li>Minimal 1 huruf kapital</li>
-                    <li>Minimal 1 huruf kecil</li>
-                    <li>Minimal 1 angka</li>
-                    <li>Minimal 1 karakter spesial</li>
-                    <li>Minimal 8 karakter</li>
+                    <li :class="passwordChecks.kapital ? 'text-green-600 font-semibold' : ''">Minimal 1 huruf kapital</li>
+                    <li :class="passwordChecks.kecil ? 'text-green-600 font-semibold' : ''">Minimal 1 huruf kecil</li>
+                    <li :class="passwordChecks.angka ? 'text-green-600 font-semibold' : ''">Minimal 1 angka</li>
+                    <li :class="passwordChecks.spesial ? 'text-green-600 font-semibold' : ''">Minimal 1 karakter spesial</li>
+                    <li :class="passwordChecks.panjang ? 'text-green-600 font-semibold' : ''">Minimal 8 karakter</li>
                   </ul>
                 </div>
               </div>
@@ -144,7 +158,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+const showConfirmModal = ref(false)
+
+function openConfirmModal() {
+  if (!validateForm()) return
+  showConfirmModal.value = true
+}
+
+async function handleConfirmSubmit() {
+  showConfirmModal.value = false
+  await submitSignup()
+}
+import { ref, watch } from 'vue'
 import { User, IdCard, Mail, Lock } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import { useReCaptcha } from 'vue-recaptcha-v3'
@@ -159,6 +184,29 @@ const nip = ref('')
 const password = ref('')
 const password2 = ref('')
 const passwordStrength = ref(0)
+const passwordChecks = ref({
+  kapital: false,
+  kecil: false,
+  angka: false,
+  spesial: false,
+  panjang: false
+})
+
+function checkPasswordStrength(pw: string) {
+  passwordChecks.value.kapital = /[A-Z]/.test(pw)
+  passwordChecks.value.kecil = /[a-z]/.test(pw)
+  passwordChecks.value.angka = /[0-9]/.test(pw)
+  passwordChecks.value.spesial = /[^A-Za-z0-9]/.test(pw)
+  passwordChecks.value.panjang = pw.length >= 8
+  let score = 0
+  Object.values(passwordChecks.value).forEach(v => { if (v) score += 20 })
+  passwordStrength.value = score
+}
+
+watch(password, (val) => {
+  checkPasswordStrength(val)
+})
+
 const isLoading = ref(false)
 const error = ref('')
 const registrationSuccess = ref(false)
@@ -224,8 +272,10 @@ const submitSignup = async () => {
 
     const data = await response.json()
 
-    if (!response.ok) {
-      throw new Error(data.message || 'Gagal mendaftar')
+    if (!data.success) {
+      error.value = data.message || 'Gagal mendaftar. Silakan coba lagi.'
+      isLoading.value = false
+      return
     }
 
     // Registration successful

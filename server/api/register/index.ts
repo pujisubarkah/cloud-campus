@@ -3,6 +3,7 @@ import { users } from '~/server/database/users'
 import { H3Event } from 'h3'
 import bcrypt from 'bcryptjs'
 import { eq } from 'drizzle-orm'
+import { sendVerificationEmail } from '~/server/utils/sendVerificationEmail'
 
 // Define the expected request body structure
 interface RegisterRequest {
@@ -16,10 +17,10 @@ interface RegisterRequest {
 export default defineEventHandler(async (event: H3Event) => {
   // Only allow POST method
   if (event.method !== 'POST') {
-    throw createError({
-      statusCode: 405,
+    return {
+      success: false,
       message: 'Method not allowed'
-    })
+    }
   }
 
   try {
@@ -28,10 +29,10 @@ export default defineEventHandler(async (event: H3Event) => {
 
     // Validate required fields
     if (!body.email || !body.password || !body.full_name) {
-      throw createError({
-        statusCode: 400,
+      return {
+        success: false,
         message: 'Email, password, and full name are required'
-      })
+      }
     }
 
     // Check if email already exists
@@ -42,10 +43,10 @@ export default defineEventHandler(async (event: H3Event) => {
       .limit(1)
 
     if (existingUser.length > 0) {
-      throw createError({
-        statusCode: 400,
+      return {
+        success: false,
         message: 'Email already registered'
-      })
+      }
     }
 
     // Hash password
@@ -54,14 +55,15 @@ export default defineEventHandler(async (event: H3Event) => {
 
     // Create new user
     const newUser = await db.insert(users).values({
-  email: body.email,
-  password_hash: hashedPassword,
-  full_name: body.full_name,
-  nip: body.nip || null,
-  avatar_seed: body.avatar_seed || null,
-  role: 'user',
-  role_id: 3, // Default role_id for regular users
-  is_active: true
+      email: body.email,
+      password_hash: hashedPassword,
+      full_name: body.full_name,
+      nip: body.nip || null,
+      avatar_seed: body.avatar_seed || null,
+      role: 'user',
+      role_id: 3, // Default role_id for regular users
+      is_active: true,
+      is_verified: false // default belum terverifikasi
     })
     .returning({
       id: users.id,
@@ -72,25 +74,26 @@ export default defineEventHandler(async (event: H3Event) => {
       created_at: users.created_at
     })
 
+    // Tidak kirim email verifikasi di sini
+
     return {
-      message: 'Registration successful',
+      success: true,
+      message: 'Registration successful. Menunggu persetujuan admin.',
       user: newUser[0]
     }
 
   } catch (error) {
     console.error('Registration error:', error)
-    
     // Handle unique constraint violation
     if (typeof error === 'object' && error !== null && 'code' in error && (error as any).code === '23505') {
-      throw createError({
-        statusCode: 400,
+      return {
+        success: false,
         message: 'Email already registered'
-      })
+      }
     }
-
-    throw createError({
-      statusCode: 500,
-      message: 'Failed to register user'
-    })
+    return {
+  success: false,
+  message: typeof error === 'object' && error !== null && 'message' in error ? (error as any).message : 'Failed to register user'
+    }
   }
 })

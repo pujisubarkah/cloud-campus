@@ -217,7 +217,17 @@ async function approveUser(id: string) {
     })
     const user = allUsers.value.find(u => u.id === id)
     if (user) user.is_verified = true
-    alert('User berhasil di-approve!')
+    // Send verification email after approval
+    try {
+      await $fetch('/api/admin/send-verification-email', {
+        method: 'POST',
+        body: { userId: id }
+      })
+      alert('User berhasil di-approve dan email verifikasi telah dikirim!')
+    } catch (emailError) {
+      console.error('Error sending verification email:', emailError)
+      alert('User berhasil di-approve, tapi gagal mengirim email verifikasi!')
+    }
   } catch (error) {
     console.error('Error approving user:', error)
     alert('Gagal approve user!')

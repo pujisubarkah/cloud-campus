@@ -48,13 +48,15 @@
           <div class="space-y-3">
             <div v-for="(section, index) in sections" :key="section.id" class="group">
               <button
-                @click="selectSection(section)"
+                @click="handleSectionClick(section, index)"
+                :disabled="index > 0 && !completedSections.includes(sections[index - 1].id)"
                 :class="{
                   'w-full text-left p-4 rounded-xl transition-all duration-300 border-2 relative overflow-hidden': true,
                   'bg-gradient-to-r from-blue-500 to-indigo-500 text-white border-blue-500 shadow-lg transform scale-105': selectedSection?.id === section.id,
                   'bg-white hover:bg-slate-50 border-slate-200 hover:border-blue-300 hover:shadow-md text-slate-700': selectedSection?.id !== section.id,
                   'ring-2 ring-emerald-200 border-emerald-300': completedSections.includes(section.id),
-                  'ring-2 ring-blue-200 border-blue-300': sectionCompletionStatus[section.id] && !completedSections.includes(section.id)
+                  'ring-2 ring-blue-200 border-blue-300': sectionCompletionStatus[section.id] && !completedSections.includes(section.id),
+                  'opacity-50 cursor-not-allowed': index > 0 && !completedSections.includes(sections[index - 1].id)
                 }"
               >
                 <!-- Section Number -->
@@ -105,6 +107,21 @@
 
     <!-- Area Konten Utama -->
     <main :class="showSidebar ? 'w-full md:w-[calc(100%-20rem)]' : 'w-full'" class="flex-1 transition-all duration-300">
+      <!-- Skor Total Course -->
+      <div v-if="sections.length > 0" class="mb-6 max-w-4xl mx-auto">
+        <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 shadow">
+          <div>
+            <h2 class="text-xl font-bold text-blue-700 mb-2">Skor Total Course</h2>
+            <div class="text-lg text-blue-800 font-semibold">{{ userCourseQuizPoints }} / {{ totalCourseQuizPoints }}</div>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="text-2xl font-bold text-emerald-600">{{ Math.round(courseScorePercent) }}</span>
+            <span v-if="courseScorePercent > 80" class="ml-2 px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 font-semibold">Lulus</span>
+            <span v-else class="ml-2 px-3 py-1 rounded-full bg-red-100 text-red-700 font-semibold">Belum Lulus</span>
+            <span v-if="courseScorePercent <= 80" class="ml-2 text-sm text-red-600">Silakan ulangi quiz untuk mendapatkan skor di atas 80.</span>
+          </div>
+        </div>
+      </div>
       <!-- Header Konten -->
       <div class="bg-white/80 backdrop-blur-md border-b border-slate-200 p-6 sticky top-16 z-10">
         <div class="flex items-center justify-between">
@@ -389,6 +406,9 @@
                   Submit Jawaban
                 </button>
               </div>
+
+              <!-- Submit Button -->
+            <!-- Tombol Submit Semua Jawaban -->
             </div>
           </div>
         </div>
@@ -427,7 +447,7 @@
         </div>
 
         <!-- Sertifikat -->
-        <div v-if="showCertificateButton && isPassed" class="mt-8 flex flex-col items-center">
+        <div v-if="showCertificateButton && courseScorePercent > 80" class="mt-8 flex flex-col items-center">
           <button @click="getCertificate" :disabled="isCertificateLoading" aria-label="Ambil Sertifikat" class="px-8 py-4 bg-gradient-to-r from-blue-600 to-emerald-500 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
             <span v-if="!isCertificateLoading">Ambil Sertifikat</span>
             <span v-else>Mengambil Sertifikat...</span>
@@ -438,7 +458,6 @@
             <img :src="certificateUrl" alt="Sertifikat" class="mt-2 rounded-xl shadow-lg max-w-xl" />
           </div>
         </div>
-        <div v-else-if="showCertificateButton && !isPassed" class="mt-8 text-red-600 font-semibold text-center">Skor Anda belum cukup untuk mendapatkan sertifikat. Silakan ulangi quiz hingga skor minimal 80.</div>
 
         <!-- Tambahan Info Skor dan Kelulusan -->
         <div v-if="selectedSection && selectedSection.quizzes && selectedSection.quizzes.length" class="mt-4 text-lg font-bold text-blue-600">
@@ -470,6 +489,83 @@
 </template>
 
 <script setup>
+// Penilaian total per course
+const totalCourseQuizPoints = computed(() => {
+  if (!sections.value || sections.value.length === 0) return 0
+  return sections.value.reduce((sum, section) => {
+    if (!section.quizzes) return sum
+    return sum + section.quizzes.reduce((s, quiz) => s + (quiz.points || 10), 0)
+  }, 0)
+})
+
+const userCourseQuizPoints = computed(() => {
+  if (!sections.value || sections.value.length === 0) return 0
+  return sections.value.reduce((sum, section) => {
+    if (!section.quizzes) return sum
+    return sum + section.quizzes.reduce((s, quiz) => s + (quizScores.value[quiz.id] || 0), 0)
+  }, 0)
+})
+
+const courseScorePercent = computed(() => {
+  if (totalCourseQuizPoints.value === 0) return 0
+  return Math.round((userCourseQuizPoints.value / totalCourseQuizPoints.value) * 100)
+})
+// Hanya bisa pilih section berikutnya jika section sebelumnya sudah selesai
+function handleSectionClick(section, index) {
+  if (index > 0 && !completedSections.value.includes(sections.value[index - 1].id)) {
+    alert('Selesaikan pembelajaran section sebelumnya terlebih dahulu!')
+    return
+  }
+  selectSection(section)
+}
+// Submit semua jawaban sekaligus
+const canSubmitAll = computed(() => {
+  if (!selectedSection.value || !selectedSection.value.quizzes) return false
+  // Pastikan semua quiz sudah dijawab
+  return selectedSection.value.quizzes.every(q => quizAnswers.value[q.id] !== undefined && quizAnswers.value[q.id] !== null && quizAnswers.value[q.id] !== '')
+})
+
+const submitAllAnswers = async () => {
+  if (!auth.user?.token) {
+    alert('Silakan login terlebih dahulu!')
+    return
+  }
+  if (!selectedSection.value || !selectedSection.value.quizzes) {
+    alert('Tidak ada quiz untuk section ini.')
+    return
+  }
+  // Kumpulkan semua jawaban
+  const answers = selectedSection.value.quizzes.map(q => ({
+    quiz_id: q.id,
+    user_answer: quizAnswers.value[q.id]
+  }))
+  try {
+    const response = await $fetch(`/api/quizzes_section/${selectedSection.value.id}/submit-all`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${auth.user.token}`,
+        'Content-Type': 'application/json'
+      },
+      body: {
+        answers
+      }
+    })
+    if (response.success) {
+      // Update skor quiz
+      response.scores?.forEach(r => {
+        quizScores.value[r.quiz_id] = r.points_earned
+      })
+      alert('✅ Semua jawaban berhasil disubmit!')
+      await fetchQuizScores()
+      await autoCompleteSection(selectedSection.value.id)
+    } else {
+      alert('❌ Gagal submit semua jawaban: ' + (response.message || 'Unknown error'))
+    }
+  } catch (error) {
+    console.error('Error submit all answers:', error)
+    alert('❌ Gagal submit semua jawaban!')
+  }
+}
 import { ref, onMounted, computed, nextTick, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '~/stores/auth'
@@ -768,6 +864,8 @@ watch([isPassed, showCertificateButton], ([passed, completed]) => {
       const certBtn = document.querySelector('button[aria-label="Ambil Sertifikat"]')
       if (certBtn) certBtn.scrollIntoView({ behavior: 'smooth' })
     })
+    // Tambahkan notifikasi toast/alert
+    alert('🎉 Progress 100%! Anda sudah bisa mengambil sertifikat. Klik tombol Ambil Sertifikat untuk download.')
   } else {
     showPassedPopup.value = false
   }

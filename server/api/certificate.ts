@@ -1,9 +1,10 @@
 import { courses } from '@/server/database/courses'
 import { courseProgress } from '@/server/database/course_progress'
+import { courseSections } from '@/server/database/course_section'
 import { db } from '@/server/db'
 import { users } from '@/server/database/users'
 import { H3Event } from 'h3'
-import { eq, and } from 'drizzle-orm'
+import { eq, and, isNull, isNotNull, gte } from 'drizzle-orm'
 import sharp from 'sharp'
 import path from 'path'
 import fs from 'fs/promises'
@@ -51,12 +52,27 @@ export default defineEventHandler(async (event: H3Event) => {
     }
     // courseId sudah didapat dari parameter
 
-    const progress = await db.select().from(courseProgress)
-      .where(and(eq(courseProgress.user_id, String(userId)), eq(courseProgress.course_id, String(courseId))))
+    // Cek progress total course
+    const totalProgress = await db.select().from(courseProgress)
+      .where(and(eq(courseProgress.user_id, String(userId)), eq(courseProgress.course_id, String(courseId)), isNull(courseProgress.section_id)))
       .limit(1)
-    console.log('Progress:', progress);
-    if (!progress || !progress[0] || (progress[0].progress_percent ?? 0) < 100) {
-      console.log('Course not completed or progress < 100');
+    console.log('Total Progress:', totalProgress);
+
+    let isCourseCompleted = false;
+    if (totalProgress[0] && (totalProgress[0].progress_percent ?? 0) >= 100) {
+      isCourseCompleted = true;
+    } else {
+      // Jika tidak ada baris total, cek semua section
+      const allSections = await db.select().from(courseSections)
+        .where(eq(courseSections.course_id, String(courseId)))
+      const sectionIds = allSections.map(s => s.id)
+      const completedSections = await db.select().from(courseProgress)
+        .where(and(eq(courseProgress.user_id, String(userId)), eq(courseProgress.course_id, String(courseId)), isNotNull(courseProgress.section_id), gte(courseProgress.progress_percent, 100)))
+      const completedSectionIds = completedSections.map(s => s.section_id)
+      isCourseCompleted = sectionIds.length > 0 && sectionIds.every(id => completedSectionIds.includes(id))
+    }
+    if (!isCourseCompleted) {
+      console.log('Course not completed (all sections not finished)');
       throw createError({ statusCode: 403, message: 'Course not completed' })
     }
 
