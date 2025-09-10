@@ -197,8 +197,8 @@
                             </span>
                           </span>
                         </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2 cursor-pointer group" @click="showProgressModal(enroll)">
-                          <div class="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full group-hover:shadow-lg transition-all duration-300" 
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                          <div class="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-300" 
                             :style="{ width: `${courseProgress[String(enroll.course_id)]?.overall_percent || 0}%` }"></div>
                         </div>
                       </div>

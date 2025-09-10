@@ -1,4 +1,3 @@
-
 <template>
   <div class="flex min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 pt-16">
     <!-- Sidebar Materi dengan Design Modern -->
@@ -510,6 +509,32 @@
       <button @click="showPassedPopup = false" class="px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-xl shadow hover:bg-gray-300 transition mt-4">Tutup</button>
     </div>
   </div>
+
+  <!-- Modal Progress Section List (outside card loop) -->
+  <div v-if="progressModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+    <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-lg w-full text-center relative">
+      <button @click="progressModalOpen = false" class="absolute top-4 right-4 text-gray-400 hover:text-gray-700">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+      <h2 class="text-xl font-bold mb-4 text-blue-700">Progress Materi: {{ progressModalCourse?.course_title }}</h2>
+      <div v-if="progressModalSections.length > 0" class="space-y-3 text-left">
+        <div v-for="section in progressModalSections" :key="section.id" class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 bg-gray-50">
+          <span class="font-semibold text-gray-800">{{ section.title }}</span>
+          <span v-if="section.completed" class="ml-auto px-2 py-1 rounded-full bg-green-100 text-green-700 text-xs flex items-center gap-1">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="white"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 13l3 3 7-7"/></svg>
+            Selesai
+          </span>
+          <span v-else class="ml-auto px-2 py-1 rounded-full bg-gray-200 text-gray-600 text-xs flex items-center gap-1">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="white"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            Belum Selesai
+          </span>
+        </div>
+      </div>
+      <div v-else class="text-gray-500">Tidak ada data section untuk kursus ini.</div>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -608,6 +633,9 @@ const isCertificateLoading = ref(false)
 const quizScores = ref({})
 const showPassedPopup = ref(false)
 const passedMessage = ref('')
+const progressModalOpen = ref(false)
+const progressModalCourse = ref(null)
+const progressModalSections = ref([])
 
 const toggleSidebar = () => {
   showSidebar.value = !showSidebar.value
