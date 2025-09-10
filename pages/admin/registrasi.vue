@@ -1,6 +1,6 @@
 <template>
   <MainLayout role="admin">
-    <div class="p-8">
+  <div class="p-8 mt-20">
       <h1 class="text-2xl font-bold mb-6">Approval Registrasi User</h1>
       <div v-if="loading" class="text-center py-8">Loading...</div>
       <div v-else class="overflow-x-auto">
