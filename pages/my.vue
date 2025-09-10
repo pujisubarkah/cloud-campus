@@ -46,7 +46,7 @@
               </div>
               <h3 class="text-2xl font-bold mb-4 text-red-800">Terjadi Kesalahan</h3>
               <p class="text-red-600 mb-8">{{ error }}</p>
-              <button @click="fetchEnrollments" class="px-6 py-3 bg-red-600 text-white font-semibold rounded-xl shadow hover:bg-red-700 transition">
+              <button @click="fetchEnrollmentsAndProgress" class="px-6 py-3 bg-red-600 text-white font-semibold rounded-xl shadow hover:bg-red-700 transition">
                 Coba Lagi
               </button>
             </div>
@@ -56,11 +56,12 @@
           <div v-else>
             <!-- Kartu Statistik -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <!-- Total Kursus -->
               <div class="bg-white rounded-2xl shadow-lg p-6 border border-blue-100">
                 <div class="flex items-center">
                   <div class="bg-blue-100 p-3 rounded-xl">
-                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253"/>
+                    <svg class="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7M16 3v4M8 3v4M4 7h16"/>
                     </svg>
                   </div>
                   <div class="ml-4">
@@ -69,29 +70,36 @@
                   </div>
                 </div>
               </div>
+              <!-- Selesai -->
               <div class="bg-white rounded-2xl shadow-lg p-6 border border-green-100">
                 <div class="flex items-center">
                   <div class="bg-green-100 p-3 rounded-xl">
-                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    <svg class="w-7 h-7 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="white"/>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 13l3 3 7-7"/>
                     </svg>
                   </div>
                   <div class="ml-4">
                     <p class="text-sm text-gray-600">Selesai</p>
-                    <p class="text-2xl font-bold text-gray-800">0</p>
+                    <p class="text-2xl font-bold text-gray-800">{{ enrollments.filter(e => courseProgress[String(e.course_id)]?.overall_percent === 100).length }}</p>
                   </div>
                 </div>
               </div>
+              <!-- Sedang Berjalan -->
               <div class="bg-white rounded-2xl shadow-lg p-6 border border-orange-100">
                 <div class="flex items-center">
                   <div class="bg-orange-100 p-3 rounded-xl">
-                    <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    <svg class="w-7 h-7 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="white"/>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3"/>
                     </svg>
                   </div>
                   <div class="ml-4">
                     <p class="text-sm text-gray-600">Sedang Berjalan</p>
-                    <p class="text-2xl font-bold text-gray-800">{{ enrollments.length }}</p>
+                    <p class="text-2xl font-bold text-gray-800">{{ enrollments.filter(e => {
+                      const p = courseProgress[String(e.course_id)]?.overall_percent || 0;
+                      return p > 0 && p < 100;
+                    }).length }}</p>
                   </div>
                 </div>
               </div>
@@ -132,15 +140,30 @@
 
               <!-- Daftar Kursus -->
               <div v-else>
-                <div class="flex items-center justify-between mb-8">
-                  <h2 class="text-2xl font-bold text-gray-800">Kursus Anda</h2>
-                  <div class="flex items-center space-x-2 text-sm text-gray-600">
-                    <span>{{ enrollments.length }} kursus terdaftar</span>
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
+                  <div>
+                    <h2 class="text-2xl font-bold text-gray-800">Kursus Anda</h2>
+                    <div class="text-sm text-gray-600 mt-1">{{ enrollments.length }} kursus terdaftar</div>
+                  </div>
+                  <div class="flex flex-col md:flex-row gap-2 items-center">
+                    <input v-model="searchQuery" type="text" placeholder="Cari kursus..." class="px-3 py-2 rounded-xl border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-sm" />
+                    <select v-model="filterStatus" class="px-3 py-2 rounded-xl border border-gray-300 text-sm">
+                      <option value="">Semua Status</option>
+                      <option value="berjalan">Sedang Berjalan</option>
+                      <option value="selesai">Selesai</option>
+                      <option value="belum">Belum Dimulai</option>
+                    </select>
+                    <select v-model="sortBy" class="px-3 py-2 rounded-xl border border-gray-300 text-sm">
+                      <option value="">Urutkan</option>
+                      <option value="tanggal">Tanggal Pendaftaran</option>
+                      <option value="kemajuan">Kemajuan</option>
+                      <option value="abjad">Abjad</option>
+                    </select>
                   </div>
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div v-for="enroll in enrollments" :key="enroll.id" 
+                  <div v-for="enroll in filteredSortedEnrollments" :key="enroll.id" 
                        class="group bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
                     
                     <!-- Gambar Kursus -->
@@ -168,35 +191,73 @@
                         <div class="flex justify-between text-sm text-gray-600 mb-2">
                           <span>Kemajuan</span>
                           <span>
-                            {{ courseProgress[enroll.course_id]?.overall_percent || 0 }}%
-                            <span v-if="courseProgress[enroll.course_id]?.completed_sections !== undefined && courseProgress[enroll.course_id]?.total_sections !== undefined">
-                              &nbsp;({{ courseProgress[enroll.course_id]?.completed_sections }}/{{ courseProgress[enroll.course_id]?.total_sections }} section selesai)
+                            {{ courseProgress[String(enroll.course_id)]?.overall_percent || 0 }}%
+                            <span v-if="courseProgress[String(enroll.course_id)]?.completed_sections !== undefined && courseProgress[String(enroll.course_id)]?.total_sections !== undefined">
+                              &nbsp;({{ courseProgress[String(enroll.course_id)]?.completed_sections }}/{{ courseProgress[String(enroll.course_id)]?.total_sections }} section selesai)
                             </span>
                           </span>
                         </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                          <div class="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full" 
-                               :style="{ width: `${courseProgress[enroll.course_id]?.overall_percent || 0}%` }"></div>
+                        <div class="w-full bg-gray-200 rounded-full h-2 cursor-pointer group" @click="showProgressModal(enroll)">
+                          <div class="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full group-hover:shadow-lg transition-all duration-300" 
+                            :style="{ width: `${courseProgress[String(enroll.course_id)]?.overall_percent || 0}%` }"></div>
                         </div>
                       </div>
+      <!-- Modal Progress Section List -->
+      <div v-if="progressModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-lg w-full text-center relative">
+          <button @click="progressModalOpen = false" class="absolute top-4 right-4 text-gray-400 hover:text-gray-700">
+            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+          <h2 class="text-xl font-bold mb-4 text-blue-700">Progress Materi: {{ progressModalCourse?.course_title }}</h2>
+          <div v-if="progressModalSections.length > 0" class="space-y-3 text-left">
+            <div v-for="section in progressModalSections" :key="section.id" class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 bg-gray-50">
+              <span class="font-semibold text-gray-800">{{ section.title }}</span>
+              <span v-if="section.completed" class="ml-auto px-2 py-1 rounded-full bg-green-100 text-green-700 text-xs flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="white"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 13l3 3 7-7"/></svg>
+                Selesai
+              </span>
+              <span v-else class="ml-auto px-2 py-1 rounded-full bg-gray-200 text-gray-600 text-xs flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="white"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                Belum Selesai
+              </span>
+            </div>
+          </div>
+          <div v-else class="text-gray-500">Tidak ada data section untuk kursus ini.</div>
+        </div>
+      </div>
 
-                      <!-- Tombol Aksi -->
-                      <div class="flex space-x-3">
-                        <NuxtLink
-                          v-if="enroll.course_id"
-                          :to="`/course/${enroll.course_id}/materi`"
-                          class="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white text-center py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5">
-                          Lanjutkan Belajar
-                        </NuxtLink>
-                        <button v-else disabled class="flex-1 bg-gray-200 text-gray-400 text-center py-3 rounded-xl font-semibold shadow cursor-not-allowed">
-                          Lanjutkan Belajar
-                        </button>
-                        <button class="px-4 py-3 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition">
-                          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
-                          </svg>
-                        </button>
-                      </div>
+                      <!-- Tombol Aksi di Bawah Card -->
+                    </div>
+                    <div class="px-6 pb-6 flex flex-col gap-3">
+                      <NuxtLink
+                        v-if="enroll.course_id"
+                        :to="`/course/${enroll.course_id}/materi`"
+                        class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white text-center py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 text-lg">
+                        <svg class="w-5 h-5 inline-block mr-2 align-middle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17l5-5m0 0l-5-5m5 5H6"/>
+                        </svg>
+                        Lanjutkan Belajar
+                      </NuxtLink>
+                      <button v-else disabled class="w-full bg-gray-200 text-gray-400 text-center py-3 rounded-xl font-bold shadow cursor-not-allowed text-lg">
+                        <svg class="w-5 h-5 inline-block mr-2 align-middle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17l5-5m0 0l-5-5m5 5H6"/>
+                        </svg>
+                        Lanjutkan Belajar
+                      </button>
+                      <button
+                        class="w-full px-4 py-3 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition"
+                        :aria-pressed="bookmarks[String(enroll.course_id)] ? 'true' : 'false'"
+                        @click="toggleBookmark(enroll.course_id)"
+                      >
+                        <svg v-if="bookmarks[String(enroll.course_id)]" class="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                        </svg>
+                        <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
+                        </svg>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -240,6 +301,7 @@
             </div>
 
             <div class="space-y-4">
+              <!-- Kehadiran Event -->
               <div class="flex items-start space-x-3 p-3 bg-blue-50 rounded-xl border border-blue-100">
                 <div class="bg-blue-100 p-2 rounded-lg">
                   <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -249,9 +311,14 @@
                 <div class="flex-1">
                   <h4 class="font-semibold text-gray-800 text-sm">Kehadiran</h4>
                   <p class="text-xs text-gray-600">Senin, 4 Agustus, 10:00 - 13:00</p>
+                  <button @click="downloadICS('Kehadiran', '2025-08-04T10:00:00', '2025-08-04T13:00:00', 'Kehadiran di webinar', 'Online')"
+                    class="mt-2 px-3 py-1 bg-blue-600 text-white text-xs rounded shadow hover:bg-blue-700 transition">
+                    Tambahkan ke Kalender
+                  </button>
                 </div>
               </div>
 
+              <!-- Batas Proyek Akhir Event -->
               <div class="flex items-start space-x-3 p-3 bg-yellow-50 rounded-xl border border-yellow-100">
                 <div class="bg-yellow-100 p-2 rounded-lg">
                   <svg class="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -261,6 +328,10 @@
                 <div class="flex-1">
                   <h4 class="font-semibold text-gray-800 text-sm">Batas Proyek Akhir</h4>
                   <p class="text-xs text-gray-600">Jumat, 8 Agustus, 23:59</p>
+                  <button @click="downloadICS('Batas Proyek Akhir', '2025-08-08T23:00:00', '2025-08-08T23:59:00', 'Deadline pengumpulan proyek akhir', 'Online')"
+                    class="mt-2 px-3 py-1 bg-yellow-500 text-white text-xs rounded shadow hover:bg-yellow-600 transition">
+                    Tambahkan ke Kalender
+                  </button>
                 </div>
               </div>
             </div>
@@ -333,7 +404,90 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+// Modal state and logic for progress detail
+const progressModalOpen = ref(false)
+const progressModalCourse = ref<any>(null)
+const progressModalSections = ref<any[]>([])
+
+async function showProgressModal(enroll: any) {
+  progressModalCourse.value = enroll
+  progressModalSections.value = []
+  progressModalOpen.value = true
+  // Fetch sections for this course
+  try {
+    const res = await $fetch('/api/course_section', { params: { course_id: enroll.course_id } })
+    let sections = Array.isArray(res) ? res : (res.sections || [])
+    // Mark completed status
+    const completedSectionIds: number[] = []
+    if (courseProgress.value[String(enroll.course_id)]?.progress_rows) {
+      completedSectionIds.push(...(courseProgress.value[String(enroll.course_id)]?.progress_rows?.filter((row: any) => (row.progress_percent ?? 0) >= 100).map((row: any) => row.section_id) ?? []))
+    }
+    progressModalSections.value = sections.map((s: any) => ({
+      id: s.id,
+      title: s.title,
+      completed: completedSectionIds.includes(s.id)
+    }))
+  } catch (err) {
+    progressModalSections.value = []
+  }
+}
+// Function to generate and download .ics calendar file
+function downloadICS(title: string, start: string, end: string, description: string, location: string) {
+  const pad = (n: number) => n < 10 ? '0' + n : n
+  function formatICSDate(dateStr: string) {
+    const d = new Date(dateStr)
+    return d.getUTCFullYear().toString() + pad(d.getUTCMonth() + 1) + pad(d.getUTCDate()) + 'T' + pad(d.getUTCHours()) + pad(d.getUTCMinutes()) + '00Z'
+  }
+  const ics = `BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nSUMMARY:${title}\nDTSTART:${formatICSDate(start)}\nDTEND:${formatICSDate(end)}\nDESCRIPTION:${description}\nLOCATION:${location}\nEND:VEVENT\nEND:VCALENDAR`
+  const blob = new Blob([ics.replace(/\n/g, '\r\n')], { type: 'text/calendar' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `${title.replace(/\s+/g, '_')}.ics`
+  document.body.appendChild(a)
+  a.click()
+  setTimeout(() => {
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }, 100)
+}
+// Filter, sorting, and search state
+import { computed } from 'vue'
+const searchQuery = ref('')
+const filterStatus = ref('')
+const sortBy = ref('')
+
+const filteredSortedEnrollments = computed(() => {
+  let result = enrollments.value.slice()
+  // Search
+  if (searchQuery.value) {
+    result = result.filter(e => e.course_title.toLowerCase().includes(searchQuery.value.toLowerCase()))
+  }
+  // Filter
+  if (filterStatus.value) {
+    result = result.filter(e => {
+      const progress = courseProgress.value[String(e.course_id)]?.overall_percent || 0
+      if (filterStatus.value === 'berjalan') return progress > 0 && progress < 100
+      if (filterStatus.value === 'selesai') return progress === 100
+      if (filterStatus.value === 'belum') return progress === 0
+      return true
+    })
+  }
+  // Sort
+  if (sortBy.value === 'tanggal') {
+    result = result.sort((a, b) => (a.id > b.id ? 1 : -1))
+  } else if (sortBy.value === 'kemajuan') {
+    result = result.sort((a, b) => {
+      const pa = courseProgress.value[String(a.course_id)]?.overall_percent || 0
+      const pb = courseProgress.value[String(b.course_id)]?.overall_percent || 0
+      return pb - pa
+    })
+  } else if (sortBy.value === 'abjad') {
+    result = result.sort((a, b) => a.course_title.localeCompare(b.course_title))
+  }
+  return result
+})
+import { ref, onMounted, watch } from 'vue'
 import { useAuthStore } from '~/stores/auth'
 
 const auth = useAuthStore()
@@ -373,59 +527,98 @@ interface CourseProgress {
   overall_percent: number
   completed_sections?: number
   total_sections?: number
+  progress_rows?: Array<{ section_id: number; progress_percent?: number }>
   // tambahkan properti lain sesuai kebutuhan
 }
-const courseProgress = ref<Record<number, CourseProgress>>({}) // Key: course_id, Value: { overall_percent, ... }
+const courseProgress = ref<Record<string, CourseProgress>>({}) // Key: course_id as string, Value: { overall_percent, ... }
 
-const fetchEnrollments = async () => {
-  // Pastikan auth sinkron dengan localStorage
-  auth.loadFromStorage?.()
-
-
+const fetchEnrollmentsAndProgress = async () => {
+  auth.loadFromStorage?.();
   if (!auth.isLoggedIn || !auth.user?.token) {
-    enrollments.value = []
-    return
+    enrollments.value = [];
+    courseProgress.value = {};
+    return;
   }
-
-  isLoading.value = true
-  error.value = ''
-
-    try {
-      // Fetch data dari API dengan header Authorization
-      const responseData: any = await $fetch('/api/enrollment', {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${auth.user?.token || ''}`
-        }
-      })
-      enrollments.value = responseData.enrollments || []
-      // Jika ada progress, bisa diisi di sini
-      courseProgress.value = responseData.progress || {}
-    } catch (err: any) {
-      error.value = err?.message || 'Gagal memuat data kursus.'
-      enrollments.value = []
-    } finally {
-      isLoading.value = false
-    }
-  }
-  
-  const fetchProgressForCourses = async () => {
-  for (const enroll of enrollments.value) {
-    if (enroll.course_id) {
-      const progressRes = await $fetch('/api/course_progress', {
-        method: 'GET',
-        params: { user_id: userId, course_id: enroll.course_id }
-      })
-      if ('overall_percent' in progressRes) {
-        courseProgress.value[enroll.course_id] = progressRes
-      } else {
-        courseProgress.value[enroll.course_id] = { overall_percent: 0 }
+  isLoading.value = true;
+  error.value = '';
+  try {
+    // Debug: log before fetching
+    console.log('[DEBUG] Fetching enrollments and progress for user:', auth.user?.id);
+    // Fetch enrollments
+    const responseData: any = await $fetch('/api/enrollment', {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${auth.user?.token || ''}`
       }
-    }
+    });
+    console.log('[DEBUG] Enrollment response:', responseData);
+    enrollments.value = responseData.enrollments || [];
+    // Fetch course progress (sinkron dengan materi)
+    const progressRes = await $fetch('/api/course_progress', {
+      method: 'GET',
+      params: { user_id: userId }
+    });
+    console.log('[DEBUG] Course progress response:', progressRes);
+    courseProgress.value = (progressRes && typeof progressRes === 'object') ? progressRes as Record<string, CourseProgress> : {};
+  } catch (err: any) {
+    error.value = err?.message || 'Gagal memuat data kursus.';
+    enrollments.value = [];
+    courseProgress.value = {};
+    console.error('[DEBUG] Error fetching enrollments/progress:', err);
+  } finally {
+    isLoading.value = false;
   }
 }
 
-  onMounted(() => {
-    fetchEnrollments()
-  })
+// Auto-refresh dashboard when returning from a course
+if (typeof window !== 'undefined' && window.addEventListener) {
+  window.addEventListener('focus', () => {
+    if (auth.user?.id) {
+      fetchEnrollmentsAndProgress();
+    }
+  });
+}
+
+// On component mounted
+onMounted(() => {
+  if (auth.user?.id) {
+    fetchEnrollmentsAndProgress();
+  }
+});
+
+// Watcher agar progress tetap update saat userId berubah (misal setelah login/refresh)
+watch(
+  () => auth.user?.id,
+  (newId, oldId) => {
+    if (newId && newId !== oldId) {
+      fetchEnrollmentsAndProgress();
+    }
+  }
+);
+
+// Bookmark logic
+const bookmarks = ref<Record<string, boolean>>({})
+
+function loadBookmarks() {
+  const raw = localStorage.getItem('bookmarks_' + (auth.user?.id || ''))
+  if (raw) {
+    try {
+      bookmarks.value = JSON.parse(raw)
+    } catch {}
+  }
+}
+function saveBookmarks() {
+  localStorage.setItem('bookmarks_' + (auth.user?.id || ''), JSON.stringify(bookmarks.value))
+}
+function toggleBookmark(courseId: string | number) {
+  const key = String(courseId)
+  bookmarks.value[key] = !bookmarks.value[key]
+  saveBookmarks()
+}
+onMounted(() => {
+  loadBookmarks()
+})
+watch(() => auth.user?.id, () => {
+  loadBookmarks()
+})
   </script>

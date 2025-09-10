@@ -1,3 +1,4 @@
+
 <template>
   <div class="flex min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 pt-16">
     <!-- Sidebar Materi dengan Design Modern -->
@@ -31,11 +32,19 @@
               {{ progressPercent }}%
             </span>
           </div>
-          <div class="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+          <div class="w-full bg-slate-200 rounded-full h-3 overflow-hidden group relative">
             <div 
-              class="bg-gradient-to-r from-emerald-500 to-teal-500 h-3 rounded-full transition-all duration-500 ease-out"
+              class="bg-gradient-to-r from-emerald-500 to-teal-500 h-3 rounded-full transition-all duration-700 ease-in-out animate-progress"
               :style="`width: ${progressPercent}%`"
             ></div>
+            <div v-if="progressPercent > 0" class="absolute left-0 top-0 h-3 flex items-center" :style="`left: calc(${progressPercent}% - 16px)`">
+              <div class="w-6 h-6 bg-white border border-emerald-400 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <span class="text-xs font-bold text-emerald-600">{{ progressPercent }}%</span>
+              </div>
+            </div>
+            <div v-if="progressPercent < 100" class="absolute right-0 top-0 h-3 flex items-center group-hover:block hidden">
+              <span class="text-xs text-slate-500 bg-white px-2 py-1 rounded shadow">Selesaikan semua section untuk 100%</span>
+            </div>
           </div>
           <div class="flex justify-between text-xs text-slate-500 mt-2">
             <span>{{ totalCompletedSet.size }} selesai</span>
@@ -277,10 +286,19 @@
                 <div class="flex items-center justify-between mb-4 flex-1">
                   <h3 class="text-lg font-bold text-slate-800">{{ quiz.question }}</h3>
                   <div class="flex items-center gap-2">
-                    <!-- Status Quiz -->
-                    <span v-if="quizScores[quiz.id] !== undefined" 
-                          class="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm font-semibold">
-                      ✅ Sudah dijawab - Skor: {{ quizScores[quiz.id] }}
+                    <!-- Status Quiz Icon Only -->
+                    <span v-if="quizScores[quiz.id] !== undefined"
+                          class="px-2 py-1 rounded-full flex items-center justify-center"
+                          :class="{
+                            'bg-emerald-100': quizScores[quiz.id] > 0,
+                            'bg-red-100': quizScores[quiz.id] === 0
+                          }">
+                      <template v-if="quizScores[quiz.id] > 0">
+                        <svg class="w-6 h-6 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="white"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 13l3 3 7-7"/></svg>
+                      </template>
+                      <template v-else>
+                        <svg class="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="white"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                      </template>
                     </span>
                     <!-- Quiz counter -->
                     <span class="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-medium">
@@ -447,10 +465,16 @@
         </div>
 
         <!-- Sertifikat -->
-        <div v-if="showCertificateButton && courseScorePercent > 80" class="mt-8 flex flex-col items-center">
-          <button @click="getCertificate" :disabled="isCertificateLoading" aria-label="Ambil Sertifikat" class="px-8 py-4 bg-gradient-to-r from-blue-600 to-emerald-500 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
+        <div class="mt-8 flex flex-col items-center">
+          <button @click="getCertificate" :disabled="!showCertificateButton || courseScorePercent <= 80 || isCertificateLoading" aria-label="Ambil Sertifikat"
+            class="px-8 py-4 bg-gradient-to-r from-blue-600 to-emerald-500 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 relative"
+            @mouseenter="showCertTooltip = !showCertificateButton || courseScorePercent <= 80"
+            @mouseleave="showCertTooltip = false">
             <span v-if="!isCertificateLoading">Ambil Sertifikat</span>
             <span v-else>Mengambil Sertifikat...</span>
+            <span v-if="!showCertificateButton || courseScorePercent <= 80" class="absolute left-1/2 -translate-x-1/2 top-full mt-2 px-3 py-2 bg-slate-800 text-white text-xs rounded shadow-lg z-10" v-show="showCertTooltip">
+              Selesaikan semua kuis dan dapatkan skor minimal 80% untuk mengaktifkan tombol ini.
+            </span>
           </button>
           <div v-if="certificateUrl" class="mt-4">
             <a :href="certificateUrl" target="_blank" class="text-blue-600 underline font-semibold">Download Sertifikat</a>
@@ -489,6 +513,8 @@
 </template>
 
 <script setup>
+// Tooltip state for certificate button
+const showCertTooltip = ref(false)
 // Penilaian total per course
 const totalCourseQuizPoints = computed(() => {
   if (!sections.value || sections.value.length === 0) return 0
@@ -1058,6 +1084,13 @@ body {
 </style>
 
 <style scoped>
+@keyframes progressBarAnim {
+  0% { width: 0; }
+  100% { width: 100%; }
+}
+.animate-progress {
+  animation: progressBarAnim 1.2s cubic-bezier(0.4,0,0.2,1);
+}
 .slide-enter-active, .slide-leave-active {
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
