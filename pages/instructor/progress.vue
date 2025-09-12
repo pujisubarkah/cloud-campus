@@ -196,60 +196,40 @@
 </template>
 
 <script setup>
-definePageMeta({
-  layout: 'instructor'
-})
+import { useAuthStore } from '~/stores/auth'
+import { ref, onMounted, computed } from 'vue'
 
-const progressData = [
-  {
-    id: 1,
-    student: 'Budi Santoso',
-    course: 'Dasar-Dasar Statistik',
-    section: 'Pendahuluan',
-    progress_percent: 100,
-    is_completed: true,
-  },
-  {
-    id: 2,
-    student: 'Siti Aminah',
-    course: 'Remote Sensing & GIS',
-    section: 'Pengantar GIS',
-    progress_percent: 75,
-    is_completed: false,
-  },
-  {
-    id: 3,
-    student: 'Andi Wijaya',
-    course: 'Dasar-Dasar Statistik',
-    section: 'Analisis Data',
-    progress_percent: 50,
-    is_completed: false,
-  },
-  {
-    id: 4,
-    student: 'Dewi Lestari',
-    course: 'Remote Sensing & GIS',
-    section: 'Aplikasi GIS',
-    progress_percent: 90,
-    is_completed: false,
-  },
-  {
-    id: 5,
-    student: 'Ahmad Rahman',
-    course: 'Dasar-Dasar Statistik',
-    section: 'Statistik Deskriptif',
-    progress_percent: 100,
-    is_completed: true,
-  },
-]
+const auth = useAuthStore()
+const progressData = ref([])
+
+const fetchProgressData = async () => {
+  try {
+    const instructorId = auth.user?.id
+    if (!instructorId) return
+    const response = await $fetch(`/api/instructor/progress/${instructorId}`, {
+      headers: {
+        'Authorization': `Bearer ${auth.user?.token}`
+      }
+    })
+    if (response.success) {
+      progressData.value = response.progress
+    }
+  } catch (error) {
+    console.error('Error fetching progress data:', error)
+  }
+}
+
+onMounted(() => {
+  fetchProgressData()
+})
 
 // Computed properties for statistics
 const completedCount = computed(() => {
-  return progressData.filter(item => item.is_completed).length
+  return progressData.value.filter(item => item.is_completed).length
 })
 
 const inProgressCount = computed(() => {
-  return progressData.filter(item => !item.is_completed).length
+  return progressData.value.filter(item => !item.is_completed).length
 })
 
 // Function to get progress bar color based on percentage
@@ -264,4 +244,9 @@ function getProgressColor(percentage) {
     return 'bg-gradient-to-r from-orange-500 to-red-500'
   }
 }
+
+definePageMeta({
+  layout: 'main',
+  // Jika perlu, bisa tambahkan props role: 'instructor' di sini
+})
 </script>

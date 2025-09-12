@@ -7,7 +7,8 @@
     <!-- Logo & Title -->
     <div class="flex items-center gap-3 mb-8 justify-center">
       <div class="bg-blue-600 rounded-full w-12 h-12 flex items-center justify-center shadow-lg">
-        <component :is="logoIcon" class="w-7 h-7" />
+        <img v-if="logoImg" :src="logoImg" class="w-10 h-10 object-contain" />
+        <component v-else :is="logoIcon" class="w-7 h-7" />
       </div>
       <div v-if="!isCollapsed">
         <h2 class="text-xl font-bold tracking-wide">{{ title }}</h2>
@@ -42,6 +43,7 @@ const props = defineProps<{
   title: string
   subtitle: string
   logoIcon: any
+  logoImg?: string
   menu: Array<{ path: string, label: string, icon: any }>
 }>()
 const { isCollapsed, isActive, handleMouseEnter, handleMouseLeave } = useSidebarMenu()

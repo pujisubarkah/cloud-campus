@@ -187,13 +187,12 @@ const recentActivities = ref([
 // Fetch dashboard stats
 const fetchDashboardStats = async () => {
   try {
-    // Jika ada API untuk stats dashboard
-    const response = await $fetch('/api/instructor/dashboard', {
+    const instructorId = auth.user?.id // pastikan ini adalah UUID instruktur yang login
+    const response = await $fetch(`/api/instructor/dashboard/${instructorId}`, {
       headers: {
         'Authorization': `Bearer ${auth.user?.token}`
       }
     })
-    
     if (response.success) {
       stats.value = response.stats
     }

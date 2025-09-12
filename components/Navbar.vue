@@ -68,62 +68,42 @@
             </a>
           </li>
           <template v-if="auth.isLoggedIn">
-            <li>
-              <a 
-                href="/my" 
-                class="block px-4 py-3 rounded-xl font-medium text-base text-blue-50 hover:bg-blue-700/50 hover:text-yellow-300 transition-all duration-300"
-                @click="isMenuOpen = false"
-              >
-                Kursus Saya
-              </a>
-            </li>
+            <template v-if="auth.isLoggedIn && auth.user?.role_id === 3">
+              <li>
+                <a 
+                  href="/my" 
+                  class="block px-4 py-3 rounded-xl font-medium text-base text-blue-50 hover:bg-blue-700/50 hover:text-yellow-300 transition-all duration-300"
+                  @click="isMenuOpen = false"
+                >
+                  Kursus Saya
+                </a>
+              </li>
+            </template>
           </template>
-          <li>
-            <a 
-              href="/tentang" 
-              class="block px-4 py-3 rounded-xl font-medium text-base text-blue-50 hover:bg-blue-700/50 hover:text-yellow-300 transition-all duration-300"
-              @click="isMenuOpen = false"
-            >
-              Tentang
-            </a>
-          </li>
-          <li>
-            <a 
-              href="/kontak" 
-              class="block px-4 py-3 rounded-xl font-medium text-base text-blue-50 hover:bg-blue-700/50 hover:text-yellow-300 transition-all duration-300"
-              @click="isMenuOpen = false"
-            >
-              Helpdesk
-            </a>
-          </li>
         </ul>
-
-        <!-- Mobile Login/User Button -->
-        <div class="pt-4 border-t border-blue-700/50">
-          <template v-if="auth.isLoggedIn">
-            <div class="space-y-4">
-              <span class="block text-blue-50 font-medium px-4">
-                <i class="fas fa-user-circle mr-2 text-yellow-300"></i>
-                {{ auth.user?.full_name }}
-              </span>
-              <button 
-                @click="auth.logout(); $router.push('/'); isMenuOpen = false" 
-                class="w-full bg-blue-700/50 text-yellow-300 border border-yellow-300/20 py-3 px-4 rounded-xl font-medium hover:bg-blue-600/50 transition-all duration-300"
-              >
-                Logout
-              </button>
-            </div>
-          </template>
-          <template v-else>
-            <a 
-              href="/login" 
-              class="block text-center bg-blue-700/50 text-yellow-300 border border-yellow-300/20 py-3 px-4 rounded-xl font-medium hover:bg-blue-600/50 transition-all duration-300"
-              @click="isMenuOpen = false"
+        <template v-if="auth.isLoggedIn">
+          <div class="space-y-4">
+            <span class="block text-blue-50 font-medium px-4">
+              <i class="fas fa-user-circle mr-2 text-yellow-300"></i>
+              {{ auth.user?.full_name }}
+            </span>
+            <button 
+              @click="auth.logout(); $router.push('/'); isMenuOpen = false" 
+              class="w-full bg-blue-700/50 text-yellow-300 border border-yellow-300/20 py-3 px-4 rounded-xl font-medium hover:bg-blue-600/50 transition-all duration-300"
             >
-              Masuk
-            </a>
-          </template>
-        </div>
+              Logout
+            </button>
+          </div>
+        </template>
+        <template v-else>
+          <a 
+            href="/login" 
+            class="block text-center bg-blue-700/50 text-yellow-300 border border-yellow-300/20 py-3 px-4 rounded-xl font-medium hover:bg-blue-600/50 transition-all duration-300"
+            @click="isMenuOpen = false"
+          >
+            Masuk
+          </a>
+        </template>
       </div>
     </div>
 
