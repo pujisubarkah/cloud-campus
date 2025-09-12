@@ -53,25 +53,26 @@
             </div>
           </transition>
           <!-- Avatar Selection -->
-          <div class="mb-8 flex flex-col items-center">
+            <!--
+            <div class="mb-8 flex flex-col items-center">
             <div class="relative mb-4">
               <img 
-                :src="avatarUrl" 
-                alt="Avatar Preview" 
-                class="w-32 h-32 rounded-full shadow-lg border-4 border-blue-500 object-cover ring-4 ring-blue-200 animate-in"
+              :src="avatarUrl" 
+              alt="Avatar Preview" 
+              class="w-32 h-32 rounded-full shadow-lg border-4 border-blue-500 object-cover ring-4 ring-blue-200 animate-in"
               />
               <button 
-                type="button"
-                @click="randomizeAvatar"
-                class="absolute bottom-0 right-0 bg-white p-3 rounded-full shadow-md border hover:bg-blue-100 transform hover:scale-110 transition-all duration-200"
-                aria-label="Randomize Avatar"
+              type="button"
+              @click="randomizeAvatar"
+              class="absolute bottom-0 right-0 bg-white p-3 rounded-full shadow-md border hover:bg-blue-100 transform hover:scale-110 transition-all duration-200"
+              aria-label="Randomize Avatar"
               >
-                🎲
+              🎲
               </button>
             </div>
             <p class="text-sm text-blue-600 text-center px-4">Pilih avatarmu — bisa dikustom atau acak</p>
-          </div>
-          <!-- Input fields -->
+            </div>
+            -->
           <div class="space-y-6">
             <!-- Nama Lengkap -->
             <div class="relative group">
@@ -111,7 +112,14 @@
                     <Lock :size="20" />
                   </span>
                 </div>
-                <progress class="progress progress-info w-full h-2" :value="passwordStrength" max="100"></progress>
+                <progress class="progress w-full h-3" 
+                  :class="passwordStrength >= 100 ? 'progress-success' : passwordStrength >= 60 ? 'progress-warning' : 'progress-error'" 
+                  :value="passwordStrength" max="100"></progress>
+                <div class="text-xs text-center mt-1">
+                  <span :class="passwordStrength >= 100 ? 'text-green-600 font-semibold' : passwordStrength >= 60 ? 'text-yellow-600' : 'text-red-600'">
+                    {{ passwordStrength >= 100 ? 'Kuat' : passwordStrength >= 60 ? 'Sedang' : 'Lemah' }}
+                  </span>
+                </div>
                 <div class="text-xs text-blue-700 space-y-2 p-4 bg-blue-50 rounded-lg border border-blue-200">
                   <p class="font-medium mb-2">Password harus memiliki:</p>
                   <ul class="list-disc list-inside space-y-1">
@@ -123,53 +131,62 @@
                   </ul>
                 </div>
               </div>
-              <div class="relative group">
-                <input type="password" name="password2" placeholder="Ulangi Kata Sandi" 
-                  class="input input-bordered w-full pl-12 pr-4 py-4 bg-white/50 border-blue-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-300 text-gray-800 shadow-sm" 
-                  v-model="password2" />
-                <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-blue-400 group-hover:text-blue-600 transition-colors duration-300">
-                  <Lock :size="20" />
-                </span>
+              <div class="space-y-4">
+                <div class="relative group">
+                  <input type="password" name="password2" placeholder="Ulangi Kata Sandi" 
+                    class="input input-bordered w-full pl-12 pr-4 py-4 bg-white/50 border-blue-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-300 text-gray-800 shadow-sm" 
+                    v-model="password2" />
+                  <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-blue-400 group-hover:text-blue-600 transition-colors duration-300">
+                    <Lock :size="20" />
+                  </span>
+                </div>
+                <!-- Indikator kecocokan password -->
+                <div v-if="password2" class="text-xs p-3 rounded-lg border">
+                  <div v-if="password === password2" class="text-green-600 bg-green-50 border-green-200 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    </svg>
+                    Password cocok
+                  </div>
+                  <div v-else class="text-red-600 bg-red-50 border-red-200 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                    Password tidak cocok
+                  </div>
+                </div>
               </div>
             </div>
           </div>
           <!-- Button -->
           <button id="submitdata" type="submit" 
-            class="w-full py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-300 mt-8">
-            Daftar
+            :disabled="!isFormValid || isLoading"
+            :class="[
+              'w-full py-4 rounded-xl font-semibold text-lg shadow-lg transition-all duration-300 mt-8',
+              isFormValid && !isLoading 
+                ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:shadow-xl transform hover:-translate-y-0.5 cursor-pointer' 
+                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            ]">
+            <span v-if="isLoading">Mendaftar...</span>
+            <span v-else>{{ isFormValid ? 'Daftar' : 'Lengkapi Form' }}</span>
           </button>
-          <!-- Tambahkan info badge reCAPTCHA di bawah tombol submit -->
-          <div class="flex items-center justify-center mt-2 text-xs text-gray-400">
-            <svg class="w-4 h-4 mr-1" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#4285F4" stroke-width="2"/><path d="M8 12l2 2 4-4" stroke="#34A853" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            Halaman ini dilindungi oleh Google reCAPTCHA
-          </div>
-        </form>
-        </transition>
-        <!-- Link login -->
+          <!-- Link login -->
         <div class="text-center mt-8 pt-6">
           <p class="text-blue-700 text-lg">
             Sudah punya akun? 
             <a href="/login" class="text-blue-600 hover:text-blue-700 font-medium hover:underline transition-colors duration-300 ml-2">Masuk di sini</a>
           </p>
         </div>
+        </form>
+        </transition>
+        
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-const showConfirmModal = ref(false)
-
-function openConfirmModal() {
-  if (!validateForm()) return
-  showConfirmModal.value = true
-}
-
-async function handleConfirmSubmit() {
-  showConfirmModal.value = false
-  await submitSignup()
-}
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { User, IdCard, Mail, Lock } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import { useReCaptcha } from 'vue-recaptcha-v3'
@@ -192,6 +209,39 @@ const passwordChecks = ref({
   panjang: false
 })
 
+// Computed property untuk mengecek apakah password valid
+const isPasswordValid = computed(() => {
+  return passwordChecks.value.kapital && 
+         passwordChecks.value.kecil && 
+         passwordChecks.value.angka && 
+         passwordChecks.value.spesial && 
+         passwordChecks.value.panjang
+})
+
+// Computed property untuk mengecek apakah form siap disubmit
+const isFormValid = computed(() => {
+  return name.value && 
+         email.value && 
+         password.value && 
+         password2.value && 
+         isPasswordValid.value && 
+         password.value === password2.value
+})
+
+const showConfirmModal = ref(false)
+
+function openConfirmModal() {
+  if (!isFormValid.value) {
+    if (!validateForm()) return
+  }
+  showConfirmModal.value = true
+}
+
+async function handleConfirmSubmit() {
+  showConfirmModal.value = false
+  await submitSignup()
+}
+
 function checkPasswordStrength(pw: string) {
   passwordChecks.value.kapital = /[A-Z]/.test(pw)
   passwordChecks.value.kecil = /[a-z]/.test(pw)
@@ -199,12 +249,30 @@ function checkPasswordStrength(pw: string) {
   passwordChecks.value.spesial = /[^A-Za-z0-9]/.test(pw)
   passwordChecks.value.panjang = pw.length >= 8
   let score = 0
-  Object.values(passwordChecks.value).forEach(v => { if (v) score += 20 })
+  Object.values(passwordChecks.value).forEach((v: boolean) => { if (v) score += 20 })
   passwordStrength.value = score
 }
 
-watch(password, (val) => {
+watch(password, (val: string) => {
   checkPasswordStrength(val)
+  // Clear error jika password valid
+  if (val && passwordChecks.value.kapital && passwordChecks.value.kecil && 
+      passwordChecks.value.angka && passwordChecks.value.spesial && passwordChecks.value.panjang) {
+    if (error.value && error.value.includes('Password harus')) {
+      error.value = ''
+    }
+  }
+})
+
+// Tambahkan watcher untuk password2 untuk validasi kecocokan
+watch(password2, (val: string) => {
+  if (val && password.value && val !== password.value) {
+    // Tidak set error di sini untuk menghindari gangguan saat mengetik
+  } else if (val && password.value && val === password.value) {
+    if (error.value === 'Password tidak sama') {
+      error.value = ''
+    }
+  }
 })
 
 const isLoading = ref(false)
@@ -212,13 +280,13 @@ const error = ref('')
 const registrationSuccess = ref(false)
 
 // Avatar handling
-const avatarUrl = ref('https://api.dicebear.com/7.x/avataaars/svg?seed=1')
-const currentSeed = ref(1)
-
-const randomizeAvatar = () => {
-  currentSeed.value = Math.floor(Math.random() * 1000)
-  avatarUrl.value = `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentSeed.value}`
-}
+// const avatarUrl = ref('https://api.dicebear.com/7.x/avataaars/svg?seed=1')
+// const currentSeed = ref(1)
+// 
+// const randomizeAvatar = () => {
+//   currentSeed.value = Math.floor(Math.random() * 1000)
+//   avatarUrl.value = `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentSeed.value}`
+// }
 
 const validateForm = () => {
   if (!name.value || !email.value || !password.value || !password2.value) {
@@ -231,6 +299,31 @@ const validateForm = () => {
     return false
   }
 
+  // Validasi aturan password
+  if (!passwordChecks.value.kapital) {
+    error.value = 'Password harus mengandung minimal 1 huruf kapital'
+    return false
+  }
+
+  if (!passwordChecks.value.kecil) {
+    error.value = 'Password harus mengandung minimal 1 huruf kecil'
+    return false
+  }
+
+  if (!passwordChecks.value.angka) {
+    error.value = 'Password harus mengandung minimal 1 angka'
+    return false
+  }
+
+  if (!passwordChecks.value.spesial) {
+    error.value = 'Password harus mengandung minimal 1 karakter spesial'
+    return false
+  }
+
+  if (!passwordChecks.value.panjang) {
+    error.value = 'Password harus minimal 8 karakter'
+    return false
+  }
 
   return true
 }
@@ -265,7 +358,7 @@ const submitSignup = async () => {
         email: email.value,
         password: password.value,
         nip: nip.value || undefined,
-        avatar_seed: currentSeed.value.toString(),
+        // avatar_seed: currentSeed.value.toString(),
         recaptcha_token: recaptchaToken // kirim token ke backend
       })
     })
@@ -299,7 +392,7 @@ const goToLogin = () => {
 }
 
 // Initialize with random avatar
-randomizeAvatar()
+// randomizeAvatar()
 </script>
 
 <style scoped>
