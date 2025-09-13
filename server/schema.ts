@@ -8,3 +8,4 @@ export * from "./database/section_progress";
 export * from "./database/notifikasi";
 export * from "./database/content_section";
 export * from "./database/course_info";
+export * from "./database/pesan";

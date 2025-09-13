@@ -8,6 +8,7 @@ interface User {
   role_id: number
   token: string  // 👈 Token wajib ada
   avatar_seed?: string
+  foto_url?: string | null
 }
 
 export const useAuthStore = defineStore('auth', {
@@ -23,15 +24,17 @@ export const useAuthStore = defineStore('auth', {
         console.error('Token is required for login')
         return
       }
-      // Simpan avatar_seed jika ada
+      // Simpan avatar_seed dan foto_url jika ada
       this.user = {
         ...userData,
-        avatar_seed: userData.avatar_seed ?? undefined
+        avatar_seed: userData.avatar_seed ?? undefined,
+        foto_url: userData.foto_url ?? null
       }
       this.isLoggedIn = true
       localStorage.setItem('user', JSON.stringify({
         ...userData,
-        avatar_seed: userData.avatar_seed ?? undefined
+        avatar_seed: userData.avatar_seed ?? undefined,
+        foto_url: userData.foto_url ?? null
       }))
       localStorage.setItem('isLoggedIn', 'true')
       console.log('User logged in with token:', userData.token)
@@ -54,7 +57,11 @@ export const useAuthStore = defineStore('auth', {
             const userData = JSON.parse(userStr)
             // Pastikan token ada setelah load dari storage
             if (userData.token) {
-              this.user = userData
+              this.user = {
+                ...userData,
+                avatar_seed: userData.avatar_seed ?? undefined,
+                foto_url: userData.foto_url ?? null
+              }
               this.isLoggedIn = true
               console.log('User loaded from storage with token:', userData.token)
             } else {

@@ -22,10 +22,26 @@ const isVisible = ref(false)
 // Form submission
 const submitForm = async () => {
   isSubmitting.value = true
-  // Simulate form submission
-  await new Promise(resolve => setTimeout(resolve, 1000))
-  alert('Pesan berhasil dikirim! Kami akan segera menghubungi Anda.')
-  form.value = { name: '', email: '', message: '' }
+  try {
+    const res = await fetch('/api/pesan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(form.value)
+    })
+    if (res.status === 401) {
+      window.location.href = '/login'
+      return
+    }
+    const data = await res.json()
+    if (data.success) {
+      alert('Pesan berhasil dikirim! Kami akan segera menghubungi Anda.')
+      form.value = { name: '', email: '', message: '' }
+    } else {
+      alert('Gagal mengirim pesan: ' + (data.error || 'Unknown error'))
+    }
+  } catch (err) {
+    alert('Terjadi kesalahan jaringan atau server.')
+  }
   isSubmitting.value = false
 }
 

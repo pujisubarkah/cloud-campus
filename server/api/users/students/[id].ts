@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
   const body = method === 'PUT' ? await readBody(event) : null;
 
   if (method === 'GET') {
-    // Get single student with course count
+    // Get single student with course count and foto_url
     if (!id) {
       return { error: 'No student id provided' };
     }
@@ -32,7 +32,8 @@ export default defineEventHandler(async (event) => {
         avatar_seed: users.avatar_seed,
         is_verified: users.is_verified,
         created_at: users.created_at,
-        total_courses: sql<number>`COUNT(${enrollments.course_id})`.as('total_courses')
+        total_courses: sql<number>`COUNT(${enrollments.course_id})`.as('total_courses'),
+        foto_url: sql<string>`(SELECT foto_url FROM user_identity WHERE user_identity.user_id = ${users.id} LIMIT 1)`
       })
       .from(users)
       .leftJoin(enrollments, eq(users.id, enrollments.user_id))

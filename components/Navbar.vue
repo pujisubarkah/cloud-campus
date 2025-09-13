@@ -132,7 +132,7 @@
 
     <!-- Desktop Login/User Button -->
     <div class="hidden lg:flex items-center gap-2 sm:gap-4">
-      <template v-if="auth.isLoggedIn">
+      <template v-if="auth.isLoggedIn && auth.user?.role_id === 3">
         <div class="relative user-dropdown">
           <button 
             @click="isUserDropdownOpen = !isUserDropdownOpen"

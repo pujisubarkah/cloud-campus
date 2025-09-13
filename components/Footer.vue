@@ -39,8 +39,9 @@ import { Instagram, Youtube, Facebook } from 'lucide-vue-next';
             </a>
             <a href="https://x.com/LAN_RI" target="_blank" class="flex items-center gap-3 hover:text-[#FFD966] transition-colors">
                 <span class="icon">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M4 4L20 20M20 4L4 20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <!-- X Twitter logo SVG -->
+                  <svg width="24" height="24" viewBox="0 0 1200 1227" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M1197.6 0H1077.6L600 529.2L122.4 0H0L489.6 585.6L0 1227H120L600 697.8L1080 1227H1200L710.4 641.4L1197.6 0Z" fill="currentColor"/>
                   </svg>
                 </span>
                 <span class="ml-2">@LAN_RI</span>

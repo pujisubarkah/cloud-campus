@@ -1,6 +1,7 @@
 import { users } from '../../../database/users';
 import { enrollments } from '../../../database/enrollment';
 import { courses } from '../../../database/courses';
+import { user_identity } from '../../../database/user_identity';
 import { db } from '../../../db';
 import { eq, sql, desc } from 'drizzle-orm';
 
@@ -22,12 +23,14 @@ export default defineEventHandler(async (event) => {
         avatar_seed: users.avatar_seed,
         is_verified: users.is_verified,
         created_at: users.created_at,
-        total_courses: sql<number>`COUNT(${enrollments.course_id})`.as('total_courses')
+        total_courses: sql<number>`COUNT(${enrollments.course_id})`.as('total_courses'),
+        foto_url: user_identity.foto_url
       })
       .from(users)
       .leftJoin(enrollments, eq(users.id, enrollments.user_id))
+      .leftJoin(user_identity, eq(users.id, user_identity.user_id))
       .where(eq(users.role_id, 3))
-      .groupBy(users.id)
+      .groupBy(users.id, user_identity.foto_url)
       .orderBy(desc(sql`COUNT(${enrollments.course_id})`));
 
     return { users: studentsWithCourseCount };

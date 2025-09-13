@@ -5,23 +5,23 @@
     <!-- Summary Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       <div class="bg-gradient-to-br from-blue-600 to-blue-400 rounded-xl shadow-lg p-6 flex flex-col items-center text-white">
-        <Icon name="heroicons-outline:user-group" class="w-10 h-10 mb-2" />
-        <div class="text-2xl font-bold">1,204</div>
+        <User class="w-10 h-10 mb-2" />
+        <div class="text-2xl font-bold">{{ summary.total_siswa ?? '-' }}</div>
         <div class="text-sm opacity-80">Total Siswa</div>
       </div>
       <div class="bg-gradient-to-br from-purple-600 to-purple-400 rounded-xl shadow-lg p-6 flex flex-col items-center text-white">
-        <Icon name="heroicons-outline:academic-cap" class="w-10 h-10 mb-2" />
-        <div class="text-2xl font-bold">87</div>
+        <GraduationCap class="w-10 h-10 mb-2" />
+        <div class="text-2xl font-bold">{{ summary.total_instruktur ?? '-' }}</div>
         <div class="text-sm opacity-80">Total Instruktur</div>
       </div>
       <div class="bg-gradient-to-br from-green-600 to-green-400 rounded-xl shadow-lg p-6 flex flex-col items-center text-white">
-        <Icon name="heroicons-outline:book-open" class="w-10 h-10 mb-2" />
-        <div class="text-2xl font-bold">312</div>
+        <BookOpen class="w-10 h-10 mb-2" />
+        <div class="text-2xl font-bold">{{ summary.total_course ?? '-' }}</div>
         <div class="text-sm opacity-80">Kursus</div>
       </div>
       <div class="bg-gradient-to-br from-yellow-500 to-yellow-300 rounded-xl shadow-lg p-6 flex flex-col items-center text-white">
-        <Icon name="heroicons-outline:collection" class="w-10 h-10 mb-2" />
-        <div class="text-2xl font-bold">1,129</div>
+        <Library class="w-10 h-10 mb-2" />
+        <div class="text-2xl font-bold">{{ summary.total_content ?? '-' }}</div>
         <div class="text-sm opacity-80">Konten</div>
       </div>
     </div>
@@ -64,7 +64,18 @@ definePageMeta({
   layout: 'admin'
 })
 
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+const summary = ref({})
+
+onMounted(async () => {
+  try {
+    const res = await fetch('/api/admin/dashboard')
+    summary.value = await res.json()
+  } catch (err) {
+    summary.value = {}
+  }
+})
+import { User, GraduationCap, BookOpen, Library } from 'lucide-vue-next'
 import { use } from 'echarts/core'
 import VChart from 'vue-echarts'
 import { CanvasRenderer } from 'echarts/renderers'

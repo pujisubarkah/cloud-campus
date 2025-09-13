@@ -1,6 +1,6 @@
 <template>
-  <MainLayout role="admin">
-  <div class="p-8 mt-20">
+
+    <div class="p-8 mt-20">
       <h1 class="text-2xl font-bold mb-6">Approval Registrasi User</h1>
       <div v-if="loading" class="text-center py-8">Loading...</div>
       <div v-else class="overflow-x-auto">
@@ -118,30 +118,28 @@
         </div>
       </div>
     </div>
-  </MainLayout>
 </template>
 
 <script setup lang="ts">
 import MainLayout from '@/layouts/main.vue'
 import { ref, onMounted, computed } from 'vue'
 import { CheckIcon, Trash2Icon, ChevronLeftIcon, ChevronRightIcon } from 'lucide-vue-next'
-// Temporary: use alert instead of toast
-// import useToast from 'vue-toastification'
-// const toast = useToast()
+import { definePageMeta } from '#imports' // Pastikan ini sesuai dengan framework Anda (Nuxt 3?)
 
-// Fetch data dari API users
+definePageMeta({ layout: 'admin' })
+
+// State
 const allUsers = ref<Array<{ id: string, full_name: string, email: string, role: string, role_id: number, is_verified: boolean, nip: string | null, avatar_seed: string | null }>>([])
 const loading = ref(true)
 const roles = ref<Array<{ id: number, nama: string }>>([])
-
-// Pagination
 const currentPage = ref(1)
 const itemsPerPage = ref(10)
 const search = ref('')
 
-// Computed properties for pagination
+// Computed
 const totalUsers = computed(() => allUsers.value.length)
 const totalPages = computed(() => Math.ceil(totalUsers.value / itemsPerPage.value))
+
 const users = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage.value
   const end = start + itemsPerPage.value
@@ -184,6 +182,14 @@ const visiblePages = computed<(number | string)[]>(() => {
   return pages
 })
 
+const filteredUsers = computed(() =>
+  allUsers.value.filter(u =>
+    u.full_name.toLowerCase().includes(search.value.toLowerCase()) ||
+    u.email.toLowerCase().includes(search.value.toLowerCase())
+  )
+)
+
+// Methods
 function goToPage(page: number) {
   if (page >= 1 && page <= totalPages.value) {
     currentPage.value = page
@@ -228,7 +234,7 @@ async function approveUser(id: string) {
     })
     const user = allUsers.value.find(u => u.id === id)
     if (user) user.is_verified = true
-    // Send verification email after approval
+    
     try {
       await $fetch('/api/admin/send-verification-email', {
         method: 'POST',
@@ -266,7 +272,6 @@ async function updateRole(id: string, newRoleId: number) {
       method: 'PUT',
       body: { role_id: newRoleId }
     })
-    // Update local state
     const user = allUsers.value.find(u => u.id === id)
     if (user) user.role_id = newRoleId
   } catch (error) {
@@ -274,13 +279,7 @@ async function updateRole(id: string, newRoleId: number) {
   }
 }
 
-const filteredUsers = computed(() =>
-  allUsers.value.filter(u =>
-    u.full_name.toLowerCase().includes(search.value.toLowerCase()) ||
-    u.email.toLowerCase().includes(search.value.toLowerCase())
-  )
-)
-
+// Lifecycle
 onMounted(() => {
   fetchUsers()
   fetchRoles()

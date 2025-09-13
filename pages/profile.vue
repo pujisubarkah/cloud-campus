@@ -6,10 +6,17 @@
       <div v-else-if="error" class="text-center py-8 text-red-500">{{ error }}</div>
       <form v-if="selectedMenu === 'profile' && !loading && !error" @submit.prevent="handleSubmit" class="bg-white rounded-lg shadow p-6">
         <div class="flex items-center gap-4 mb-6">
-          <img :src="avatarPreviewUrl || avatarUrl" alt="Avatar" class="w-20 h-20 rounded-full border object-cover" />
+          <!-- Avatar dengan prioritas: foto_url → DiceBear → Inisial -->
+          <img 
+            :src="avatarPreviewUrl || avatarUrl" 
+            alt="Avatar" 
+            class="w-20 h-20 rounded-full border object-cover"
+            @error="handleAvatarError"
+          />
           <div class="flex flex-col gap-2">
             <label class="font-semibold">Upload Foto</label>
             <input type="file" accept="image/*" @change="onAvatarChange" class="file-input file-input-bordered w-full" />
+            <span v-if="fotoError" class="text-red-500 text-sm">{{ fotoError }}</span>
             <label class="font-semibold mt-2">Avatar Seed (opsional)</label>
             <input v-model="form.avatar_seed" type="text" class="input input-bordered w-full" placeholder="Avatar Seed" />
           </div>
@@ -48,6 +55,7 @@
         <div v-if="success" class="mt-4 text-green-600">Berhasil disimpan!</div>
         <div v-if="saveError" class="mt-4 text-red-600">{{ saveError }}</div>
       </form>
+
       <form v-if="selectedMenu === 'identitas' && !loading && !error" @submit.prevent="handleSaveIdentitas" class="bg-white rounded-lg shadow p-6">
         <h2 class="text-xl font-bold mb-4">Identitas Kepegawaian</h2>
         <div class="grid grid-cols-2 gap-4 mb-4">
@@ -64,7 +72,7 @@
             <input v-model="identitas.pangkat_golongan" type="text" class="input input-bordered w-full" />
           </div>
         </div>
-        <button type="submit" class="btn btn-primary">Simpan Identitas</button>
+        <button type="submit" class="btn btn-primary">Update Identitas</button>
         <div v-if="identitasSuccess" class="mt-4 text-green-600">Berhasil disimpan!</div>
         <div v-if="identitasError" class="mt-4 text-red-600">{{ identitasError }}</div>
       </form>
@@ -73,7 +81,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import ProfileSidebar from '~/components/ProfileSidebar.vue';
 import { useAuthStore } from '~/stores/auth';
 
@@ -115,7 +123,6 @@ async function handleSaveIdentitas() {
   try {
     let res, data;
     if (identitas.value.id) {
-      // Update
       res = await fetch(`/api/user_identity/${identitas.value.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -127,7 +134,6 @@ async function handleSaveIdentitas() {
         }),
       });
     } else {
-      // Create
       res = await fetch(`/api/user_identity`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -152,26 +158,6 @@ async function handleSaveIdentitas() {
   }
 }
 
-async function handleDeleteIdentitas() {
-  identitasSuccess.value = false;
-  identitasError.value = '';
-  if (!identitas.value.id) return;
-  try {
-    const res = await fetch(`/api/user_identity/${identitas.value.id}`, {
-      method: 'DELETE',
-    });
-    const data = await res.json();
-    if (data.success) {
-      identitas.value = { id: '', unit_kerja: '', jabatan: '', pangkat_golongan: '', foto_url: '' };
-      identitasSuccess.value = true;
-    } else {
-      identitasError.value = 'Gagal menghapus identitas.';
-    }
-  } catch (e) {
-    identitasError.value = 'Gagal menghapus identitas.';
-  }
-}
-
 const auth = useAuthStore();
 const user = ref<any>({});
 const form = ref<any>({});
@@ -180,9 +166,50 @@ const error = ref('');
 const saving = ref(false);
 const success = ref(false);
 const saveError = ref('');
-const avatarUrl = ref('');
-const avatarPreviewUrl = ref('');
-const avatarFile = ref<File|null>(null);
+const avatarFile = ref<File | null>(null);
+const avatarPreviewUrl = ref<string>('');
+const fotoError = ref('');
+
+// --- AVATAR LOGIC ---
+function generateInitials(name: string): string {
+  if (!name || name.trim() === '') return '?';
+  const words = name.trim().split(' ');
+  const first = words[0]?.charAt(0).toUpperCase() || '';
+  const last = words.length > 1 ? words[words.length - 1]?.charAt(0).toUpperCase() : '';
+  return first + last;
+}
+
+function generateColorFromName(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const c = (hash & 0x00FFFFFF).toString(16).toUpperCase();
+  return '#' + '00000'.substring(0, 6 - c.length) + c;
+}
+
+function handleAvatarError(event: Event) {
+  const img = event.target as HTMLImageElement;
+  img.src = '/lanri_.png'; // fallback final
+  img.onerror = null;
+}
+
+const avatarUrl = computed(() => {
+  // 1. Prioritas utama: foto_url (trim untuk aman)
+  if (form.value.foto_url && form.value.foto_url.trim() !== '') {
+    return form.value.foto_url.trim();
+  }
+
+  // 2. Prioritas kedua: avatar_seed → DiceBear
+  if (form.value.avatar_seed && form.value.avatar_seed.trim() !== '') {
+    return `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(form.value.avatar_seed.trim())}`;
+  }
+
+  // 3. Fallback terakhir: inisial nama (SVG inline)
+  const initials = generateInitials(form.value.full_name || '');
+  const bgColor = generateColorFromName(form.value.full_name || '');
+  return `image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Crect width='80' height='80' fill='${bgColor}'/%3E%3Ctext x='50%25' y='50%25' font-size='32' dominant-baseline='middle' text-anchor='middle' fill='%23ffffff' font-family='Arial, sans-serif'%3E${initials}%3C/text%3E%3C/svg%3E`;
+});
 
 function formatDate(dateStr: string) {
   if (!dateStr) return '-';
@@ -208,19 +235,13 @@ onMounted(async () => {
     } else {
       user.value = data.user;
       form.value = { ...data.user };
-      avatarUrl.value = form.value.avatar_seed
-        ? `https://api.dicebear.com/7.x/identicon/svg?seed=${form.value.avatar_seed}`
-        : '/lanri_.png';
+      // avatarUrl akan otomatis dihitung oleh computed property
     }
   } catch (e) {
     error.value = 'Gagal memuat data';
   }
   await fetchIdentitas();
   loading.value = false;
-});
-
-watch(() => form.value.avatar_seed, (val) => {
-  avatarUrl.value = val ? `https://api.dicebear.com/7.x/identicon/svg?seed=${val}` : '/lanri_.png';
 });
 
 async function handleSubmit() {
@@ -259,21 +280,24 @@ async function handleSubmit() {
   saving.value = false;
 }
 
-const fotoError = ref('');
 async function onAvatarChange(e: Event) {
   const input = e.target as HTMLInputElement;
   if (input.files && input.files[0]) {
     const file = input.files[0];
     avatarFile.value = file;
-    avatarPreviewUrl.value = URL.createObjectURL(file);
+    const previewUrl = URL.createObjectURL(file);
+    avatarPreviewUrl.value = previewUrl; // Jika kamu masih butuh preview sementara
     fotoError.value = '';
+
     if (file.size > 2 * 1024 * 1024) {
       fotoError.value = 'Ukuran gambar maksimal 2 MB.';
       return;
     }
+
     const formData = new FormData();
     formData.append('file', file);
     formData.append('upload_preset', 'Makarti_corpu');
+
     try {
       const res = await fetch('https://api.cloudinary.com/v1_1/dqlfyyigk/image/upload', {
         method: 'POST',
@@ -281,15 +305,11 @@ async function onAvatarChange(e: Event) {
       });
       const data = await res.json();
       if (data.secure_url) {
-        identitas.value.foto_url = data.secure_url;
+        identitas.value.foto_url = data.secure_url.trim(); // ← TRIM DI SINI!
         fotoError.value = '';
       } else {
         fotoError.value = data.error?.message || 'Gagal upload gambar ke Cloudinary.';
         console.error('Cloudinary error:', data);
-        if (data.error) {
-          console.log('Cloudinary error message:', data.error.message);
-          console.log('Cloudinary error details:', data.error);
-        }
       }
     } catch (err) {
       fotoError.value = 'Gagal upload gambar ke Cloudinary.';
@@ -301,3 +321,14 @@ async function onAvatarChange(e: Event) {
   }
 }
 </script>
+
+<style scoped>
+/* Tambahkan style jika perlu */
+.file-input {
+  appearance: none;
+  padding: 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  background-color: #fff;
+}
+</style>
