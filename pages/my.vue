@@ -81,7 +81,7 @@
                   </div>
                   <div class="ml-4">
                     <p class="text-sm text-gray-600">Selesai</p>
-                    <p class="text-2xl font-bold text-gray-800">{{ enrollments.filter(e => courseProgress[String(e.course_id)]?.overall_percent === 100).length }}</p>
+                    <p class="text-2xl font-bold text-gray-800">{{ enrollments.filter(e => e.progress_percent === 100).length }}</p>
                   </div>
                 </div>
               </div>
@@ -97,7 +97,7 @@
                   <div class="ml-4">
                     <p class="text-sm text-gray-600">Sedang Berjalan</p>
                     <p class="text-2xl font-bold text-gray-800">{{ enrollments.filter(e => {
-                      const p = courseProgress[String(e.course_id)]?.overall_percent || 0;
+                      const p = e.progress_percent || 0;
                       return p > 0 && p < 100;
                     }).length }}</p>
                   </div>
@@ -191,17 +191,18 @@
                         <div class="flex justify-between text-sm text-gray-600 mb-2">
                           <span>Kemajuan</span>
                           <span>
-                            {{ courseProgress[String(enroll.course_id)]?.overall_percent || 0 }}%
-                            <span v-if="courseProgress[String(enroll.course_id)]?.completed_sections !== undefined && courseProgress[String(enroll.course_id)]?.total_sections !== undefined">
-                              &nbsp;({{ courseProgress[String(enroll.course_id)]?.completed_sections }}/{{ courseProgress[String(enroll.course_id)]?.total_sections }} section selesai)
+                            {{ enroll.progress_percent || 0 }}%
+                            <span v-if="enroll.completed_sections !== undefined && enroll.total_sections !== undefined">
+                              &nbsp;({{ enroll.completed_sections }}/{{ enroll.total_sections }} section selesai)
                             </span>
                           </span>
                         </div>
                         <div class="w-full bg-gray-200 rounded-full h-2">
                           <div class="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-300" 
-                            :style="{ width: `${courseProgress[String(enroll.course_id)]?.overall_percent || 0}%` }"></div>
+                            :style="{ width: `${enroll.progress_percent || 0}%` }"></div>
                         </div>
                       </div>
+
       <!-- Modal Progress Section List -->
       <div v-if="progressModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
         <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-lg w-full text-center relative">
@@ -300,45 +301,7 @@
               <h3 class="text-lg font-bold text-gray-800 ml-3">Acara Mendatang</h3>
             </div>
 
-            <div class="space-y-4">
-              <!-- Kehadiran Event -->
-              <div class="flex items-start space-x-3 p-3 bg-blue-50 rounded-xl border border-blue-100">
-                <div class="bg-blue-100 p-2 rounded-lg">
-                  <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                  </svg>
-                </div>
-                <div class="flex-1">
-                  <h4 class="font-semibold text-gray-800 text-sm">Kehadiran</h4>
-                  <p class="text-xs text-gray-600">Senin, 4 Agustus, 10:00 - 13:00</p>
-                  <button @click="downloadICS('Kehadiran', '2025-08-04T10:00:00', '2025-08-04T13:00:00', 'Kehadiran di webinar', 'Online')"
-                    class="mt-2 px-3 py-1 bg-blue-600 text-white text-xs rounded shadow hover:bg-blue-700 transition">
-                    Tambahkan ke Kalender
-                  </button>
-                </div>
-              </div>
-
-              <!-- Batas Proyek Akhir Event -->
-              <div class="flex items-start space-x-3 p-3 bg-yellow-50 rounded-xl border border-yellow-100">
-                <div class="bg-yellow-100 p-2 rounded-lg">
-                  <svg class="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                  </svg>
-                </div>
-                <div class="flex-1">
-                  <h4 class="font-semibold text-gray-800 text-sm">Batas Proyek Akhir</h4>
-                  <p class="text-xs text-gray-600">Jumat, 8 Agustus, 23:59</p>
-                  <button @click="downloadICS('Batas Proyek Akhir', '2025-08-08T23:00:00', '2025-08-08T23:59:00', 'Deadline pengumpulan proyek akhir', 'Online')"
-                    class="mt-2 px-3 py-1 bg-yellow-500 text-white text-xs rounded shadow hover:bg-yellow-600 transition">
-                    Tambahkan ke Kalender
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div class="mt-4 pt-4 border-t border-gray-100">
-              <a href="#" class="text-blue-600 hover:text-blue-700 text-sm font-medium">Lihat semua acara →</a>
-            </div>
+            <div class="text-gray-500">Belum ada acara mendatang.</div>
           </div>
 
           <!-- Webinar Saya -->
@@ -431,26 +394,6 @@ async function showProgressModal(enroll: any) {
     progressModalSections.value = []
   }
 }
-// Function to generate and download .ics calendar file
-function downloadICS(title: string, start: string, end: string, description: string, location: string) {
-  const pad = (n: number) => n < 10 ? '0' + n : n
-  function formatICSDate(dateStr: string) {
-    const d = new Date(dateStr)
-    return d.getUTCFullYear().toString() + pad(d.getUTCMonth() + 1) + pad(d.getUTCDate()) + 'T' + pad(d.getUTCHours()) + pad(d.getUTCMinutes()) + '00Z'
-  }
-  const ics = `BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nSUMMARY:${title}\nDTSTART:${formatICSDate(start)}\nDTEND:${formatICSDate(end)}\nDESCRIPTION:${description}\nLOCATION:${location}\nEND:VEVENT\nEND:VCALENDAR`
-  const blob = new Blob([ics.replace(/\n/g, '\r\n')], { type: 'text/calendar' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `${title.replace(/\s+/g, '_')}.ics`
-  document.body.appendChild(a)
-  a.click()
-  setTimeout(() => {
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-  }, 100)
-}
 // Filter, sorting, and search state
 import { computed } from 'vue'
 const searchQuery = ref('')
@@ -466,7 +409,7 @@ const filteredSortedEnrollments = computed(() => {
   // Filter
   if (filterStatus.value) {
     result = result.filter(e => {
-      const progress = courseProgress.value[String(e.course_id)]?.overall_percent || 0
+      const progress = e.progress_percent || 0
       if (filterStatus.value === 'berjalan') return progress > 0 && progress < 100
       if (filterStatus.value === 'selesai') return progress === 100
       if (filterStatus.value === 'belum') return progress === 0
@@ -478,8 +421,8 @@ const filteredSortedEnrollments = computed(() => {
     result = result.sort((a, b) => (a.id > b.id ? 1 : -1))
   } else if (sortBy.value === 'kemajuan') {
     result = result.sort((a, b) => {
-      const pa = courseProgress.value[String(a.course_id)]?.overall_percent || 0
-      const pb = courseProgress.value[String(b.course_id)]?.overall_percent || 0
+      const pa = a.progress_percent || 0
+      const pb = b.progress_percent || 0
       return pb - pa
     })
   } else if (sortBy.value === 'abjad') {
@@ -498,28 +441,24 @@ interface Enrollment {
   course_title: string
   course_description: string
   course_thumbnail: string
+  progress_percent?: number
+  completed_sections?: number
+  total_sections?: number
   // tambahkan properti lain sesuai kebutuhan
 }
 const enrollments = ref<Enrollment[]>([])
 const isLoading = ref(false)
 const error = ref('')
 
-const webinars = ref([
-  {
-    id: 1,
-    title: 'Webinar: Strategi Pengentasan Kemiskinan',
-    date: 'Senin, 4 Agustus',
-    time: '10:00 - 12:00',
-    description: 'Webinar bersama pakar ekonomi membahas strategi terbaru.'
-  },
-  {
-    id: 2,
-    title: 'Webinar: Diskusi Kelompok',
-    date: 'Rabu, 6 Agustus',
-    time: '14:00 - 15:30',
-    description: 'Diskusi interaktif bersama peserta lain.'
-  }
-])
+interface Webinar {
+  id: number
+  title: string
+  date: string
+  time: string
+  description: string
+  // tambahkan properti lain sesuai kebutuhan
+}
+const webinars = ref<Webinar[]>([])
 const isLoadingWebinar = ref(false)
 
 const courses = ref<Enrollment[]>([]) // Daftar course user
@@ -553,13 +492,33 @@ const fetchEnrollmentsAndProgress = async () => {
     });
     console.log('[DEBUG] Enrollment response:', responseData);
     enrollments.value = responseData.enrollments || [];
-    // Fetch course progress (sinkron dengan materi)
-    const progressRes = await $fetch('/api/course_progress', {
-      method: 'GET',
-      params: { user_id: userId }
-    });
-    console.log('[DEBUG] Course progress response:', progressRes);
-    courseProgress.value = (progressRes && typeof progressRes === 'object') ? progressRes as Record<string, CourseProgress> : {};
+    // Fetch section progress for each enrollment
+    for (const enroll of enrollments.value) {
+      try {
+        const progressRes = await $fetch(`/api/section_progress/${enroll.course_id}`, {
+          method: 'GET',
+          params: { user_id: userId }
+        });
+        let userProgress = (progressRes && 'userProgress' in progressRes && progressRes.userProgress)
+          ? progressRes.userProgress[String(userId)]
+          : undefined;
+        if (userProgress) {
+          enroll.progress_percent = userProgress.progress_percent;
+          enroll.completed_sections = userProgress.completed_sections;
+          enroll.total_sections = ('total_sections' in userProgress ? userProgress.total_sections : userProgress.totalSections) ?? 0;
+        } else {
+          enroll.progress_percent = 0;
+          enroll.completed_sections = 0;
+          enroll.total_sections = 0;
+        }
+      } catch (err) {
+        enroll.progress_percent = 0;
+        enroll.completed_sections = 0;
+        enroll.total_sections = 0;
+      }
+    }
+    // Force Vue reactivity update
+    enrollments.value = [...enrollments.value];
   } catch (err: any) {
     error.value = err?.message || 'Gagal memuat data kursus.';
     enrollments.value = [];
@@ -621,4 +580,41 @@ onMounted(() => {
 watch(() => auth.user?.id, () => {
   loadBookmarks()
 })
+for (const enroll of enrollments.value) {
+  try {
+    const progressRes = await $fetch(`/api/section_progress/${enroll.course_id}`, {
+      method: 'GET',
+      params: { user_id: userId }
+    });
+    let userProgress;
+    if (
+      progressRes &&
+      typeof progressRes === 'object' &&
+      'userProgress' in progressRes &&
+      progressRes.userProgress &&
+      typeof userId !== 'undefined'
+    ) {
+      userProgress = progressRes.userProgress?.[String(userId)];
+    }
+    if (userProgress) {
+      enroll.progress_percent = userProgress.progress_percent;
+      enroll.completed_sections = userProgress.completed_sections;
+      if ('total_sections' in userProgress) {
+        enroll.total_sections = userProgress.total_sections;
+      } else if ('totalSections' in userProgress) {
+        enroll.total_sections = userProgress.totalSections;
+      } else {
+        enroll.total_sections = 0;
+      }
+    } else {
+      enroll.progress_percent = 0;
+      enroll.completed_sections = 0;
+      enroll.total_sections = 0;
+    }
+  } catch (err) {
+    enroll.progress_percent = 0;
+    enroll.completed_sections = 0;
+    enroll.total_sections = 0;
+  }
+}
   </script>

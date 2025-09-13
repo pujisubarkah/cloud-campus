@@ -190,9 +190,12 @@ import { ref, watch, computed } from 'vue'
 import { User, IdCard, Mail, Lock } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import { useReCaptcha } from 'vue-recaptcha-v3'
+import { useAuthStore } from '~/stores/auth'
+import { useFetch } from '#app'
 
 const router = useRouter()
 const recaptcha = useReCaptcha()
+const auth = useAuthStore()
 
 // Form data
 const name = ref('')
@@ -374,12 +377,31 @@ const submitSignup = async () => {
     // Registration successful
     registrationSuccess.value = true
 
+    // Send admin notification
+    await sendAdminNotification(data.user)
+
   } catch (e) {
     error.value = (e instanceof Error ? e.message : 'Terjadi kesalahan saat mendaftar')
     console.error('Signup error:', e)
   } finally {
     isLoading.value = false
   }
+}
+
+async function sendAdminNotification(newUser: { id: string; token: string }) {
+  const adminId = '550e8400-e29b-41d4-a716-446655440000';
+  await $fetch('/api/notifikasi', {
+    method: 'POST',
+    body: {
+      user_id: adminId,
+      pesan: 'Ada pendaftar baru',
+      dibaca: false,
+      created_by: newUser.id
+    },
+    headers: {
+      'Authorization': `Bearer ${newUser.token}`
+    }
+  })
 }
 
 const goToLogin = () => {

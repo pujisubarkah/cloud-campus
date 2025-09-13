@@ -4,6 +4,16 @@
       <h1 class="text-2xl font-bold mb-6">Approval Registrasi User</h1>
       <div v-if="loading" class="text-center py-8">Loading...</div>
       <div v-else class="overflow-x-auto">
+        
+        <!-- Search Bar -->
+        <div class="mb-4 flex justify-end">
+          <input
+            v-model="search"
+            placeholder="Cari nama/email..."
+            class="p-2 border rounded w-64"
+          />
+        </div>
+        
         <table class="min-w-full bg-white rounded-xl shadow-lg border border-blue-200">
           <thead>
             <tr class="bg-gradient-to-r from-blue-800 via-blue-700 to-blue-600 text-white">
@@ -16,7 +26,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="user in users" :key="user.id" class="border-b hover:bg-blue-50 transition">
+            <tr v-for="user in filteredUsers" :key="user.id" class="border-b hover:bg-blue-50 transition">
               <td class="py-3 px-6 flex items-center gap-3">
                 <img :src="`https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name)}&background=random&seed=${user.avatar_seed}`" class="w-8 h-8 rounded-full shadow" />
                 <span class="font-medium">{{ user.full_name }}</span>
@@ -127,6 +137,7 @@ const roles = ref<Array<{ id: number, nama: string }>>([])
 // Pagination
 const currentPage = ref(1)
 const itemsPerPage = ref(10)
+const search = ref('')
 
 // Computed properties for pagination
 const totalUsers = computed(() => allUsers.value.length)
@@ -262,6 +273,13 @@ async function updateRole(id: string, newRoleId: number) {
     console.error('Error updating role:', error)
   }
 }
+
+const filteredUsers = computed(() =>
+  allUsers.value.filter(u =>
+    u.full_name.toLowerCase().includes(search.value.toLowerCase()) ||
+    u.email.toLowerCase().includes(search.value.toLowerCase())
+  )
+)
 
 onMounted(() => {
   fetchUsers()

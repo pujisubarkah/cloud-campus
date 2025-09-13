@@ -80,10 +80,13 @@ export default defineEventHandler(async (event) => {
     const body = await readBody(event)
     const { user_id, course_id, section_id, progress_percent } = body
 
+    // Untuk progress course, section_id harus null
+    const sectionIdValue = typeof section_id === 'undefined' ? null : section_id
+
     const result = await db.insert(courseProgress).values({
       user_id,
       course_id,
-      section_id,
+      section_id: sectionIdValue,
       progress_percent,
       completed_at: progress_percent === 100 ? new Date() : null,
     })

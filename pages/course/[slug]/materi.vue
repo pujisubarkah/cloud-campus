@@ -41,7 +41,7 @@
                 <span class="text-xs font-bold text-emerald-600">{{ progressPercent }}%</span>
               </div>
             </div>
-            <div v-if="progressPercent < 100" class="absolute right-0 top-0 h-3 flex items-center group-hover:block hidden">
+            <div v-if="progressPercent < 100" class="absolute right-0 top-0 h-3 flex items-center group-hover:block">
               <span class="text-xs text-slate-500 bg-white px-2 py-1 rounded shadow">Selesaikan semua section untuk 100%</span>
             </div>
           </div>
@@ -124,9 +124,6 @@
           </div>
           <div class="flex items-center gap-3">
             <span class="text-2xl font-bold text-emerald-600">{{ Math.round(courseScorePercent) }}</span>
-            <span v-if="courseScorePercent > 80" class="ml-2 px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 font-semibold">Lulus</span>
-            <span v-else class="ml-2 px-3 py-1 rounded-full bg-red-100 text-red-700 font-semibold">Belum Lulus</span>
-            <span v-if="courseScorePercent <= 80" class="ml-2 text-sm text-red-600">Silakan ulangi quiz untuk mendapatkan skor di atas 80.</span>
           </div>
         </div>
       </div>
@@ -462,31 +459,6 @@
           <h3 class="text-xl font-semibold text-slate-600 mb-2">Belum Ada Materi atau Quiz</h3>
           <p class="text-slate-500">Section ini belum memiliki materi maupun quiz.</p>
         </div>
-
-        <!-- Sertifikat -->
-        <div class="mt-8 flex flex-col items-center">
-          <button @click="getCertificate" :disabled="!showCertificateButton || courseScorePercent <= 80 || isCertificateLoading" aria-label="Ambil Sertifikat"
-            class="px-8 py-4 bg-gradient-to-r from-blue-600 to-emerald-500 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 relative"
-            @mouseenter="showCertTooltip = !showCertificateButton || courseScorePercent <= 80"
-            @mouseleave="showCertTooltip = false">
-            <span v-if="!isCertificateLoading">Ambil Sertifikat</span>
-            <span v-else>Mengambil Sertifikat...</span>
-            <span v-if="!showCertificateButton || courseScorePercent <= 80" class="absolute left-1/2 -translate-x-1/2 top-full mt-2 px-3 py-2 bg-slate-800 text-white text-xs rounded shadow-lg z-10" v-show="showCertTooltip">
-              Selesaikan semua kuis dan dapatkan skor minimal 80% untuk mengaktifkan tombol ini.
-            </span>
-          </button>
-          <div v-if="certificateUrl" class="mt-4">
-            <a :href="certificateUrl" target="_blank" class="text-blue-600 underline font-semibold">Download Sertifikat</a>
-            <br>
-            <img :src="certificateUrl" alt="Sertifikat" class="mt-2 rounded-xl shadow-lg max-w-xl" />
-          </div>
-        </div>
-
-        <!-- Tambahan Info Skor dan Kelulusan -->
-        <div v-if="selectedSection && selectedSection.quizzes && selectedSection.quizzes.length" class="mt-4 text-lg font-bold text-blue-600">
-          Skor Anda: {{ userQuizPoints }} / {{ totalQuizPoints }}
-          <div v-if="isPassed" class="mt-2 text-emerald-600 font-semibold">✅ Anda lulus materi ini!</div>
-        </div>
       </div>
     </main>
   </div>
@@ -495,17 +467,8 @@
   <div v-if="showPassedPopup" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
     <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
       <div class="text-4xl mb-4">🎉</div>
-      <h2 class="text-2xl font-bold text-emerald-600 mb-2">Lulus Materi!</h2>
+      <h2 class="text-2xl font-bold text-emerald-600 mb-2">Selamat Anda telah menyelesaikan Materi ini</h2>
       <p class="text-lg text-gray-700 mb-6">{{ passedMessage }}</p>
-      <button @click="getCertificate" :disabled="isCertificateLoading" class="px-6 py-3 bg-gradient-to-r from-blue-600 to-emerald-500 text-white font-semibold rounded-xl shadow hover:bg-blue-700 transition mb-4">
-        <span v-if="!isCertificateLoading">Ambil Sertifikat</span>
-        <span v-else>Mengambil Sertifikat...</span>
-      </button>
-      <div v-if="certificateUrl" class="mt-2">
-        <a :href="certificateUrl" target="_blank" class="text-blue-600 underline font-semibold">Download Sertifikat</a>
-        <br>
-        <img :src="certificateUrl" alt="Sertifikat" class="mt-2 rounded-xl shadow-lg max-w-xs mx-auto" />
-      </div>
       <button @click="showPassedPopup = false" class="px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-xl shadow hover:bg-gray-300 transition mt-4">Tutup</button>
     </div>
   </div>
@@ -816,7 +779,6 @@ const autoCompleteSection = async (sectionId) => {
 
   try {
     console.log(`🎯 Auto-completing section: ${sectionId} (all quizzes finished)`)
-    
     const response = await $fetch('/api/section_progress', {
       method: 'POST',
       headers: {
@@ -830,19 +792,16 @@ const autoCompleteSection = async (sectionId) => {
         is_completed: true
       }
     })
-    
-    // Update local state
     completedSections.value.push(sectionId)
-    
     console.log(`✅ Section ${sectionId} auto-marked as completed`)
     console.log('API Response:', response)
-    
+    await refreshSectionProgress();
   } catch (error) {
     console.error('❌ Error auto-completing section:', error)
-    // Fallback: tetap update local state meskipun API error
     if (!completedSections.value.includes(sectionId)) {
       completedSections.value.push(sectionId)
     }
+    await refreshSectionProgress();
   }
 }
 
@@ -941,10 +900,67 @@ const handleCompletion = async (sectionId) => {
         }
       })
       completedSections.value.push(sectionId)
+      await refreshSectionProgress();
+      // Jika semua section sudah selesai, update course_progress
+      if (totalCompletedSet.value.size === sections.value.length && sections.value.length > 0) {
+        await postCourseProgress(100);
+      }
     } catch (error) {
       console.error('Error marking section as completed:', error)
+      await refreshSectionProgress();
+      // Jika semua section sudah selesai, update course_progress
+      if (totalCompletedSet.value.size === sections.value.length && sections.value.length > 0) {
+        await postCourseProgress(100);
+      }
     }
   }
+// Fungsi untuk refresh progress section dari API agar progress bar langsung update
+async function refreshSectionProgress() {
+  try {
+    const progressRes = await $fetch('/api/section_progress', {
+      method: 'GET',
+      headers: { 'Authorization': `Bearer ${auth.user.token}` },
+      params: { user_id: auth.user.id }
+    });
+    const userProgress = (progressRes.progress || []).filter(
+      p => p.user_id === auth.user.id && p.is_completed
+    );
+    completedSections.value = userProgress.map(p => p.section_id);
+  } catch (error) {
+    console.error('Error refreshing progress:', error);
+  }
+}
+
+// Fungsi untuk POST ke api/course_progress
+async function postCourseProgress(percent) {
+  try {
+    // Ambil courseId dari route
+    const courseRes = await $fetch(`/api/course/${route.params.slug}`);
+    const courseId = courseRes.course?.id;
+    if (!courseId) return;
+    // Hitung progress_percent
+    const completed = totalCompletedSet.value.size;
+    const total = sections.value.length;
+    const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+    await $fetch('/api/course_progress', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${auth.user?.token}`,
+        'Content-Type': 'application/json'
+      },
+      body: {
+        user_id: auth.user.id,
+        course_id: courseId,
+        progress_percent: percent,
+        completed_at: percent === 100 ? new Date().toISOString() : null
+      }
+    });
+    // Optional: bisa tambahkan notifikasi sukses
+    console.log('Course progress updated:', percent);
+  } catch (error) {
+    console.error('Error updating course progress:', error);
+  }
+}
 }
 
 const getCertificate = async () => {
