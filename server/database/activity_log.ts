@@ -1,6 +1,7 @@
 import { pgTable, uuid, varchar, text, integer, timestamp } from 'drizzle-orm/pg-core'
+import { akademiSchema } from './akademi-schema';
 
-export const activity_log = pgTable('activity_log', {
+export const activity_log = akademiSchema.table('activity_log', {
   id: uuid('id').primaryKey().notNull(),
   instructor_id: uuid('instructor_id').notNull(),
   type: varchar('type', { length: 50 }).notNull(),

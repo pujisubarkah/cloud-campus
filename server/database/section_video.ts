@@ -1,9 +1,11 @@
 // server/database/section_videos.ts
 
-import { pgTable, uuid, text, integer, timestamp } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, integer, timestamp, pgSchema } from 'drizzle-orm/pg-core';
 import { courseSections } from './course_section';
 
-export const sectionVideos = pgTable('section_videos', {
+const akademiSchema = pgSchema('akademi');
+
+export const sectionVideos = akademiSchema.table('section_videos', {
   id: uuid('id').primaryKey().defaultRandom(),
   section_id: uuid('section_id').notNull().references(() => courseSections.id),
   title: text('title').notNull(),

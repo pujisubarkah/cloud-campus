@@ -1,8 +1,10 @@
-import { pgTable, uuid, timestamp, integer, boolean } from 'drizzle-orm/pg-core'
+import { pgTable, uuid, timestamp, integer, boolean, pgSchema } from 'drizzle-orm/pg-core'
 import { users } from './users'
 import { courseSections } from './course_section'
 
-export const sectionProgress = pgTable('section_progress', {
+const akademiSchema = pgSchema('akademi');
+
+export const sectionProgress = akademiSchema.table('section_progress', {
   id: uuid('id').primaryKey().defaultRandom(),
   user_id: uuid('user_id').notNull().references(() => users.id),
   section_id: uuid('section_id').notNull().references(() => courseSections.id),

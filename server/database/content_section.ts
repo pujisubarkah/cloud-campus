@@ -1,7 +1,8 @@
 import { pgTable, uuid, text, integer, timestamp } from 'drizzle-orm/pg-core';
 import { courseSections } from './course_section';
+import { akademiSchema } from './akademi-schema';
 
-export const sectionContents = pgTable('section_contents', {
+export const sectionContents = akademiSchema.table('section_contents', {
   id: uuid('id').primaryKey().defaultRandom(),
   section_id: uuid('section_id').notNull().references(() => courseSections.id),
   type: text('type').notNull(), // 'video', 'pdf', 'paparan', 'embed', etc.

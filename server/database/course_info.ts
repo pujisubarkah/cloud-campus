@@ -1,7 +1,8 @@
 import { pgTable, uuid, varchar, integer, boolean, timestamp } from 'drizzle-orm/pg-core'
 import { courses } from './courses'
+import { akademiSchema } from './akademi-schema';
 
-export const course_info = pgTable('course_info', {
+export const course_info = akademiSchema.table('course_info', {
   id: uuid('id').primaryKey().defaultRandom(),
   course_id: uuid('course_id').references(() => courses.id).notNull(),
   level: varchar('level', { length: 50 }).notNull(),

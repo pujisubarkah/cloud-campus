@@ -1,7 +1,9 @@
-import { pgTable, uuid, varchar, timestamp } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, timestamp, pgSchema } from 'drizzle-orm/pg-core';
 import { users } from './users';
 
-export const user_identity = pgTable('user_identity', {
+const akademiSchema = pgSchema('akademi');
+
+export const user_identity = akademiSchema.table('user_identity', {
   id: uuid('id').defaultRandom().primaryKey(),
   user_id: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
   unit_kerja: varchar('unit_kerja', { length: 128 }),

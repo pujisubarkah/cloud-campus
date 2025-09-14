@@ -1,7 +1,8 @@
 import { pgTable, uuid, text, timestamp, boolean } from 'drizzle-orm/pg-core';
 import { users } from './users';
+import { akademiSchema } from './akademi-schema';
 
-export const courses = pgTable('courses', {
+export const courses = akademiSchema.table('courses', {
   id: uuid('id').primaryKey().defaultRandom(),
   title: text('title').notNull(),
   slug: text('slug').notNull().unique(),

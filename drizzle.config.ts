@@ -20,7 +20,7 @@ function parseDatabaseUrl(url: string) {
 const dbCredentials = parseDatabaseUrl(process.env.DATABASE_URL!);
 
 export default {
-  schema: './server/database/schema/index.ts',
+  schema: './server/schema.ts',
   out: './drizzle',
   dialect: 'postgresql',
   dbCredentials,

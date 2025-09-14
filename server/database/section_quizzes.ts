@@ -1,7 +1,9 @@
-import { pgTable, uuid, text, integer, timestamp, jsonb, boolean } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, integer, timestamp, jsonb, boolean, pgSchema } from 'drizzle-orm/pg-core';
 import { courseSections } from './course_section';
 
-export const sectionQuizzes = pgTable('section_quizzes', {
+const akademiSchema = pgSchema('akademi');
+
+export const sectionQuizzes = akademiSchema.table('section_quizzes', {
   id: uuid('id').primaryKey().defaultRandom(),
   section_id: uuid('section_id').notNull().references(() => courseSections.id),
   type: text('type').notNull(), // 'multiple', 'short', 'truefalse', 'fill', 'likert'

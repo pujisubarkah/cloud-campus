@@ -1,6 +1,8 @@
-import { pgTable, serial, varchar, timestamp } from 'drizzle-orm/pg-core';
+import { pgTable, serial, varchar, timestamp, pgSchema } from 'drizzle-orm/pg-core';
 
-export const pesan = pgTable('pesan', {
+const akademiSchema = pgSchema('akademi');
+
+export const pesan = akademiSchema.table('pesan', {
   id: serial('id').primaryKey(),
   name: varchar('name', { length: 100 }).notNull(),
   email: varchar('email', { length: 100 }).notNull(),

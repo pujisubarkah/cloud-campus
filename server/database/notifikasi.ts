@@ -1,6 +1,8 @@
-import { pgTable, uuid, text, boolean, timestamp } from 'drizzle-orm/pg-core'
+import { pgTable, uuid, text, boolean, timestamp, pgSchema } from 'drizzle-orm/pg-core'
 
-export const notifikasi = pgTable('notifications', {
+const akademiSchema = pgSchema('akademi');
+
+export const notifikasi = akademiSchema.table('notifications', {
   id: uuid('id').primaryKey().defaultRandom(),
   user_id: uuid('user_id').notNull(),
   pesan: text('pesan').notNull(),

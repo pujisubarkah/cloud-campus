@@ -1,8 +1,10 @@
-import { pgTable, uuid, text, integer, timestamp, boolean } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, integer, timestamp, boolean, pgSchema } from 'drizzle-orm/pg-core';
 import { users } from './users'; // Import users table
 import { sectionQuizzes } from './section_quizzes'; // Import section_quiz table
 
-export const quizResponses = pgTable('quiz_responses', {
+const akademiSchema = pgSchema('akademi');
+
+export const quizResponses = akademiSchema.table('quiz_responses', {
   id: uuid('id').primaryKey().defaultRandom(),
   user_id: uuid('user_id').notNull().references(() => users.id),
   quiz_id: uuid('quiz_id').notNull().references(() => sectionQuizzes.id),
