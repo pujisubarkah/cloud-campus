@@ -168,6 +168,18 @@
               </span>
             </a>
 
+            <!-- Change Password Link -->
+            <a 
+              href="/profile/change-password" 
+              @click="isUserDropdownOpen = false"
+              class="group flex items-center w-full px-4 py-3 text-gray-700 hover:bg-yellow-50/80 transition-all duration-200"
+            >
+              <span class="flex items-center gap-3">
+                <i class="fas fa-key w-5 text-yellow-600 group-hover:scale-110 transition-transform"></i>
+                <span class="font-medium">Ganti Password</span>
+              </span>
+            </a>
+
             <!-- Divider -->
             <div class="border-t border-gray-100 my-1"></div>
 

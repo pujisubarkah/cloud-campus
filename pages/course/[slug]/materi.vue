@@ -2,7 +2,7 @@
   <div class="flex min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 pt-16">
     <!-- Sidebar Materi dengan Design Modern -->
     <transition name="slide">
-      <aside v-if="showSidebar" class="w-80 bg-white/95 backdrop-blur-md shadow-2xl border-r border-slate-200 flex flex-col min-h-screen relative">
+  <aside v-if="showSidebar" class="w-80 bg-white/95 backdrop-blur-md shadow-2xl border-r border-slate-200 flex flex-col min-h-screen relative mt-10">
         <!-- Header Sidebar -->
         <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 rounded-br-3xl">
           <div class="flex justify-between items-center mb-4">
@@ -116,7 +116,7 @@
     <!-- Area Konten Utama -->
     <main :class="showSidebar ? 'w-full md:w-[calc(100%-20rem)]' : 'w-full'" class="flex-1 transition-all duration-300">
       <!-- Skor Total Course -->
-      <div v-if="sections.length > 0" class="mb-6 max-w-4xl mx-auto">
+  <div v-if="sections.length > 0" class="mb-6 max-w-4xl mx-auto mt-10">
         <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 shadow">
           <div>
             <h2 class="text-xl font-bold text-blue-700 mb-2">Skor Total Course</h2>
